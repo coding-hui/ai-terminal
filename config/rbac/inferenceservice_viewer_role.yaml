@@ -1,0 +1,23 @@
+# permissions for end users to view inferenceservices.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: ai-terminal
+    app.kubernetes.io/managed-by: kustomize
+  name: inferenceservice-viewer-role
+rules:
+- apiGroups:
+  - ai.wecoding.top.top.wecoding
+  resources:
+  - inferenceservices
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ai.wecoding.top.top.wecoding
+  resources:
+  - inferenceservices/status
+  verbs:
+  - get
