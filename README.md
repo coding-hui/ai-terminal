@@ -1,18 +1,18 @@
-# ai-terminal
+# AI-Terminal
 
-Ai-Terminal is an AI-powered command-line tool designed to seamlessly integrate into your existing terminal workflow. It enhances user      
+AI-Terminal is an AI-powered command-line tool designed to seamlessly integrate into your existing terminal workflow. It enhances user      
 experience by offering AI-driven functionalities that automate and optimize routine terminal operations. With its advanced understanding    
-and response to user commands, Ai-Terminal can efficiently handle tasks such as file management, data processing, system diagnostics, and   
+and response to user commands, AI-Terminal can efficiently handle tasks such as file management, data processing, system diagnostics, and   
 more.
 
 ## Description
 
-Ai-Terminal brings intelligence to the traditional CLI, enabling users to execute complex tasks effortlessly. Its key features include:
+AI-Terminal brings intelligence to the traditional CLI, enabling users to execute complex tasks effortlessly. Its key features include:
 
-• Contextual Assistance: Ai-Terminal learns from your commands and provides suggestions, reducing the need for memorizing complex syntax.   
+• Contextual Assistance: AI-Terminal learns from your commands and provides suggestions, reducing the need for memorizing complex syntax.   
 • Automated Tasks: It can recognize patterns in repetitive tasks and create shortcuts or scripts for one-click execution.
 • Intelligent Search: Perform intelligent searches within files, directories, and even within the content of specific file types.
-• Error Correction: Ai-Terminal attempts to correct incorrect commands or suggest alternatives when errors occur.
+• Error Correction: AI-Terminal attempts to correct incorrect commands or suggest alternatives when errors occur.
 • Custom Integrations: Supports integration with other tools and services through plugins or APIs.
 
 ## Getting Started
@@ -29,7 +29,7 @@ Ai-Terminal brings intelligence to the traditional CLI, enabling users to execut
 **Build and push your image to the location specified by `IMG`:**
 
 ```sh
-make docker-build docker-push IMG=<some-registry>/ai-terminal:tag
+make docker-build docker-push IMG=<some-registry>/AI-terminal:tag
 ```
 
 **NOTE:** This image ought to be published in the personal registry you specified.
@@ -45,7 +45,7 @@ make install
 **Deploy the Manager to the cluster with the image specified by `IMG`:**
 
 ```sh
-make deploy IMG=<some-registry>/ai-terminal:tag
+make deploy IMG=<some-registry>/AI-terminal:tag
 ```
 
 > **NOTE**: If you encounter RBAC errors, you may need to grant yourself cluster-admin
@@ -87,7 +87,7 @@ Following are the steps to build the installer and distribute this project to us
 1. Build the installer for the image built and published in the registry:
 
 ```sh
-make build-installer IMG=<some-registry>/ai-terminal:tag
+make build-installer IMG=<some-registry>/AI-terminal:tag
 ```
 
 NOTE: The makefile target mentioned above generates an 'install.yaml'
@@ -100,7 +100,7 @@ its dependencies.
 Users can just run kubectl apply -f <URL for YAML BUNDLE> to install the project, i.e.:
 
 ```sh
-kubectl apply -f https://raw.githubusercontent.com/<org>/ai-terminal/<tag or branch>/dist/install.yaml
+kubectl apply -f https://raw.githubusercontent.com/<org>/AI-terminal/<tag or branch>/dist/install.yaml
 ```
 
 ## Contributing
