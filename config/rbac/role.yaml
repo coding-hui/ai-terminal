@@ -4,29 +4,29 @@ kind: ClusterRole
 metadata:
   name: manager-role
 rules:
-- apiGroups:
-  - ai.wecoding.top.top.wecoding
-  resources:
-  - inferenceservices
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ai.wecoding.top.top.wecoding
-  resources:
-  - inferenceservices/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - ai.wecoding.top.top.wecoding
-  resources:
-  - inferenceservices/status
-  verbs:
-  - get
-  - patch
-  - update
+  - apiGroups:
+      - ai.wecoding.top.top.wecoding
+    resources:
+      - inferenceservices
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - ai.wecoding.top.top.wecoding
+    resources:
+      - inferenceservices/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - ai.wecoding.top.top.wecoding
+    resources:
+      - inferenceservices/status
+    verbs:
+      - get
+      - patch
+      - update

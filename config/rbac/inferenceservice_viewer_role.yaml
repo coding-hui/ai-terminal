@@ -7,17 +7,17 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: inferenceservice-viewer-role
 rules:
-- apiGroups:
-  - ai.wecoding.top.top.wecoding
-  resources:
-  - inferenceservices
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ai.wecoding.top.top.wecoding
-  resources:
-  - inferenceservices/status
-  verbs:
-  - get
+  - apiGroups:
+      - ai.wecoding.top.top.wecoding
+    resources:
+      - inferenceservices
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ai.wecoding.top.top.wecoding
+    resources:
+      - inferenceservices/status
+    verbs:
+      - get

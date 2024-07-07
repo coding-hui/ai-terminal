@@ -7,21 +7,21 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: inferenceservice-editor-role
 rules:
-- apiGroups:
-  - ai.wecoding.top.top.wecoding
-  resources:
-  - inferenceservices
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ai.wecoding.top.top.wecoding
-  resources:
-  - inferenceservices/status
-  verbs:
-  - get
+  - apiGroups:
+      - ai.wecoding.top.top.wecoding
+    resources:
+      - inferenceservices
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - ai.wecoding.top.top.wecoding
+    resources:
+      - inferenceservices/status
+    verbs:
+      - get
