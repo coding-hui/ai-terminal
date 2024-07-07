@@ -1,18 +1,19 @@
 # AI-Terminal
 
-AI-Terminal is an AI-powered command-line tool designed to seamlessly integrate into your existing terminal workflow. It enhances user      
-experience by offering AI-driven functionalities that automate and optimize routine terminal operations. With its advanced understanding    
-and response to user commands, AI-Terminal can efficiently handle tasks such as file management, data processing, system diagnostics, and   
-more.
+AI-Terminal is an AI-powered command-line tool designed to seamlessly integrate into your existing terminal workflow. It enhances user experience by offering AI-driven functionalities that automate and optimize routine terminal operations. With its advanced understanding and response to user commands, AI-Terminal can efficiently handle tasks such as file management, data processing, system diagnostics, and more.
 
 ## Description
 
 AI-Terminal brings intelligence to the traditional CLI, enabling users to execute complex tasks effortlessly. Its key features include:
 
 • Contextual Assistance: AI-Terminal learns from your commands and provides suggestions, reducing the need for memorizing complex syntax.   
+
 • Automated Tasks: It can recognize patterns in repetitive tasks and create shortcuts or scripts for one-click execution.
+
 • Intelligent Search: Perform intelligent searches within files, directories, and even within the content of specific file types.
+
 • Error Correction: AI-Terminal attempts to correct incorrect commands or suggest alternatives when errors occur.
+
 • Custom Integrations: Supports integration with other tools and services through plugins or APIs.
 
 ## Getting Started
@@ -24,83 +25,18 @@ AI-Terminal brings intelligence to the traditional CLI, enabling users to execut
 - kubectl version v1.11.3+.
 - Access to a Kubernetes v1.11.3+ cluster.
 
-### To Deploy on the cluster
+### To Install
 
-**Build and push your image to the location specified by `IMG`:**
+**Build and install go binary:**
 
 ```sh
-make docker-build docker-push IMG=<some-registry>/AI-terminal:tag
+make build
 ```
 
-**NOTE:** This image ought to be published in the personal registry you specified.
-And it is required to have access to pull the image from the working environment.
-Make sure you have the proper permission to the registry if the above commands don’t work.
-
-**Install the CRDs into the cluster:**
+### Start chat
 
 ```sh
-make install
-```
-
-**Deploy the Manager to the cluster with the image specified by `IMG`:**
-
-```sh
-make deploy IMG=<some-registry>/AI-terminal:tag
-```
-
-> **NOTE**: If you encounter RBAC errors, you may need to grant yourself cluster-admin
-> privileges or be logged in as admin.
-
-**Create instances of your solution**
-You can apply the samples (examples) from the config/sample:
-
-```sh
-kubectl apply -k config/samples/
-```
-
-> **NOTE**: Ensure that the samples has default values to test it out.
-
-### To Uninstall
-
-**Delete the instances (CRs) from the cluster:**
-
-```sh
-kubectl delete -k config/samples/
-```
-
-**Delete the APIs(CRDs) from the cluster:**
-
-```sh
-make uninstall
-```
-
-**UnDeploy the controller from the cluster:**
-
-```sh
-make undeploy
-```
-
-## Project Distribution
-
-Following are the steps to build the installer and distribute this project to users.
-
-1. Build the installer for the image built and published in the registry:
-
-```sh
-make build-installer IMG=<some-registry>/AI-terminal:tag
-```
-
-NOTE: The makefile target mentioned above generates an 'install.yaml'
-file in the dist directory. This file contains all the resources built
-with Kustomize, which are necessary to install this project without
-its dependencies.
-
-2. Using the installer
-
-Users can just run kubectl apply -f <URL for YAML BUNDLE> to install the project, i.e.:
-
-```sh
-kubectl apply -f https://raw.githubusercontent.com/<org>/AI-terminal/<tag or branch>/dist/install.yaml
+ai ask hi?
 ```
 
 ## Contributing
