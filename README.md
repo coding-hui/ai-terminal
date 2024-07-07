@@ -1,10 +1,19 @@
 # ai-terminal
 
-// TODO(user): Add simple overview of use/purpose
+Ai-Terminal is an AI-powered command-line tool designed to seamlessly integrate into your existing terminal workflow. It enhances user      
+experience by offering AI-driven functionalities that automate and optimize routine terminal operations. With its advanced understanding    
+and response to user commands, Ai-Terminal can efficiently handle tasks such as file management, data processing, system diagnostics, and   
+more.
 
 ## Description
 
-// TODO(user): An in-depth paragraph about your project and overview of use
+Ai-Terminal brings intelligence to the traditional CLI, enabling users to execute complex tasks effortlessly. Its key features include:
+
+• Contextual Assistance: Ai-Terminal learns from your commands and provides suggestions, reducing the need for memorizing complex syntax.   
+• Automated Tasks: It can recognize patterns in repetitive tasks and create shortcuts or scripts for one-click execution.
+• Intelligent Search: Perform intelligent searches within files, directories, and even within the content of specific file types.
+• Error Correction: Ai-Terminal attempts to correct incorrect commands or suggest alternatives when errors occur.
+• Custom Integrations: Supports integration with other tools and services through plugins or APIs.
 
 ## Getting Started
 
