@@ -1,0 +1,28 @@
+ifeq ($(origin VERSION), undefined)
+VERSION := $(shell git describe --tags --always --match='v*')
+endif
+
+# Check if the tree is dirty.  default to dirty
+GIT_TREE_STATE:="dirty"
+ifeq (, $(shell git status --porcelain 2>/dev/null))
+	GIT_TREE_STATE="clean"
+endif
+GIT_COMMIT:=$(shell git rev-parse HEAD)
+
+GitSHA=`git rev-parse HEAD`
+
+VERSION_PACKAGE=github.com/coding-hui/common/version
+
+GO_LDFLAGS += -X $(VERSION_PACKAGE).GitVersion=$(VERSION) \
+	-X $(VERSION_PACKAGE).GitCommit=$(GIT_COMMIT) \
+	-X $(VERSION_PACKAGE).GitTreeState=$(GIT_TREE_STATE) \
+	-X $(VERSION_PACKAGE).BuildDate=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
+ifneq ($(DLV),)
+	GO_BUILD_FLAGS += -gcflags "all=-N -l"
+	LDFLAGS = ""
+endif
+GO_BUILD_FLAGS += -ldflags "$(GO_LDFLAGS)"
+
+ifeq ($(GOOS),windows)
+	GO_OUT_EXT := .exe
+endif

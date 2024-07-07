@@ -21,6 +21,8 @@ CONTAINER_TOOL ?= docker
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
+include Makefile.def
+
 .PHONY: all
 all: build
 
@@ -80,7 +82,7 @@ lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes
 
 .PHONY: build
 build: fmt vet ## Build manager binary.
-	go build -o bin/ai cmd/cli/main.go
+	go build $(GO_BUILD_FLAGS) -o bin/ai cmd/cli/main.go
 
 .PHONY: run
 run: fmt vet ## Run a controller from your host.

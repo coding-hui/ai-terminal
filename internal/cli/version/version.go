@@ -81,7 +81,7 @@ func (o *Options) Run() error {
 		if o.Short {
 			fmt.Fprintf(o.Out, "Version: %s\n", versionInfo.GitVersion)
 		} else {
-			fmt.Fprintf(o.Out, "%s\n", fmt.Sprintf("%#v", versionInfo))
+			fmt.Fprintf(o.Out, "Version: %s\n", fmt.Sprintf("%#v", versionInfo))
 		}
 	case "yaml":
 		marshaled, err := yaml.Marshal(&versionInfo)
