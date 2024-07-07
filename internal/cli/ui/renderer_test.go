@@ -60,7 +60,7 @@ func testRenderHelp(t *testing.T) {
 
 func testRenderConfigMessage(t *testing.T) {
 	r := NewRenderer(glamour.WithAutoStyle())
-	output := r.RenderConfigMessage()
+	output := r.RenderConfigMessage("test")
 	assert.NotEmpty(t, output, "Rendered config message should not be empty.")
 }
 

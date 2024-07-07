@@ -30,7 +30,17 @@ type Engine struct {
 }
 
 func NewDefaultEngine(mode EngineMode, config *options.Config) (*Engine, error) {
-	llm, err := openai.New()
+	var opts []openai.Option
+	if config.Ai.Model != "" {
+		opts = append(opts, openai.WithModel(config.Ai.Model))
+	}
+	if config.Ai.ApiBase != "" {
+		opts = append(opts, openai.WithBaseURL(config.Ai.ApiBase))
+	}
+	if config.Ai.Token != "" {
+		opts = append(opts, openai.WithToken(config.Ai.Token))
+	}
+	llm, err := openai.New(opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +109,15 @@ func (e *Engine) ExecCompletion(input string) (*EngineExecOutput, error) {
 	e.appendUserMessage(input)
 
 	messages := e.prepareCompletionMessages()
-	rsp, err := e.llm.GenerateContent(ctx, messages)
+	if e.config.Ai.MaxTokens > 0 {
+
+	}
+	rsp, err := e.llm.GenerateContent(ctx, messages,
+		llms.WithModel(e.config.Ai.Model),
+		llms.WithMaxTokens(e.config.Ai.MaxTokens),
+		llms.WithTemperature(e.config.Ai.Temperature),
+		llms.WithTopP(e.config.Ai.TopP),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +164,13 @@ func (e *Engine) ChatStreamCompletion(input string) error {
 
 	messages := e.prepareCompletionMessages()
 	klog.V(2).InfoS("prepareCompletionMessages", "input", input, "messages", messages)
-	rsp, err := e.llm.GenerateContent(ctx, messages, llms.WithStreamingFunc(streamingFunc))
+	rsp, err := e.llm.GenerateContent(ctx, messages,
+		llms.WithModel(e.config.Ai.Model),
+		llms.WithMaxTokens(e.config.Ai.MaxTokens),
+		llms.WithTemperature(e.config.Ai.Temperature),
+		llms.WithTopP(e.config.Ai.TopP),
+		llms.WithStreamingFunc(streamingFunc),
+	)
 	if err != nil {
 		e.running = false
 		return err
@@ -207,7 +231,7 @@ func (e *Engine) appendAssistantMessage(content string) {
 func (e *Engine) prepareCompletionMessages() []llms.MessageContent {
 	var messages []llms.MessageContent
 
-	if e.config.SystemPrompt == "" {
+	if e.config.Ai.SystemPrompt == "" {
 		messages = append(messages, llms.MessageContent{
 			Role:  llms.ChatMessageTypeSystem,
 			Parts: []llms.ContentPart{llms.TextPart(e.prepareSystemPrompt())},

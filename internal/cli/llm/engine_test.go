@@ -17,9 +17,14 @@ func TestEngine_ExecCompletion(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	cfg, err := options.NewConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	e := &Engine{
 		mode:         ChatEngineMode,
-		config:       options.NewConfig(),
+		config:       cfg,
 		llm:          llm,
 		execMessages: make([]llms.MessageContent, 0),
 		chatMessages: make([]llms.MessageContent, 0),

@@ -3,7 +3,13 @@ package run
 import (
 	"fmt"
 	"os/exec"
+	"runtime"
 	"strings"
+)
+
+const (
+	defaultShellUnix = "bash"
+	defaultShellWin  = "cmd.exe"
 )
 
 func Run(cmd string, arg ...string) (string, error) {
@@ -16,16 +22,34 @@ func Run(cmd string, arg ...string) (string, error) {
 }
 
 func PrepareInteractiveCommand(input string) *exec.Cmd {
-	return exec.Command(
-		"bash",
-		"-c",
-		fmt.Sprintf("echo \"\n\";%s; echo \"\n\";", strings.TrimRight(input, ";")),
-	)
+	if isWindows() {
+		return prepareWindowsCommand(input)
+	}
+	return prepareUnixCommand(input)
 }
 
 func PrepareEditSettingsCommand(input string) *exec.Cmd {
+	if isWindows() {
+		return prepareWindowsCommand(input)
+	}
+	return prepareUnixCommand(input)
+}
+
+func isWindows() bool {
+	return runtime.GOOS == "windows"
+}
+
+func prepareWindowsCommand(input string) *exec.Cmd {
 	return exec.Command(
-		"bash",
+		defaultShellWin,
+		"/c",
+		fmt.Sprintf("%s", strings.TrimRight(input, "&")),
+	)
+}
+
+func prepareUnixCommand(input string) *exec.Cmd {
+	return exec.Command(
+		defaultShellUnix,
 		"-c",
 		fmt.Sprintf("%s; echo \"\n\";", strings.TrimRight(input, ";")),
 	)

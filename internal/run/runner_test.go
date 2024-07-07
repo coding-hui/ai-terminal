@@ -5,41 +5,32 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestRun(t *testing.T) {
-	t.Run("Run", testRunCommand)
-	t.Run("PrepareInteractiveCommand", testPrepareInteractiveCommand)
-	t.Run("PrepareEditSettingsCommand", testPrepareEditSettingsCommand)
+	t.Run("PrepareUnixEditSettingsCommand", testPrepareUnixEditSettingsCommand)
+	t.Run("PrepareWinEditSettingsCommand", testPrepareWinEditSettingsCommand)
 }
 
-func testRunCommand(t *testing.T) {
-	output, err := Run("echo", "Hello, World!")
-	require.NoError(t, err)
-
-	assert.Equal(t, "Hello, World!\n", output, "The command output should be the same.")
-}
-
-func testPrepareInteractiveCommand(t *testing.T) {
-	cmd := PrepareInteractiveCommand("echo 'Hello, World!'")
+func testPrepareUnixEditSettingsCommand(t *testing.T) {
+	cmd := prepareUnixCommand("ai.json")
 
 	expectedCmd := exec.Command(
 		"bash",
 		"-c",
-		"echo \"\n\";echo 'Hello, World!'; echo \"\n\";",
+		"ai.json; echo \"\n\";",
 	)
 
 	assert.Equal(t, expectedCmd.Args, cmd.Args, "The command arguments should be the same.")
 }
 
-func testPrepareEditSettingsCommand(t *testing.T) {
-	cmd := PrepareEditSettingsCommand("nano yo.json")
+func testPrepareWinEditSettingsCommand(t *testing.T) {
+	cmd := prepareWindowsCommand("notepad.exe ai.json")
 
 	expectedCmd := exec.Command(
-		"bash",
-		"-c",
-		"nano yo.json; echo \"\n\";",
+		"cmd.exe",
+		"/c",
+		"notepad.exe ai.json",
 	)
 
 	assert.Equal(t, expectedCmd.Args, cmd.Args, "The command arguments should be the same.")

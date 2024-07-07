@@ -11,7 +11,12 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/run"
 )
 
-const DefaultApplicationName = "ai"
+const (
+	DefaultApplicationName = "ai"
+
+	WindowsDefaultEditor = "notepad.exe"
+	LinuxDefaultEditor   = "vim"
+)
 
 type Analysis struct {
 	operatingSystem OperatingSystem
@@ -145,9 +150,19 @@ func GetEditor() string {
 		return "nano"
 	}
 
-	return strings.TrimSpace(name)
+	name = strings.TrimSpace(name)
+	if len(name) > 0 {
+		return name
+	}
+
+	name = LinuxDefaultEditor
+	if GetOperatingSystem() == WindowsOperatingSystem {
+		name = WindowsDefaultEditor
+	}
+
+	return name
 }
 
 func GetDefaultConfigFile() string {
-	return filepath.Join(GetHomeDirectory(), ".config", strings.ToLower(DefaultApplicationName))
+	return filepath.Join(GetHomeDirectory(), ".wecoding", strings.ToLower(DefaultApplicationName))
 }

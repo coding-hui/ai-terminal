@@ -9,12 +9,16 @@ import (
 )
 
 const (
-	execIcon          = "🚀 > "
-	execPlaceholder   = "Execute something..."
-	configIcon        = "🔒 > "
-	configPlaceholder = "Enter your OpenAI key..."
-	chatIcon          = "💬 > "
-	chatPlaceholder   = "Ask me something..."
+	execIcon                 = "🚀 > "
+	configIcon               = "🔒 > "
+	botIcon                  = "🤖 > "
+	apiBaseIcon              = "🛠️ > "
+	chatIcon                 = "💬 > "
+	execPlaceholder          = "Execute something..."
+	chatPlaceholder          = "Ask me something..."
+	modelConfigPlaceholder   = "Enter your LLM Model Name..."
+	apiBaseConfigPlaceholder = "Enter your LLM Api Base..."
+	tokenConfigPlaceholder   = "Enter your LLM API Token..."
 )
 
 type Prompt struct {
@@ -28,7 +32,7 @@ func NewPrompt(mode PromptMode) *Prompt {
 	input.TextStyle = getPromptStyle(mode)
 	input.Prompt = getPromptIcon(mode)
 
-	if mode == ConfigPromptMode {
+	if mode == TokenConfigPromptMode {
 		input.EchoMode = textinput.EchoPassword
 	}
 
@@ -97,10 +101,10 @@ func getPromptStyle(mode PromptMode) lipgloss.Style {
 	switch mode {
 	case ExecPromptMode:
 		return lipgloss.NewStyle().Foreground(lipgloss.Color(execColor))
-	case ConfigPromptMode:
-		return lipgloss.NewStyle().Foreground(lipgloss.Color(configColor))
-	default:
+	case ChatPromptMode:
 		return lipgloss.NewStyle().Foreground(lipgloss.Color(chatColor))
+	default:
+		return lipgloss.NewStyle().Foreground(lipgloss.Color(configColor))
 	}
 }
 
@@ -110,10 +114,14 @@ func getPromptIcon(mode PromptMode) string {
 	switch mode {
 	case ExecPromptMode:
 		return style.Render(execIcon)
-	case ConfigPromptMode:
-		return style.Render(configIcon)
-	default:
+	case ChatPromptMode:
 		return style.Render(chatIcon)
+	case ModelConfigPromptMode:
+		return style.Render(botIcon)
+	case ApiBaseConfigPromptMode:
+		return style.Render(apiBaseIcon)
+	default:
+		return style.Render(configIcon)
 	}
 }
 
@@ -121,8 +129,12 @@ func getPromptPlaceholder(mode PromptMode) string {
 	switch mode {
 	case ExecPromptMode:
 		return execPlaceholder
-	case ConfigPromptMode:
-		return configPlaceholder
+	case TokenConfigPromptMode:
+		return tokenConfigPlaceholder
+	case ModelConfigPromptMode:
+		return modelConfigPlaceholder
+	case ApiBaseConfigPromptMode:
+		return apiBaseConfigPlaceholder
 	default:
 		return chatPlaceholder
 	}

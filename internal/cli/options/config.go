@@ -2,10 +2,12 @@ package options
 
 import (
 	"errors"
+	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/spf13/viper"
+	"k8s.io/klog/v2"
 
 	"github.com/coding-hui/common/util/homedir"
 	"github.com/coding-hui/iam/pkg/log"
@@ -15,32 +17,47 @@ import (
 
 const (
 	// RecommendedHomeDir defines the default directory used to place all iam service configurations.
-	RecommendedHomeDir = ".config"
+	RecommendedHomeDir = ".wecoding"
 
 	// RecommendedEnvPrefix defines the ENV prefix used by all iam service.
 	RecommendedEnvPrefix = "AI"
-
-	// DefaultAIConfigName default ai config name
-	DefaultAIConfigName = "ai"
 )
 
 // Config is a structure used to configure a AI.
 // Its members are sorted roughly in order of importance for composers.
 type Config struct {
-	DefaultPromptMode string
-	Preferences       string
-	SystemPrompt      string
-	System            *system.Analysis
+	DefaultPromptMode string   `yaml:"default-prompt-mode,omitempty" mapstructure:"default-prompt-mode,omitempty"`
+	Ai                AiConfig `yaml:"inline" mapstructure:"inline" json:"inline"`
+
+	System *system.Analysis
+}
+
+type AiConfig struct {
+	SystemPrompt string  `yaml:"system-prompt,omitempty" mapstructure:"system-prompt,omitempty"`
+	Token        string  `yaml:"token,omitempty" mapstructure:"token,omitempty"`
+	Model        string  `yaml:"model,omitempty" mapstructure:"model,omitempty"`
+	ApiBase      string  `yaml:"api-base,omitempty" mapstructure:"api-base,omitempty"`
+	Temperature  float64 `yaml:"temperature,omitempty" mapstructure:"temperature,omitempty"`
+	TopP         float64 `yaml:"top-p,omitempty" mapstructure:"top-p,omitempty"`
+	MaxTokens    int     `yaml:"max-tokens,omitempty" mapstructure:"max-tokens,omitempty"`
+	Proxy        string  `yaml:"proxy,omitempty" mapstructure:"proxy,omitempty"`
 }
 
 // NewConfig returns a Config struct with the default values.
-func NewConfig() *Config {
+func NewConfig() (*Config, error) {
 	return &Config{
-		DefaultPromptMode: viper.GetString(FlagDefaultPromptMode),
-		Preferences:       viper.GetString(FlagPreferences),
-		SystemPrompt:      viper.GetString(FlagDefaultSystemPrompt),
-		System:            system.Analyse(),
-	}
+		Ai: AiConfig{
+			SystemPrompt: viper.GetString(FlagDefaultSystemPrompt),
+			Token:        viper.GetString(FlagAiToken),
+			Model:        viper.GetString(FlagAiModel),
+			ApiBase:      viper.GetString(FlagAiApiBase),
+			Temperature:  viper.GetFloat64(FlagAiTemperature),
+			TopP:         viper.GetFloat64(FlagAiTopP),
+			MaxTokens:    viper.GetInt(FlagAiMaxTokens),
+			Proxy:        "",
+		},
+		System: system.Analyse(),
+	}, nil
 }
 
 // LoadConfig reads in config file and ENV variables if set.
@@ -62,13 +79,35 @@ func LoadConfig(cfg string, defaultName string) {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err != nil {
-		var configFileNotFoundError viper.ConfigFileNotFoundError
-		if errors.As(err, &configFileNotFoundError) {
-			if err := viper.WriteConfigAs(filepath.Join(homedir.HomeDir(), RecommendedHomeDir, DefaultAIConfigName)); err != nil {
-				log.Warnf("WARNING: viper failed to write default config: %s", err.Error())
-			}
-			return
-		}
-		log.Warnf("WARNING: viper failed to discover and load the configuration file: %s", err.Error())
+		log.Debugf("WARNING: viper failed to discover and load the configuration file: %s", err.Error())
 	}
+}
+
+func WriteConfig(model, apiBase, apiToken string, write bool) (*Config, error) {
+	viper.Set(FlagAiModel, model)
+	viper.Set(FlagAiApiBase, apiBase)
+	viper.Set(FlagAiToken, apiToken)
+	viper.SetDefault(FlagAiTemperature, 0.2)
+	viper.SetDefault(FlagAiTopP, 0.9)
+	viper.SetDefault(FlagAiMaxTokens, 2048)
+	viper.SetDefault(FlagDefaultSystemPrompt, "")
+
+	viper.SetConfigType("yaml")
+
+	if write {
+		defConfFile := system.GetDefaultConfigFile()
+		log.Debugf("Writing config file: %s", defConfFile)
+		if err := os.MkdirAll(filepath.Dir(defConfFile), 0755); err != nil {
+			klog.Warningf("WARNING: failed to create config dir: %s", err.Error())
+		}
+		err := viper.WriteConfigAs(defConfFile)
+		if err != nil {
+			var existErr *viper.ConfigFileAlreadyExistsError
+			if !errors.As(err, &existErr) {
+				return nil, err
+			}
+		}
+	}
+
+	return NewConfig()
 }

@@ -1,9 +1,11 @@
 package ui
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/spf13/viper"
 	"k8s.io/klog/v2"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -44,12 +46,13 @@ type Components struct {
 }
 
 type Ui struct {
-	state      State
-	dimensions Dimensions
-	components Components
-	config     *options.Config
-	engine     *llm.Engine
-	history    *history.History
+	state           State
+	dimensions      Dimensions
+	components      Components
+	config          *options.Config
+	waitForUserChan chan struct{}
+	engine          *llm.Engine
+	history         *history.History
 }
 
 func NewUi(input *Input) *Ui {
@@ -80,12 +83,43 @@ func NewUi(input *Input) *Ui {
 			),
 			spinner: NewSpinner(),
 		},
-		history: history.NewHistory(),
+		history:         history.NewHistory(),
+		waitForUserChan: make(chan struct{}, 1),
 	}
 }
 
 func (u *Ui) Init() tea.Cmd {
-	cfg := options.NewConfig()
+	cfg, err := options.NewConfig()
+	u.config = cfg
+	klog.V(2).InfoS("begin init tea model.", "cfg", cfg)
+	firstInit := false
+	if err != nil {
+		var configFileNotFoundError viper.ConfigFileNotFoundError
+		if errors.As(err, &configFileNotFoundError) {
+			firstInit = true
+		} else {
+			return tea.Sequence(
+				tea.Println(u.components.renderer.RenderError(fmt.Sprintf("[ERROR] failed to init chat ui: %v", err))),
+				tea.Quit,
+			)
+		}
+	}
+	if cfg.Ai.Token == "" || cfg.Ai.Model == "" || cfg.Ai.ApiBase == "" || firstInit {
+		if u.state.runMode == ReplMode {
+			return tea.Sequence(
+				tea.ClearScreen,
+				u.startConfig(ModelConfigPromptMode),
+				u.startConfig(ApiBaseConfigPromptMode),
+				u.startConfig(TokenConfigPromptMode),
+			)
+		} else {
+			return tea.Sequence(
+				u.startConfig(ModelConfigPromptMode),
+				u.startConfig(ApiBaseConfigPromptMode),
+				u.startConfig(TokenConfigPromptMode),
+			)
+		}
+	}
 	if u.state.runMode == ReplMode {
 		return u.startRepl(cfg)
 	} else {
@@ -164,8 +198,9 @@ func (u *Ui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		// enter
 		case tea.KeyEnter:
-			if u.state.configuring {
-				return u, u.finishConfig(u.components.prompt.GetValue())
+			promptVal := u.components.prompt.GetValue()
+			if u.state.configuring && promptVal != "" {
+				return u, u.finishConfig(promptVal)
 			}
 			if !u.state.querying && !u.state.confirming {
 				input := u.components.prompt.GetValue()
@@ -371,7 +406,7 @@ func (u *Ui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (u *Ui) View() string {
 	if u.state.error != nil {
-		return u.components.renderer.RenderError(fmt.Sprintf("[error] %s", u.state.error))
+		return u.components.renderer.RenderError(fmt.Sprintf("[ERROR] %s", u.state.error))
 	}
 
 	if u.state.configuring {
@@ -431,7 +466,7 @@ func (u *Ui) startRepl(config *options.Config) tea.Cmd {
 			}
 
 			u.engine = engine
-			u.state.buffer = "Welcome \n\n"
+			u.state.buffer = "Welcome! **" + u.config.System.GetUsername() + "** 👋  \n\n"
 			u.state.command = ""
 			u.components.prompt = NewPrompt(u.state.promptMode)
 
@@ -490,82 +525,109 @@ func (u *Ui) startCli(config *options.Config) tea.Cmd {
 	}
 }
 
-func (u *Ui) startConfig() tea.Cmd {
+func (u *Ui) startConfig(configPromptMode PromptMode) tea.Cmd {
 	return func() tea.Msg {
 		u.state.configuring = true
 		u.state.querying = false
 		u.state.confirming = false
 		u.state.executing = false
 
-		u.state.buffer = u.components.renderer.RenderConfigMessage()
-		u.state.command = ""
-		u.components.prompt = NewPrompt(ConfigPromptMode)
+		switch configPromptMode {
+		case ModelConfigPromptMode:
+			u.state.buffer = u.components.renderer.RenderConfigMessage(u.config.System.GetUsername())
+		case ApiBaseConfigPromptMode:
+			u.state.buffer = u.components.renderer.RenderApiBaseConfigMessage()
+		default:
+			u.state.buffer = u.components.renderer.RenderApiTokenConfigMessage()
+		}
 
-		return nil
+		u.state.command = ""
+		u.components.prompt = NewPrompt(configPromptMode)
+
+		select {
+		case <-u.waitForUserChan:
+			return nil
+		}
 	}
 }
 
 func (u *Ui) finishConfig(key string) tea.Cmd {
-	//u.state.configuring = false
-	//
-	//config, err := options.WriteConfig(key, true)
-	//if err != nil {
-	//	u.state.error = err
-	//	return nil
-	//}
-	//
-	//u.config = config
-	//engine, err := ai.NewEngine(ai.ExecEngineMode, config)
-	//if err != nil {
-	//	u.state.error = err
-	//	return nil
-	//}
-	//
-	//if u.state.pipe != "" {
-	//	engine.SetPipe(u.state.pipe)
-	//}
-	//
-	//u.engine = engine
-	//
-	//if u.state.runMode == ReplMode {
-	//	return tea.Sequence(
-	//		tea.ClearScreen,
-	//		tea.Println(u.components.renderer.RenderSuccess("\n[settings ok]\n")),
-	//		textinput.Blink,
-	//		func() tea.Msg {
-	//			u.state.buffer = ""
-	//			u.state.command = ""
-	//			u.components.prompt = NewPrompt(ExecPromptMode)
-	//
-	//			return nil
-	//		},
-	//	)
-	//} else {
-	//	if u.state.promptMode == ExecPromptMode {
-	//		u.state.querying = true
-	//		u.state.configuring = false
-	//		u.state.buffer = ""
-	//		return tea.Sequence(
-	//			tea.Println(u.components.renderer.RenderSuccess("\n[settings ok]")),
-	//			u.components.spinner.Tick,
-	//			func() tea.Msg {
-	//				output, err := u.engine.ExecCompletion(u.state.args)
-	//				u.state.querying = false
-	//				if err != nil {
-	//					return err
-	//				}
-	//
-	//				return *output
-	//			},
-	//		)
-	//	} else {
-	//		return tea.Batch(
-	//			u.startChatStream(u.state.args),
-	//			u.awaitChatStream(),
-	//		)
-	//	}
-	//}
-	return nil
+	switch u.components.prompt.mode {
+	case ModelConfigPromptMode:
+		u.config.Ai.Model = key
+	case ApiBaseConfigPromptMode:
+		u.config.Ai.ApiBase = key
+	default:
+		u.config.Ai.Token = key
+	}
+
+	finished := false
+	if u.config.Ai.Model != "" && u.config.Ai.Token != "" && u.config.Ai.ApiBase != "" {
+		finished = true
+	}
+	if !finished {
+		u.waitForUserChan <- struct{}{}
+		return tea.ClearScreen
+	}
+
+	u.state.configuring = false
+	config, err := options.WriteConfig(u.config.Ai.Model, u.config.Ai.ApiBase, u.config.Ai.Token, true)
+	if err != nil {
+		u.state.error = err
+		return nil
+	}
+	u.config = config
+
+	engine, err := llm.NewDefaultEngine(llm.ChatEngineMode, config)
+	if err != nil {
+		u.state.error = err
+		return nil
+	}
+
+	if u.state.pipe != "" {
+		engine.SetPipe(u.state.pipe)
+	}
+
+	u.engine = engine
+
+	if u.state.runMode == ReplMode {
+		return tea.Sequence(
+			tea.ClearScreen,
+			tea.Println(u.components.renderer.RenderSuccess("\n[settings ok]\n")),
+			textinput.Blink,
+			func() tea.Msg {
+				u.state.buffer = ""
+				u.state.command = ""
+				u.components.prompt = NewPrompt(ExecPromptMode)
+
+				return nil
+			},
+		)
+	} else {
+		if u.state.promptMode == ExecPromptMode {
+			u.state.querying = true
+			u.state.configuring = false
+			u.state.buffer = ""
+			return tea.Sequence(
+				tea.Println(u.components.renderer.RenderSuccess("\n[settings ok]")),
+				u.components.spinner.Tick,
+				func() tea.Msg {
+					output, err := u.engine.ExecCompletion(u.state.args)
+					u.state.querying = false
+					if err != nil {
+						return err
+					}
+
+					return *output
+				},
+			)
+		} else {
+			return tea.Batch(
+				u.startChatStream(u.state.args),
+				u.awaitChatStream(),
+			)
+		}
+	}
 }
 
 func (u *Ui) startExec(input string) tea.Cmd {
@@ -624,7 +686,7 @@ func (u *Ui) execCommand(input string) tea.Cmd {
 		u.state.executing = false
 		u.state.command = ""
 
-		return run.NewRunOutput(error, "[error]", "[ok]")
+		return run.NewRunOutput(error, "[ERROR]", "[ok]")
 	})
 }
 
@@ -647,7 +709,7 @@ func (u *Ui) editSettings() tea.Cmd {
 			return run.NewRunOutput(err, "[settings error]", "")
 		}
 
-		cfg := options.NewConfig()
+		cfg, err := options.NewConfig()
 		if err != nil {
 			return run.NewRunOutput(err, "[settings error]", "")
 		}
