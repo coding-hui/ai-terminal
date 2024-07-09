@@ -77,8 +77,9 @@ func NewUi(input *Input) *Ui {
 		components: Components{
 			prompt: NewPrompt(input.GetPromptMode()),
 			renderer: NewRenderer(
-				glamour.WithAutoStyle(),
 				glamour.WithEmoji(),
+				glamour.WithAutoStyle(),
+				glamour.WithPreservedNewLines(),
 				glamour.WithWordWrap(150),
 			),
 			spinner: NewSpinner(),
@@ -149,7 +150,9 @@ func (u *Ui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		u.dimensions.width = msg.Width
 		u.dimensions.height = msg.Height
 		u.components.renderer = NewRenderer(
+			glamour.WithEmoji(),
 			glamour.WithAutoStyle(),
+			glamour.WithPreservedNewLines(),
 			glamour.WithWordWrap(u.dimensions.width),
 		)
 	// keyboard
