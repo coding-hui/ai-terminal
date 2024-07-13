@@ -41,7 +41,7 @@ var askExample = templates.Examples(`
 // Options is a struct to support ask command.
 type Options struct {
 	tty, printRaw bool
-	prompt        string
+	prompts       []string
 	promptFile    string
 	genericclioptions.IOStreams
 
@@ -68,7 +68,7 @@ func NewCmdASK(ioStreams genericclioptions.IOStreams) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if o.prompt == "" {
+			if len(o.prompts) == 0 {
 				o.tty = true
 			}
 			return nil
@@ -112,7 +112,7 @@ func (o *Options) Run(args []string) error {
 	if o.tty {
 		runMode = ui.ReplMode
 	}
-	input, err := ui.NewInput(runMode, ui.ChatPromptMode, []string{o.prompt})
+	input, err := ui.NewInput(runMode, ui.ChatPromptMode, o.prompts)
 	if err != nil {
 		return err
 	}
@@ -128,7 +128,7 @@ func (o *Options) Run(args []string) error {
 		if err != nil {
 			display.FatalErr(err, "Failed to initialize engine")
 		}
-		out, err := engine.ExecCompletion(o.prompt)
+		out, err := engine.ExecCompletion(strings.Join(o.prompts, " "))
 		if err != nil {
 			display.FatalErr(err, "Error executing completion")
 		}
@@ -145,15 +145,19 @@ func (o *Options) Run(args []string) error {
 
 func (o *Options) preparePrompts(args []string) error {
 	if len(args) > 0 {
-		o.prompt = strings.Join(args, " ")
-	} else if o.promptFile != "" {
+		o.prompts = append(o.prompts, strings.Join(args, " "))
+	}
+
+	if o.promptFile != "" {
 		bytes, err := os.ReadFile(o.promptFile)
 		if err != nil {
 			display.FatalErr(err, "Error reading prompt file")
 		}
-		o.prompt = string(bytes)
-	} else {
-		o.prompt = o.getEditorPrompt()
+		o.prompts = append(o.prompts, string(bytes))
+	}
+
+	if len(o.prompts) == 0 {
+		o.prompts = append(o.prompts, o.getEditorPrompt())
 	}
 
 	return nil
