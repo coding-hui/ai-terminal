@@ -28,7 +28,7 @@ var askExample = templates.Examples(`
 
 // Options is a struct to support ask command.
 type Options struct {
-	tty, stdin bool
+	tty bool
 	genericclioptions.IOStreams
 }
 
@@ -47,14 +47,17 @@ func NewCmdASK(ioStreams genericclioptions.IOStreams) *cobra.Command {
 		Short:   "CLI mode is made to be integrated in your command lines workflow.",
 		Long:    "CLI mode is made to be integrated in your command lines workflow.",
 		Example: askExample,
+		PreRunE: func(c *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				o.tty = true
+			}
+			return nil
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			util.CheckErr(o.Validate())
 			util.CheckErr(o.Run(args))
 		},
 	}
-
-	cmd.Flags().BoolVarP(&o.stdin, "stdin", "i", o.stdin, "Pass stdin to the ai terminal.")
-	cmd.Flags().BoolVarP(&o.tty, "tty", "t", o.tty, "Stdin is a TTY.")
 
 	options.NewLLMFlags(false).AddFlags(cmd.Flags())
 

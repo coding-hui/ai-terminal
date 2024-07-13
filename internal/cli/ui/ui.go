@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	defaultWidth  = 80
+	defaultWidth  = 120
 	defaultHeight = 120
 )
 
