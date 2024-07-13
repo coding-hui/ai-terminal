@@ -43,7 +43,7 @@ func prepareWindowsCommand(input string) *exec.Cmd {
 	return exec.Command(
 		defaultShellWin,
 		"/c",
-		fmt.Sprintf("%s", strings.TrimRight(input, "&")),
+		strings.TrimRight(input, "&"),
 	)
 }
 

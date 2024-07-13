@@ -30,7 +30,6 @@ type State struct {
 	args        string
 	pipe        string
 	buffer      string
-	logging     string
 	command     string
 }
 
@@ -128,6 +127,7 @@ func (u *Ui) Init() tea.Cmd {
 	}
 }
 
+//nolint:golint,gocyclo
 func (u *Ui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
 		cmds       []tea.Cmd
@@ -546,10 +546,9 @@ func (u *Ui) startConfig(configPromptMode PromptMode) tea.Cmd {
 		u.state.command = ""
 		u.components.prompt = NewPrompt(configPromptMode)
 
-		select {
-		case <-u.waitForUserChan:
-			return nil
-		}
+		<-u.waitForUserChan
+
+		return nil
 	}
 }
 

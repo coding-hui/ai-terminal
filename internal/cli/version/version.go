@@ -18,7 +18,6 @@ import (
 
 	"github.com/coding-hui/common/version"
 	"github.com/coding-hui/iam/pkg/cli/genericclioptions"
-	restclient "github.com/coding-hui/wecoding-sdk-go/rest"
 )
 
 var versionExample = templates.Examples(`
@@ -31,7 +30,6 @@ type Options struct {
 	Short      bool
 	Output     string
 
-	client *restclient.RESTClient
 	genericclioptions.IOStreams
 }
 

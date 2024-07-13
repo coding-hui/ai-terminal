@@ -97,7 +97,10 @@ func NewMaxWidthWriter(w io.Writer, maxWidth uint) io.Writer {
 func (m maxWidthWriter) Write(p []byte) (nn int, err error) {
 	for _, b := range p {
 		if m.currentWidth == m.maxWidth {
-			m.writer.Write([]byte{'\n'})
+			_, err := m.writer.Write([]byte{'\n'})
+			if err != nil {
+				return 0, err
+			}
 			m.currentWidth = 0
 		}
 		if b == '\n' {

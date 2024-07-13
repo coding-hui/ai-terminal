@@ -134,6 +134,6 @@ func (r *ASCIIRenderer) Image(out *bytes.Buffer, link []byte, title []byte, alt 
 
 func (r *ASCIIRenderer) fw(out io.Writer, text ...[]byte) {
 	for _, t := range text {
-		out.Write(t)
+		_, _ = out.Write(t)
 	}
 }

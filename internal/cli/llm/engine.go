@@ -109,9 +109,6 @@ func (e *Engine) ExecCompletion(input string) (*EngineExecOutput, error) {
 	e.appendUserMessage(input)
 
 	messages := e.prepareCompletionMessages()
-	if e.config.Ai.MaxTokens > 0 {
-
-	}
 	rsp, err := e.llm.GenerateContent(ctx, messages,
 		llms.WithModel(e.config.Ai.Model),
 		llms.WithMaxTokens(e.config.Ai.MaxTokens),
@@ -269,7 +266,7 @@ func (e *Engine) prepareSystemPrompt() string {
 		bodyPart = e.prepareSystemPromptChatPart()
 	}
 
-	return bodyPart
+	return bodyPart + "\n" + e.prepareSystemPromptContextPart()
 }
 
 func (e *Engine) prepareSystemPromptExecPart() string {
