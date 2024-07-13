@@ -363,7 +363,6 @@ func (u *Ui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			u.state.buffer = ""
 			u.components.prompt.Focus()
 			if u.state.runMode == CliMode {
-				klog.Flush()
 				return u, tea.Sequence(
 					tea.Println(output),
 					tea.Quit,
