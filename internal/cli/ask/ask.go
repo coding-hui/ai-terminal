@@ -43,6 +43,7 @@ type Options struct {
 	tty, printRaw bool
 	prompts       []string
 	promptFile    string
+	pipe          string
 	genericclioptions.IOStreams
 
 	tempPromptFile string
@@ -68,7 +69,7 @@ func NewCmdASK(ioStreams genericclioptions.IOStreams) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if len(o.prompts) == 0 {
+			if len(o.prompts) == 0 && o.pipe == "" {
 				o.tty = true
 			}
 			return nil
@@ -112,7 +113,8 @@ func (o *Options) Run(args []string) error {
 	if o.tty {
 		runMode = ui.ReplMode
 	}
-	input, err := ui.NewInput(runMode, ui.ChatPromptMode, o.prompts)
+
+	input, err := ui.NewInput(runMode, ui.ChatPromptMode, o.pipe, o.prompts)
 	if err != nil {
 		return err
 	}
@@ -156,7 +158,8 @@ func (o *Options) preparePrompts(args []string) error {
 		o.prompts = append(o.prompts, string(bytes))
 	}
 
-	if len(o.prompts) == 0 {
+	o.pipe = util.ReadPipeInput()
+	if len(o.prompts) == 0 && o.pipe == "" {
 		o.prompts = append(o.prompts, o.getEditorPrompt())
 	}
 
