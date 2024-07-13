@@ -13,7 +13,6 @@ import (
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms/openai"
 
 	"github.com/coding-hui/ai-terminal/internal/cli/options"
-	"github.com/coding-hui/ai-terminal/internal/system"
 )
 
 const noExec = "[noexec]"
@@ -266,7 +265,7 @@ func (e *Engine) prepareSystemPrompt() string {
 		bodyPart = e.prepareSystemPromptChatPart()
 	}
 
-	return bodyPart + "\n" + e.prepareSystemPromptContextPart()
+	return bodyPart
 }
 
 func (e *Engine) prepareSystemPromptExecPart() string {
@@ -289,27 +288,4 @@ func (e *Engine) prepareSystemPromptExecPart() string {
 
 func (e *Engine) prepareSystemPromptChatPart() string {
 	return `You are a powerful terminal assistant. Your primary language is Chinese and you are good at answering users' questions in markdown format.`
-}
-
-func (e *Engine) prepareSystemPromptContextPart() string {
-	part := "My context: "
-
-	if e.config.System.GetOperatingSystem() != system.UnknownOperatingSystem {
-		part += fmt.Sprintf("my operating system is %s, ", e.config.System.GetOperatingSystem().String())
-	}
-	if e.config.System.GetDistribution() != "" {
-		part += fmt.Sprintf("my distribution is %s, ", e.config.System.GetDistribution())
-	}
-	if e.config.System.GetHomeDirectory() != "" {
-		part += fmt.Sprintf("my home directory is %s, ", e.config.System.GetHomeDirectory())
-	}
-	if e.config.System.GetShell() != "" {
-		part += fmt.Sprintf("my shell is %s, ", e.config.System.GetShell())
-	}
-	if e.config.System.GetEditor() != "" {
-		part += fmt.Sprintf("my editor is %s, ", e.config.System.GetEditor())
-	}
-	part += "take this into account. "
-
-	return part
 }

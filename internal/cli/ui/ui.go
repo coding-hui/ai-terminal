@@ -19,6 +19,11 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/run"
 )
 
+const (
+	defaultWidth  = 80
+	defaultHeight = 120
+)
+
 type State struct {
 	error       error
 	runMode     RunMode
@@ -70,8 +75,8 @@ func NewUi(input *Input) *Ui {
 			command:     "",
 		},
 		dimensions: Dimensions{
-			150,
-			150,
+			defaultWidth,
+			defaultHeight,
 		},
 		components: Components{
 			prompt: NewPrompt(input.GetPromptMode()),
@@ -79,7 +84,7 @@ func NewUi(input *Input) *Ui {
 				glamour.WithEmoji(),
 				glamour.WithAutoStyle(),
 				glamour.WithPreservedNewLines(),
-				glamour.WithWordWrap(150),
+				glamour.WithWordWrap(defaultWidth),
 			),
 			spinner: NewSpinner(),
 		},
