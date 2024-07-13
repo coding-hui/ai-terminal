@@ -5,6 +5,10 @@
 package ask
 
 import (
+	"fmt"
+	"os"
+	"strings"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -13,10 +17,18 @@ import (
 
 	"github.com/coding-hui/iam/pkg/cli/genericclioptions"
 
+	"github.com/coding-hui/ai-terminal/internal/cli/llm"
 	"github.com/coding-hui/ai-terminal/internal/cli/options"
 	"github.com/coding-hui/ai-terminal/internal/cli/ui"
 	"github.com/coding-hui/ai-terminal/internal/cli/util"
+	"github.com/coding-hui/ai-terminal/internal/display"
+	"github.com/coding-hui/ai-terminal/internal/run"
+	"github.com/coding-hui/ai-terminal/internal/system"
 	"github.com/coding-hui/ai-terminal/internal/util/templates"
+)
+
+const (
+	promptInstructions = `👉  Write your prompt below, then save and exit to send it to AI.`
 )
 
 var askExample = templates.Examples(`
@@ -28,8 +40,12 @@ var askExample = templates.Examples(`
 
 // Options is a struct to support ask command.
 type Options struct {
-	tty bool
+	tty, printRaw bool
+	prompt        string
+	promptFile    string
 	genericclioptions.IOStreams
+
+	tempPromptFile string
 }
 
 // NewOptions returns initialized Options.
@@ -48,7 +64,11 @@ func NewCmdASK(ioStreams genericclioptions.IOStreams) *cobra.Command {
 		Long:    "CLI mode is made to be integrated in your command lines workflow.",
 		Example: askExample,
 		PreRunE: func(c *cobra.Command, args []string) error {
-			if len(args) == 0 {
+			err := o.preparePrompts(args)
+			if err != nil {
+				return err
+			}
+			if o.prompt == "" {
 				o.tty = true
 			}
 			return nil
@@ -57,7 +77,20 @@ func NewCmdASK(ioStreams genericclioptions.IOStreams) *cobra.Command {
 			util.CheckErr(o.Validate())
 			util.CheckErr(o.Run(args))
 		},
+		PostRunE: func(c *cobra.Command, args []string) error {
+			if o.tempPromptFile != "" {
+				err := os.Remove(o.tempPromptFile)
+				if err != nil {
+					display.FatalErr(err, "Error removing temporary file")
+				}
+			}
+			return nil
+		},
 	}
+
+	cmd.Flags().BoolVarP(&o.tty, "tty", "t", o.tty, "Stdin is a TTY.")
+	cmd.Flags().StringVarP(&o.promptFile, "file", "f", o.promptFile, "File containing prompt.")
+	cmd.Flags().BoolVar(&o.printRaw, "raw", o.printRaw, "Return model raw return, no Stream UI.")
 
 	options.NewLLMFlags(false).AddFlags(cmd.Flags())
 
@@ -79,16 +112,86 @@ func (o *Options) Run(args []string) error {
 	if o.tty {
 		runMode = ui.ReplMode
 	}
-	input, err := ui.NewInput(runMode, ui.ChatPromptMode, args)
+	input, err := ui.NewInput(runMode, ui.ChatPromptMode, []string{o.prompt})
 	if err != nil {
 		return err
 	}
 
 	klog.V(2).InfoS("start ask cli mode.", "args", args, "runMode", runMode, "pipe", input.GetPipe())
 
+	if o.printRaw {
+		cfg, err := options.NewConfig()
+		if err != nil {
+			display.FatalErr(err, "Failed to load ask cmd config")
+		}
+		engine, err := llm.NewDefaultEngine(llm.ChatEngineMode, cfg)
+		if err != nil {
+			display.FatalErr(err, "Failed to initialize engine")
+		}
+		out, err := engine.ExecCompletion(o.prompt)
+		if err != nil {
+			display.FatalErr(err, "Error executing completion")
+		}
+		fmt.Println(out.Explanation)
+		return nil
+	}
+
 	if _, err := tea.NewProgram(ui.NewUi(input)).Run(); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (o *Options) preparePrompts(args []string) error {
+	if len(args) > 0 {
+		o.prompt = strings.Join(args, " ")
+	} else if o.promptFile != "" {
+		bytes, err := os.ReadFile(o.promptFile)
+		if err != nil {
+			display.FatalErr(err, "Error reading prompt file")
+		}
+		o.prompt = string(bytes)
+	} else {
+		o.prompt = o.getEditorPrompt()
+	}
+
+	return nil
+}
+
+func (o *Options) getEditorPrompt() string {
+	tempFile, err := os.CreateTemp(os.TempDir(), "ai_prompt_*.txt")
+	if err != nil {
+		display.FatalErr(err, "Failed to create temporary file")
+	}
+
+	filename := tempFile.Name()
+	o.tempPromptFile = filename
+	err = os.WriteFile(filename, []byte(promptInstructions), 0644)
+	if err != nil {
+		display.FatalErr(err, "Failed to write instructions to temporary file")
+	}
+
+	editor := system.Analyse().GetEditor()
+	editorCmd := run.PrepareEditSettingsCommand(fmt.Sprintf("%s %s", editor, filename))
+	editorCmd.Stdin = os.Stdin
+	editorCmd.Stdout = os.Stdout
+	editorCmd.Stderr = os.Stderr
+	err = editorCmd.Start()
+	if err != nil {
+		display.FatalErr(err, "Error opening editor")
+	}
+	_ = editorCmd.Wait()
+
+	bytes, err := os.ReadFile(filename)
+	if err != nil {
+		display.FatalErr(err, "Error reading temporary file")
+	}
+
+	prompt := string(bytes)
+
+	prompt = strings.TrimPrefix(prompt, strings.TrimSpace(promptInstructions))
+	prompt = strings.TrimSpace(prompt)
+
+	return prompt
 }

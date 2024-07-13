@@ -15,7 +15,7 @@ type Input struct {
 	pipe       string
 }
 
-func NewInput(runMode RunMode, promptMode PromptMode, args []string) (*Input, error) {
+func NewInput(runMode RunMode, promptMode PromptMode, prompts []string) (*Input, error) {
 	stat, err := os.Stdin.Stat()
 	if err != nil {
 		fmt.Println("Error getting stat:", err)
@@ -42,14 +42,14 @@ func NewInput(runMode RunMode, promptMode PromptMode, args []string) (*Input, er
 		pipe = strings.TrimSpace(builder.String())
 	}
 
-	if len(args) > 0 {
+	if len(prompts) > 0 {
 		runMode = CliMode
 	}
 
 	return &Input{
 		runMode:    runMode,
 		promptMode: promptMode,
-		args:       strings.Join(args, " "),
+		args:       strings.Join(prompts, " "),
 		pipe:       pipe,
 	}, nil
 }

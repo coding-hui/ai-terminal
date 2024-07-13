@@ -22,10 +22,10 @@ func Error(err error, msgs ...string) {
 		return
 	}
 
-	ErrorMsg(err.Error())
 	if len(msgs) > 0 {
 		ErrorMsg(msgs...)
 	}
+	ErrorMsg(err.Error())
 }
 
 func ErrorMsg(msgs ...string) {
