@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/AlekSi/pointer"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
@@ -41,14 +40,7 @@ var _ RESTClientGetter = &ConfigFlags{}
 // ConfigFlags composes the set of values necessary
 // for obtaining a REST client config.
 type ConfigFlags struct {
-	Config      *string
-	Token       *string
-	Model       *string
-	ApiBase     *string
-	Temperature *float64
-	TopP        *float64
-	MaxTokens   *int
-	Proxy       *string
+	Config *string
 
 	clientConfig clientcmd.ClientConfig
 	lock         sync.Mutex
@@ -104,36 +96,11 @@ func (f *ConfigFlags) AddFlags(flags *pflag.FlagSet) {
 	if f.Config != nil {
 		flags.StringVar(f.Config, FlagAIConfig, *f.Config, fmt.Sprintf("Path to the %s file to use for CLI requests", FlagAIConfig))
 	}
-	if f.Token != nil {
-		flags.StringVar(f.Token, FlagAiToken, *f.Token, "Api token to use for CLI requests")
-	}
-	if f.Model != nil {
-		flags.StringVar(f.Model, FlagAiModel, *f.Model, "The encoding of the model to be called.")
-	}
-	if f.ApiBase != nil {
-		flags.StringVar(f.ApiBase, FlagAiApiBase, *f.ApiBase, "Interface for the API.")
-	}
-	if f.Temperature != nil {
-		flags.Float64Var(f.Temperature, FlagAiTemperature, *f.Temperature, "Sampling temperature to control the randomness of the output.")
-	}
-	if f.TopP != nil {
-		flags.Float64Var(f.TopP, FlagAiTopP, *f.TopP, "Nucleus sampling method to control the probability mass of the output.")
-	}
-	if f.MaxTokens != nil {
-		flags.IntVar(f.MaxTokens, FlagAiMaxTokens, *f.MaxTokens, "The maximum number of tokens the model can output.")
-	}
 }
 
 // NewConfigFlags returns ConfigFlags with default values set.
 func NewConfigFlags(usePersistentConfig bool) *ConfigFlags {
 	return &ConfigFlags{
-		Config:              pointer.ToString(""),
-		Token:               pointer.ToString(""),
-		Model:               pointer.ToString(""),
-		ApiBase:             pointer.ToString(""),
-		Temperature:         pointer.ToFloat64(0.5),
-		TopP:                pointer.ToFloat64(0.5),
-		MaxTokens:           pointer.ToInt(1024),
 		usePersistentConfig: usePersistentConfig,
 	}
 }

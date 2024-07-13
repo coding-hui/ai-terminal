@@ -7,10 +7,13 @@ package ask
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 	"k8s.io/klog/v2"
 
 	"github.com/coding-hui/iam/pkg/cli/genericclioptions"
 
+	"github.com/coding-hui/ai-terminal/internal/cli/options"
 	"github.com/coding-hui/ai-terminal/internal/cli/ui"
 	"github.com/coding-hui/ai-terminal/internal/cli/util"
 	"github.com/coding-hui/ai-terminal/internal/util/templates"
@@ -52,6 +55,12 @@ func NewCmdASK(ioStreams genericclioptions.IOStreams) *cobra.Command {
 
 	cmd.Flags().BoolVarP(&o.stdin, "stdin", "i", o.stdin, "Pass stdin to the ai terminal.")
 	cmd.Flags().BoolVarP(&o.tty, "tty", "t", o.tty, "Stdin is a TTY.")
+
+	options.NewLLMFlags(false).AddFlags(cmd.Flags())
+
+	cmd.Flags().VisitAll(func(flag *pflag.Flag) {
+		_ = viper.BindPFlag(flag.Name, flag)
+	})
 
 	return cmd
 }
