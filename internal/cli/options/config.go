@@ -33,15 +33,23 @@ type Config struct {
 }
 
 type AiConfig struct {
-	SystemPrompt string  `yaml:"system-prompt,omitempty" mapstructure:"system-prompt,omitempty"`
-	Token        string  `yaml:"token,omitempty" mapstructure:"token,omitempty"`
-	Model        string  `yaml:"model,omitempty" mapstructure:"model,omitempty"`
-	ApiBase      string  `yaml:"api-base,omitempty" mapstructure:"api-base,omitempty"`
-	Temperature  float64 `yaml:"temperature,omitempty" mapstructure:"temperature,omitempty"`
-	TopP         float64 `yaml:"top-p,omitempty" mapstructure:"top-p,omitempty"`
-	MaxTokens    int     `yaml:"max-tokens,omitempty" mapstructure:"max-tokens,omitempty"`
-	Proxy        string  `yaml:"proxy,omitempty" mapstructure:"proxy,omitempty"`
+	SystemPrompt string       `yaml:"system-prompt,omitempty" mapstructure:"system-prompt,omitempty"`
+	Token        string       `yaml:"token,omitempty" mapstructure:"token,omitempty"`
+	Model        string       `yaml:"model,omitempty" mapstructure:"model,omitempty"`
+	ApiBase      string       `yaml:"api-base,omitempty" mapstructure:"api-base,omitempty"`
+	Temperature  float64      `yaml:"temperature,omitempty" mapstructure:"temperature,omitempty"`
+	TopP         float64      `yaml:"top-p,omitempty" mapstructure:"top-p,omitempty"`
+	MaxTokens    int          `yaml:"max-tokens,omitempty" mapstructure:"max-tokens,omitempty"`
+	Proxy        string       `yaml:"proxy,omitempty" mapstructure:"proxy,omitempty"`
+	OutputFormat OutputFormat `yaml:"output-format,omitempty" mapstructure:"output-format,omitempty"`
 }
+
+type OutputFormat string
+
+const (
+	RawOutputFormat      OutputFormat = "raw"
+	MarkdownOutputFormat OutputFormat = "markdown"
+)
 
 // NewConfig returns a Config struct with the default values.
 func NewConfig() (*Config, error) {
@@ -54,6 +62,7 @@ func NewConfig() (*Config, error) {
 			Temperature:  viper.GetFloat64(FlagAiTemperature),
 			TopP:         viper.GetFloat64(FlagAiTopP),
 			MaxTokens:    viper.GetInt(FlagAiMaxTokens),
+			OutputFormat: OutputFormat(viper.GetString(FlagOutputFormat)),
 			Proxy:        "",
 		},
 		System: system.Analyse(),

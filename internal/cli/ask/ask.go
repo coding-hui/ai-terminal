@@ -40,13 +40,14 @@ var askExample = templates.Examples(`
 
 // Options is a struct to support ask command.
 type Options struct {
-	interactive, printRaw bool
-	prompts               []string
-	promptFile            string
-	pipe                  string
-	genericclioptions.IOStreams
+	modelOptions *options.ModelOptions
 
+	interactive    bool
+	prompts        []string
+	promptFile     string
 	tempPromptFile string
+	pipe           string
+	genericclioptions.IOStreams
 }
 
 // NewOptions returns initialized Options.
@@ -91,9 +92,9 @@ func NewCmdASK(ioStreams genericclioptions.IOStreams) *cobra.Command {
 
 	cmd.Flags().BoolVarP(&o.interactive, "interactive", "i", o.interactive, "Interactive dialogue model.")
 	cmd.Flags().StringVarP(&o.promptFile, "file", "f", o.promptFile, "File containing prompt.")
-	cmd.Flags().BoolVar(&o.printRaw, "raw", o.printRaw, "Return model raw return, no Stream UI.")
 
-	options.NewLLMFlags(false).AddFlags(cmd.Flags())
+	o.modelOptions = options.NewLLMFlags(false)
+	o.modelOptions.AddFlags(cmd.Flags())
 
 	cmd.Flags().VisitAll(func(flag *pflag.Flag) {
 		_ = viper.BindPFlag(flag.Name, flag)
@@ -104,6 +105,9 @@ func NewCmdASK(ioStreams genericclioptions.IOStreams) *cobra.Command {
 
 // Validate validates the provided options.
 func (o *Options) Validate() error {
+	if err := o.modelOptions.Validate(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -121,7 +125,7 @@ func (o *Options) Run(args []string) error {
 
 	klog.V(2).InfoS("start ask cli mode.", "args", args, "runMode", runMode, "pipe", input.GetPipe())
 
-	if o.printRaw {
+	if o.modelOptions.OutputFormat != nil && *o.modelOptions.OutputFormat == string(options.RawOutputFormat) {
 		cfg, err := options.NewConfig()
 		if err != nil {
 			display.FatalErr(err, "Failed to load ask cmd config")

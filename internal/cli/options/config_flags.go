@@ -21,6 +21,7 @@ const (
 	FlagAiTemperature       = "temperature"
 	FlagAiTopP              = "top-p"
 	FlagAiMaxTokens         = "max-tokens"
+	FlagOutputFormat        = "output-format"
 
 	FlagLogFlushFrequency = "log-flush-frequency"
 )

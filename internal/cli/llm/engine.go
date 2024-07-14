@@ -277,5 +277,8 @@ func (e *Engine) prepareSystemPromptExecPart() string {
 }
 
 func (e *Engine) prepareSystemPromptChatPart() string {
+	if e.config.Ai.OutputFormat == options.RawOutputFormat {
+		return `You are a powerful terminal assistant. Your primary language is Chinese and you are good at answering users' questions.`
+	}
 	return `You are a powerful terminal assistant. Your primary language is Chinese and you are good at answering users' questions in markdown format.`
 }
