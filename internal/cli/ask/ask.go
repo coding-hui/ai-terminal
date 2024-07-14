@@ -40,10 +40,10 @@ var askExample = templates.Examples(`
 
 // Options is a struct to support ask command.
 type Options struct {
-	tty, printRaw bool
-	prompts       []string
-	promptFile    string
-	pipe          string
+	interactive, printRaw bool
+	prompts               []string
+	promptFile            string
+	pipe                  string
 	genericclioptions.IOStreams
 
 	tempPromptFile string
@@ -70,7 +70,7 @@ func NewCmdASK(ioStreams genericclioptions.IOStreams) *cobra.Command {
 				return err
 			}
 			if len(o.prompts) == 0 && o.pipe == "" {
-				o.tty = true
+				o.interactive = true
 			}
 			return nil
 		},
@@ -89,7 +89,7 @@ func NewCmdASK(ioStreams genericclioptions.IOStreams) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVarP(&o.tty, "tty", "t", o.tty, "Stdin is a TTY.")
+	cmd.Flags().BoolVarP(&o.interactive, "interactive", "i", o.interactive, "Interactive dialogue model.")
 	cmd.Flags().StringVarP(&o.promptFile, "file", "f", o.promptFile, "File containing prompt.")
 	cmd.Flags().BoolVar(&o.printRaw, "raw", o.printRaw, "Return model raw return, no Stream UI.")
 
@@ -110,7 +110,7 @@ func (o *Options) Validate() error {
 // Run executes version command.
 func (o *Options) Run(args []string) error {
 	runMode := ui.CliMode
-	if o.tty {
+	if o.interactive {
 		runMode = ui.ReplMode
 	}
 
@@ -159,7 +159,7 @@ func (o *Options) preparePrompts(args []string) error {
 	}
 
 	o.pipe = util.ReadPipeInput()
-	if len(o.prompts) == 0 && o.pipe == "" {
+	if len(o.prompts) == 0 && o.pipe == "" && !o.interactive {
 		o.prompts = append(o.prompts, o.getEditorPrompt())
 	}
 
