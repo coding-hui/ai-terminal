@@ -130,7 +130,7 @@ func (o *Options) Run(args []string) error {
 		if err != nil {
 			display.FatalErr(err, "Failed to initialize engine")
 		}
-		out, err := engine.ExecCompletion(strings.Join(o.prompts, " "))
+		out, err := engine.ExecCompletion(strings.Join(o.prompts, "\n") + "\n" + o.pipe)
 		if err != nil {
 			display.FatalErr(err, "Error executing completion")
 		}
