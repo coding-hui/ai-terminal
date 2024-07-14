@@ -24,7 +24,10 @@ jobs:
       run: export ENV=CI
 
     - name: Build
-      run: make cli
+      run: make
+
+    - name: Lint
+      run: make lint
 
     - name: Test
-      run: go test -v -count=1 ./...
+      run: make test
