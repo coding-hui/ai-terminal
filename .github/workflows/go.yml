@@ -32,6 +32,6 @@ jobs:
     - name: Test
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        OPENAI_MODEL: ${{ env.OPENAI_MODEL }}
-        OPENAI_API_BASE: ${{ env.OPENAI_API_BASE }}
+        OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+        OPENAI_API_BASE: ${{ vars.OPENAI_API_BASE }}
       run: make test
