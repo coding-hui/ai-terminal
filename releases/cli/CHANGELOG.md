@@ -1,6 +1,9 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Chore
+- add git-chglog cli
+
 
 <a name="v0.1.1"></a>
 ## [v0.1.1] - 2024-07-07

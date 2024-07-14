@@ -53,6 +53,10 @@ manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and Cust
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
+.PHONY: git-chglog
+generate-chglog: ## Generate git chglog.
+	$(GIT_CHGLOG) -o releases/cli/CHANGELOG.md
+
 .PHONY: fmt
 fmt: ## Run go fmt against code.
 	go fmt ./...
@@ -158,7 +162,7 @@ KUSTOMIZE ?= $(LOCALBIN)/kustomize-$(KUSTOMIZE_VERSION)
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen-$(CONTROLLER_TOOLS_VERSION)
 ENVTEST ?= $(LOCALBIN)/setup-envtest-$(ENVTEST_VERSION)
 GOLANGCI_LINT = $(LOCALBIN)/golangci-lint-$(GOLANGCI_LINT_VERSION)
-GIT_CHGLOG = $(LOCALBIN)/git-chlog-$(GIT_CHGLOG_VERSION)
+GIT_CHGLOG = $(LOCALBIN)/git-chglog-$(GIT_CHGLOG_VERSION)
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.4.1
