@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"strings"
 
 	"k8s.io/klog/v2"
@@ -124,19 +123,10 @@ func (e *Engine) ExecCompletion(input string) (*EngineExecOutput, error) {
 	var output EngineExecOutput
 	err = json.Unmarshal([]byte(content), &output)
 	if err != nil {
-		re := regexp.MustCompile(`\{.*?}`)
-		match := re.FindString(content)
-		if match != "" {
-			err = json.Unmarshal([]byte(match), &output)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			output = EngineExecOutput{
-				Command:     "",
-				Explanation: content,
-				Executable:  false,
-			}
+		output = EngineExecOutput{
+			Command:     "",
+			Explanation: content,
+			Executable:  false,
 		}
 	}
 
