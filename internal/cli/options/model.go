@@ -7,6 +7,17 @@ import (
 	flag "github.com/spf13/pflag"
 )
 
+const (
+	FlagDefaultSystemPrompt = "system-prompt"
+	FlagAiModel             = "model"
+	FlagAiToken             = "token"
+	FlagAiApiBase           = "api-base"
+	FlagAiTemperature       = "temperature"
+	FlagAiTopP              = "top-p"
+	FlagAiMaxTokens         = "max-tokens"
+	FlagOutputFormat        = "output-format"
+)
+
 type ModelOptions struct {
 	Token        *string
 	Model        *string
@@ -48,8 +59,8 @@ func (m *ModelOptions) AddFlags(flags *flag.FlagSet) {
 	}
 }
 
-// NewLLMFlags returns ModelOptions with default values set.
-func NewLLMFlags(usePersistentConfig bool) *ModelOptions {
+// NewModelFlags returns ModelOptions with default values set.
+func NewModelFlags(usePersistentConfig bool) *ModelOptions {
 	return &ModelOptions{
 		Token:               pointer.ToString(""),
 		Model:               pointer.ToString(""),

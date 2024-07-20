@@ -15,6 +15,10 @@ func (m EngineMode) String() string {
 	}
 }
 
+type SummaryContentOutput struct {
+	Content string `json:"content"`
+}
+
 type EngineExecOutput struct {
 	Command     string `json:"cmd"`
 	Explanation string `json:"exp"`

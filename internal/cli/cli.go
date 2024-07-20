@@ -22,6 +22,7 @@ import (
 
 	"github.com/coding-hui/ai-terminal/internal/cli/ask"
 	"github.com/coding-hui/ai-terminal/internal/cli/completion"
+	"github.com/coding-hui/ai-terminal/internal/cli/history"
 	"github.com/coding-hui/ai-terminal/internal/cli/options"
 	"github.com/coding-hui/ai-terminal/internal/cli/version"
 	"github.com/coding-hui/ai-terminal/internal/util/templates"
@@ -100,6 +101,7 @@ func NewAICommand(in io.Reader, out, err io.Writer) *cobra.Command {
 			Message: "Chat Commands:",
 			Commands: []*cobra.Command{
 				ask.NewCmdASK(ioStreams),
+				history.NewCmdHistory(ioStreams),
 			},
 		},
 		templates.CommandGroup{

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/AlekSi/pointer"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
@@ -13,16 +14,8 @@ import (
 
 // Defines flag for ai cli.
 const (
-	FlagAIConfig            = "config"
-	FlagDefaultSystemPrompt = "system-prompt"
-	FlagAiModel             = "model"
-	FlagAiToken             = "token"
-	FlagAiApiBase           = "api-base"
-	FlagAiTemperature       = "temperature"
-	FlagAiTopP              = "top-p"
-	FlagAiMaxTokens         = "max-tokens"
-	FlagOutputFormat        = "output-format"
-
+	FlagAIConfig          = "config"
+	FlagChatSessionId     = "session-id"
 	FlagLogFlushFrequency = "log-flush-frequency"
 )
 
@@ -41,7 +34,8 @@ var _ RESTClientGetter = &ConfigFlags{}
 // ConfigFlags composes the set of values necessary
 // for obtaining a REST client config.
 type ConfigFlags struct {
-	Config *string
+	Config    *string
+	SessionId *string
 
 	clientConfig clientcmd.ClientConfig
 	lock         sync.Mutex
@@ -97,11 +91,15 @@ func (f *ConfigFlags) AddFlags(flags *pflag.FlagSet) {
 	if f.Config != nil {
 		flags.StringVar(f.Config, FlagAIConfig, *f.Config, fmt.Sprintf("Path to the %s file to use for CLI requests", FlagAIConfig))
 	}
+	if f.SessionId != nil {
+		flags.StringVar(f.SessionId, FlagChatSessionId, *f.SessionId, "Current session id")
+	}
 }
 
 // NewConfigFlags returns ConfigFlags with default values set.
 func NewConfigFlags(usePersistentConfig bool) *ConfigFlags {
 	return &ConfigFlags{
+		SessionId:           pointer.ToString("default"),
 		usePersistentConfig: usePersistentConfig,
 	}
 }

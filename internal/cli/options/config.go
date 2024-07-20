@@ -26,8 +26,10 @@ const (
 // Config is a structure used to configure a AI.
 // Its members are sorted roughly in order of importance for composers.
 type Config struct {
-	DefaultPromptMode string   `yaml:"default-prompt-mode,omitempty" mapstructure:"default-prompt-mode,omitempty"`
-	Ai                AiConfig `yaml:"inline" mapstructure:"inline" json:"inline"`
+	DefaultPromptMode string           `yaml:"default-prompt-mode,omitempty" mapstructure:"default-prompt-mode,omitempty"`
+	SessionId         string           `yaml:"session-id,omitempty" mapstructure:"session-id,omitempty"`
+	Ai                AiConfig         `yaml:"inline" mapstructure:"inline" json:"inline"`
+	DataStore         DataStoreOptions `yaml:"datastore" mapstructure:"datastore" json:"datastore"`
 
 	System *system.Analysis
 }
@@ -54,6 +56,7 @@ const (
 // NewConfig returns a Config struct with the default values.
 func NewConfig() (*Config, error) {
 	return &Config{
+		SessionId: viper.GetString(FlagChatSessionId),
 		Ai: AiConfig{
 			SystemPrompt: viper.GetString(FlagDefaultSystemPrompt),
 			Token:        viper.GetString(FlagAiToken),
@@ -64,6 +67,12 @@ func NewConfig() (*Config, error) {
 			MaxTokens:    viper.GetInt(FlagAiMaxTokens),
 			OutputFormat: OutputFormat(viper.GetString(FlagOutputFormat)),
 			Proxy:        "",
+		},
+		DataStore: DataStoreOptions{
+			Type:     viper.GetString(FlagDatastoreType),
+			Url:      viper.GetString(FlagDatastoreUrl),
+			Username: viper.GetString(FlagDatastoreUsername),
+			Password: viper.GetString(FlagDatastorePassword),
 		},
 		System: system.Analyse(),
 	}, nil

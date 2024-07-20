@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms/openai"
 
 	"github.com/coding-hui/ai-terminal/internal/cli/options"
@@ -23,14 +22,14 @@ func TestEngine_ExecCompletion(t *testing.T) {
 	}
 
 	e := &Engine{
-		mode:         ChatEngineMode,
-		config:       cfg,
-		llm:          llm,
-		execMessages: make([]llms.MessageContent, 0),
-		chatMessages: make([]llms.MessageContent, 0),
-		channel:      make(chan EngineChatStreamOutput),
-		pipe:         "",
-		running:      false,
+		mode:        ChatEngineMode,
+		config:      cfg,
+		llm:         llm,
+		channel:     make(chan EngineChatStreamOutput),
+		pipe:        "",
+		running:     false,
+		chatHistory: NewChatMessageHistory(),
+		execHistory: NewChatMessageHistory(),
 	}
 	type args struct {
 		input string

@@ -8,23 +8,34 @@ import (
 
 	"k8s.io/klog/v2"
 
+	"github.com/coding-hui/common/util/slices"
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms/openai"
 
+	"github.com/coding-hui/ai-terminal/internal/cli/llm/mongo"
 	"github.com/coding-hui/ai-terminal/internal/cli/options"
+	"github.com/coding-hui/ai-terminal/internal/cli/schema"
+	"github.com/coding-hui/ai-terminal/internal/cli/session"
 )
 
-const noExec = "[noexec]"
+const (
+	noExec                         = "[noexec]"
+	mongoDefaultDBName             = "chat_history"
+	mongoDefaultCollectionName     = "message_store"
+	mongoDefaultExecDBName         = "exec_history"
+	mongoDefaultExecCollectionName = "message_store"
+)
 
 type Engine struct {
-	mode         EngineMode
-	config       *options.Config
-	llm          *openai.Model
-	execMessages []llms.MessageContent
-	chatMessages []llms.MessageContent
-	channel      chan EngineChatStreamOutput
-	pipe         string
-	running      bool
+	mode    EngineMode
+	config  *options.Config
+	llm     *openai.Model
+	channel chan EngineChatStreamOutput
+	pipe    string
+	running bool
+
+	sessionManager           *session.Manager
+	execHistory, chatHistory schema.History
 }
 
 func NewDefaultEngine(mode EngineMode, config *options.Config) (*Engine, error) {
@@ -47,16 +58,62 @@ func NewDefaultEngine(mode EngineMode, config *options.Config) (*Engine, error) 
 		llm.CallbacksHandler = LogHandler{}
 	}
 
+	datastore := config.DataStore
+
+	sessionManager, err := session.NewSessionManager(datastore)
+	if err != nil {
+		return nil, err
+	}
+
+	var currentSessionId = config.SessionId
+	if currentSessionId != "" {
+		if err := sessionManager.SetCurrentSession(currentSessionId); err != nil {
+			return nil, err
+		}
+	} else {
+		currentSessionId = sessionManager.CurrentSession()
+	}
+
+	var execHistory, chatHistory schema.History
+	if datastore.Type == "mongo" {
+		chatHistory, err = mongo.NewMongoDBChatMessageHistory(context.Background(),
+			mongo.WithSessionID(currentSessionId),
+			mongo.WithConnectionURL(datastore.Url),
+			mongo.WithDataBaseName(mongoDefaultDBName),
+			mongo.WithCollectionName(mongoDefaultCollectionName),
+		)
+		if err != nil {
+			return nil, err
+		}
+		execHistory, err = mongo.NewMongoDBChatMessageHistory(context.Background(),
+			mongo.WithSessionID(currentSessionId),
+			mongo.WithConnectionURL(datastore.Url),
+			mongo.WithDataBaseName(mongoDefaultExecDBName),
+			mongo.WithCollectionName(mongoDefaultExecCollectionName),
+		)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		chatHistory = NewChatMessageHistory()
+		execHistory = NewChatMessageHistory()
+	}
+
 	return &Engine{
-		mode:         mode,
-		config:       config,
-		llm:          llm,
-		execMessages: make([]llms.MessageContent, 0),
-		chatMessages: make([]llms.MessageContent, 0),
-		channel:      make(chan EngineChatStreamOutput),
-		pipe:         "",
-		running:      false,
+		mode:           mode,
+		config:         config,
+		llm:            llm,
+		channel:        make(chan EngineChatStreamOutput),
+		pipe:           "",
+		running:        false,
+		chatHistory:    chatHistory,
+		execHistory:    execHistory,
+		sessionManager: sessionManager,
 	}, nil
+}
+
+func (e *Engine) GetChatHistory() schema.History {
+	return e.execHistory
 }
 
 func (e *Engine) SetMode(m EngineMode) {
@@ -88,15 +145,57 @@ func (e *Engine) Interrupt() {
 
 func (e *Engine) Clear() {
 	if e.mode == ExecEngineMode {
-		e.execMessages = []llms.MessageContent{}
+		err := e.execHistory.Clear(context.Background())
+		if err != nil {
+			klog.Fatal("failed to clean exec history.", err)
+		}
 	} else {
-		e.chatMessages = []llms.MessageContent{}
+		err := e.chatHistory.Clear(context.Background())
+		if err != nil {
+			klog.Fatal("failed to clean chat history.", err)
+		}
 	}
 }
 
 func (e *Engine) Reset() {
-	e.execMessages = []llms.MessageContent{}
-	e.chatMessages = []llms.MessageContent{}
+	err := e.execHistory.Clear(context.Background())
+	if err != nil {
+		klog.Fatal("failed to clean exec history.", err)
+	}
+	err = e.chatHistory.Clear(context.Background())
+	if err != nil {
+		klog.Fatal("failed to clean chat history.", err)
+	}
+}
+
+func (e *Engine) SummaryChatHistory() (string, error) {
+	messages, err := e.chatHistory.Messages(context.Background())
+	if err != nil {
+		return "", err
+	}
+	return e.SummaryMessages(messages)
+}
+
+func (e *Engine) SummaryMessages(messages []llms.ChatMessage) (string, error) {
+	ctx := context.Background()
+
+	messageParts := slices.Map(messages, convert)
+	messageParts = append(messageParts, llms.MessageContent{
+		Role:  llms.ChatMessageTypeHuman,
+		Parts: []llms.ContentPart{llms.TextPart(summaryMessagesPrompt)},
+	})
+
+	rsp, err := e.llm.GenerateContent(ctx, messageParts,
+		llms.WithModel(e.config.Ai.Model),
+		llms.WithTemperature(e.config.Ai.Temperature),
+		llms.WithTopP(e.config.Ai.TopP),
+		llms.WithMaxTokens(256),
+	)
+	if err != nil {
+		return "", err
+	}
+
+	return rsp.Choices[0].Content, nil
 }
 
 func (e *Engine) ExecCompletion(input string) (*EngineExecOutput, error) {
@@ -188,29 +287,25 @@ func (e *Engine) appendUserMessage(content string) {
 		return
 	}
 	if e.mode == ExecEngineMode {
-		e.execMessages = append(e.execMessages, llms.MessageContent{
-			Role:  llms.ChatMessageTypeHuman,
-			Parts: []llms.ContentPart{llms.TextPart(content)},
-		})
+		if err := e.execHistory.AddUserMessage(context.Background(), content); err != nil {
+			klog.Fatal("failed to add user exec input message to history", err)
+		}
 	} else {
-		e.chatMessages = append(e.chatMessages, llms.MessageContent{
-			Role:  llms.ChatMessageTypeHuman,
-			Parts: []llms.ContentPart{llms.TextPart(content)},
-		})
+		if err := e.chatHistory.AddUserMessage(context.Background(), content); err != nil {
+			klog.Fatal("failed to add user chat input message to history", err)
+		}
 	}
 }
 
 func (e *Engine) appendAssistantMessage(content string) {
 	if e.mode == ExecEngineMode {
-		e.execMessages = append(e.execMessages, llms.MessageContent{
-			Role:  llms.ChatMessageTypeAI,
-			Parts: []llms.ContentPart{llms.TextPart(content)},
-		})
+		if err := e.execHistory.AddAIMessage(context.Background(), content); err != nil {
+			klog.Fatal("failed to add assistant exec output message to history", err)
+		}
 	} else {
-		e.chatMessages = append(e.chatMessages, llms.MessageContent{
-			Role:  llms.ChatMessageTypeAI,
-			Parts: []llms.ContentPart{llms.TextPart(content)},
-		})
+		if err := e.chatHistory.AddAIMessage(context.Background(), content); err != nil {
+			klog.Fatal("failed to add assistant chat output message to history", err)
+		}
 	}
 }
 
@@ -235,9 +330,17 @@ func (e *Engine) prepareCompletionMessages() []llms.MessageContent {
 	}
 
 	if e.mode == ExecEngineMode {
-		messages = append(messages, e.execMessages...)
+		history, err := e.execHistory.Messages(context.Background())
+		if err != nil {
+			klog.Fatal("failed to get exec history messages", err)
+		}
+		messages = append(messages, slices.Map(history, convert)...)
 	} else {
-		messages = append(messages, e.chatMessages...)
+		history, err := e.chatHistory.Messages(context.Background())
+		if err != nil {
+			klog.Fatal("failed to get chat history messages", err)
+		}
+		messages = append(messages, slices.Map(history, convert)...)
 	}
 
 	return messages
@@ -281,4 +384,11 @@ func (e *Engine) prepareSystemPromptChatPart() string {
 		return `You are a powerful terminal assistant. Your primary language is Chinese and you are good at answering users' questions.`
 	}
 	return `You are a powerful terminal assistant. Your primary language is Chinese and you are good at answering users' questions in markdown format.`
+}
+
+func convert(msg llms.ChatMessage) llms.MessageContent {
+	return llms.MessageContent{
+		Role:  msg.GetType(),
+		Parts: []llms.ContentPart{llms.TextPart(msg.GetContent())},
+	}
 }
