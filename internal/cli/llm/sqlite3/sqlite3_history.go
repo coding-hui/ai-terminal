@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3" // sqlite3 driver.
+	"k8s.io/klog/v2"
 
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
 
@@ -56,7 +57,12 @@ func (h *SqliteChatMessageHistory) Messages(ctx context.Context) ([]llms.ChatMes
 		return nil, err
 	}
 
-	defer res.Close()
+	defer func(res *sql.Rows) {
+		err := res.Close()
+		if err != nil {
+			klog.Errorf("failed to close rows: %v", err)
+		}
+	}(res)
 
 	var msgs []llms.ChatMessage
 	for res.Next() {
