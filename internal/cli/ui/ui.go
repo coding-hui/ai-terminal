@@ -16,7 +16,7 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/cli/llm"
 	"github.com/coding-hui/ai-terminal/internal/cli/options"
 	"github.com/coding-hui/ai-terminal/internal/history"
-	"github.com/coding-hui/ai-terminal/internal/run"
+	"github.com/coding-hui/ai-terminal/internal/runner"
 )
 
 const (
@@ -382,7 +382,7 @@ func (u *Ui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return u, u.awaitChatStream()
 		}
 	// runner feedback
-	case run.Output:
+	case runner.Output:
 		u.state.querying = false
 		u.components.prompt, promptCmd = u.components.prompt.Update(msg)
 		u.components.prompt.Focus()
@@ -686,13 +686,13 @@ func (u *Ui) execCommand(input string) tea.Cmd {
 	u.state.confirming = false
 	u.state.executing = true
 
-	c := run.PrepareInteractiveCommand(input)
+	c := runner.PrepareInteractiveCommand(input)
 
 	return tea.ExecProcess(c, func(error error) tea.Msg {
 		u.state.executing = false
 		u.state.command = ""
 
-		return run.NewRunOutput(error, "[ERROR]", "[ok]")
+		return runner.NewRunOutput(error, "[ERROR]", "[ok]")
 	})
 }
 
@@ -701,7 +701,7 @@ func (u *Ui) editSettings() tea.Cmd {
 	u.state.confirming = false
 	u.state.executing = true
 
-	c := run.PrepareEditSettingsCommand(fmt.Sprintf(
+	c := runner.PrepareEditSettingsCommand(fmt.Sprintf(
 		"%s %s",
 		u.config.System.GetEditor(),
 		u.config.System.GetConfigFile(),
@@ -712,12 +712,12 @@ func (u *Ui) editSettings() tea.Cmd {
 		u.state.command = ""
 
 		if err != nil {
-			return run.NewRunOutput(err, "[settings error]", "")
+			return runner.NewRunOutput(err, "[settings error]", "")
 		}
 
 		cfg, err := options.NewConfig()
 		if err != nil {
-			return run.NewRunOutput(err, "[settings error]", "")
+			return runner.NewRunOutput(err, "[settings error]", "")
 		}
 
 		u.config = cfg
@@ -726,10 +726,10 @@ func (u *Ui) editSettings() tea.Cmd {
 			engine.SetPipe(u.state.pipe)
 		}
 		if err != nil {
-			return run.NewRunOutput(err, "[settings error]", "")
+			return runner.NewRunOutput(err, "[settings error]", "")
 		}
 		u.engine = engine
 
-		return run.NewRunOutput(nil, "", "[settings ok]")
+		return runner.NewRunOutput(nil, "", "[settings ok]")
 	})
 }

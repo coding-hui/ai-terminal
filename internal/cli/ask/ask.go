@@ -22,7 +22,7 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/cli/ui"
 	"github.com/coding-hui/ai-terminal/internal/cli/util"
 	"github.com/coding-hui/ai-terminal/internal/display"
-	"github.com/coding-hui/ai-terminal/internal/run"
+	"github.com/coding-hui/ai-terminal/internal/runner"
 	"github.com/coding-hui/ai-terminal/internal/system"
 	"github.com/coding-hui/ai-terminal/internal/util/templates"
 )
@@ -191,7 +191,7 @@ func (o *Options) getEditorPrompt() string {
 	}
 
 	editor := system.Analyse().GetEditor()
-	editorCmd := run.PrepareEditSettingsCommand(fmt.Sprintf("%s %s", editor, filename))
+	editorCmd := runner.PrepareEditSettingsCommand(fmt.Sprintf("%s %s", editor, filename))
 	editorCmd.Stdin = os.Stdin
 	editorCmd.Stdout = os.Stdout
 	editorCmd.Stderr = os.Stderr

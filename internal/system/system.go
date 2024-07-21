@@ -8,7 +8,7 @@ import (
 
 	"github.com/mitchellh/go-homedir"
 
-	"github.com/coding-hui/ai-terminal/internal/run"
+	"github.com/coding-hui/ai-terminal/internal/runner"
 )
 
 const (
@@ -86,7 +86,7 @@ func GetOperatingSystem() OperatingSystem {
 }
 
 func GetDistribution() string {
-	dist, err := run.Run("lsb_release", "-sd")
+	dist, err := runner.Run("lsb_release", "-sd")
 	if err != nil {
 		return ""
 	}
@@ -102,9 +102,9 @@ func GetShell() string {
 	)
 
 	if operatingSystem == WindowsOperatingSystem {
-		shell, err = run.Run("echo", os.Getenv("COMSPEC"))
+		shell, err = runner.Run("echo", os.Getenv("COMSPEC"))
 	} else {
-		shell, err = run.Run("echo", os.Getenv("SHELL"))
+		shell, err = runner.Run("echo", os.Getenv("SHELL"))
 	}
 	if err != nil {
 		return ""
@@ -127,13 +127,13 @@ func GetHomeDirectory() string {
 }
 
 func GetUsername() string {
-	name, err := run.Run("echo", os.Getenv("USER"))
+	name, err := runner.Run("echo", os.Getenv("USER"))
 	if err != nil {
 		return ""
 	}
 	name = strings.TrimSpace(name)
 	if name == "" {
-		name, err = run.Run("whoami")
+		name, err = runner.Run("whoami")
 		if err != nil {
 			return ""
 		}
@@ -145,7 +145,7 @@ func GetUsername() string {
 }
 
 func GetEditor() string {
-	name, err := run.Run("echo", os.Getenv("EDITOR"))
+	name, err := runner.Run("echo", os.Getenv("EDITOR"))
 	if err != nil {
 		return "nano"
 	}
