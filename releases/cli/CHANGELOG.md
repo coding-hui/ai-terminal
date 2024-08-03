@@ -1,6 +1,22 @@
 # Change Log
 
 
+<a name="v0.1.3"></a>
+## [v0.1.3] - 2024-08-03
+### Bug Fixes
+- Use vim as the default editor
+- sql close
+
+### Code Refactoring
+- Optimize configuration loading and binding logic
+- rename flag utils
+- Refactoring the Chat History Store
+- rename run pkg name
+
+### Features
+- Add history ls cmd, refactor and update existing code for CLI and datastore components
+
+
 <a name="v0.1.2"></a>
 ## [v0.1.2] - 2024-07-14
 ### Bug Fixes
@@ -20,6 +36,7 @@
 - add ask cmd
 
 
-[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.1.3...HEAD
+[v0.1.3]: https://github.com/coding-hui/ai-terminal/compare/v0.1.2...v0.1.3
 [v0.1.2]: https://github.com/coding-hui/ai-terminal/compare/v0.1.1...v0.1.2
 [v0.1.1]: https://github.com/coding-hui/ai-terminal/compare/v0.1...v0.1.1
