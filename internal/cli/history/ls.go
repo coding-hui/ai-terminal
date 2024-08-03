@@ -1,6 +1,7 @@
 package history
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"sync"
@@ -13,12 +14,10 @@ import (
 	"github.com/spf13/viper"
 	"k8s.io/klog/v2"
 
-	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
-
-	"github.com/coding-hui/ai-terminal/internal/cli/llm"
 	"github.com/coding-hui/ai-terminal/internal/cli/options"
-	"github.com/coding-hui/ai-terminal/internal/cli/session"
-	"github.com/coding-hui/ai-terminal/internal/cli/util"
+	"github.com/coding-hui/ai-terminal/internal/llm"
+	"github.com/coding-hui/ai-terminal/internal/session"
+	"github.com/coding-hui/ai-terminal/internal/util"
 	"github.com/coding-hui/ai-terminal/internal/util/templates"
 )
 
@@ -36,8 +35,7 @@ func (i historyItem) Description() string { return i.desc }
 func (i historyItem) FilterValue() string { return i.title }
 
 type listModel struct {
-	list           list.Model
-	sessionManager *session.Manager
+	list list.Model
 
 	itemStyle, quitTextStyle lipgloss.Style
 }
@@ -50,19 +48,6 @@ func (m listModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if msg.String() == "ctrl+c" {
-			return m, tea.Quit
-		}
-		if msg.String() == "enter" {
-			i, ok := m.list.SelectedItem().(historyItem)
-			if ok {
-				err := m.sessionManager.SetCurrentSession(i.Title())
-				if err != nil {
-					return m, tea.Sequence(
-						tea.Println(fmt.Sprintf("Failed to select session %s", i.Title())),
-						tea.Quit,
-					)
-				}
-			}
 			return m, tea.Quit
 		}
 	case tea.WindowSizeMsg:
@@ -126,31 +111,37 @@ func (o *ls) Run(_ []string) error {
 	if err != nil {
 		return err
 	}
-	engine, err := llm.NewDefaultEngine(llm.ChatEngineMode, cfg)
+	engine, err := llm.NewLLMEngine(llm.ChatEngineMode, cfg)
 	if err != nil {
 		return err
 	}
 
-	sessionManager, err := session.NewSessionManager(cfg.DataStore)
+	chatHistory, err := session.GetHistoryStore(*cfg, llm.ChatEngineMode.String())
 	if err != nil {
 		return err
 	}
 
-	allSession, err := sessionManager.AllSession()
+	allSession, err := chatHistory.Sessions(context.Background())
 	if err != nil {
 		return err
 	}
 
-	var items []list.Item
-	var mutex sync.Mutex
-	var wg sync.WaitGroup
-	for sessionId, messages := range allSession {
+	var (
+		items []list.Item
+		mutex sync.Mutex
+		wg    sync.WaitGroup
+	)
+	for _, sessionId := range allSession {
 		wg.Add(1)
-		go func(sessionId string, messages []llms.ChatMessage) {
+		go func(sessionId string) {
 			defer wg.Done()
 
-			summary := ""
-			summary, err = engine.SummaryMessages(messages)
+			messages, err := chatHistory.Messages(context.Background(), sessionId)
+			if err != nil {
+				klog.Error(err)
+			}
+
+			summary, err := engine.SummaryMessages(messages)
 			if err != nil {
 				klog.Error(err)
 			}
@@ -161,15 +152,14 @@ func (o *ls) Run(_ []string) error {
 				title: sessionId,
 				desc:  summary,
 			})
-		}(sessionId, messages)
+		}(sessionId)
 	}
 	wg.Wait()
 
 	m := listModel{
-		sessionManager: sessionManager,
-		list:           list.New(items, list.NewDefaultDelegate(), 0, 0),
-		itemStyle:      lipgloss.NewStyle().Margin(1, 2),
-		quitTextStyle:  lipgloss.NewStyle().Margin(1, 0, 2, 4),
+		list:          list.New(items, list.NewDefaultDelegate(), 0, 0),
+		itemStyle:     lipgloss.NewStyle().Margin(1, 2),
+		quitTextStyle: lipgloss.NewStyle().Margin(1, 0, 2, 4),
 	}
 	m.list.Title = "Chat History"
 
@@ -178,5 +168,6 @@ func (o *ls) Run(_ []string) error {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}
+
 	return nil
 }

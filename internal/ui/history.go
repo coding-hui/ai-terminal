@@ -1,4 +1,4 @@
-package history
+package ui
 
 type History struct {
 	inputs map[int]string

@@ -9,7 +9,7 @@ import (
 	"github.com/coding-hui/iam/pkg/cli/genericclioptions"
 
 	"github.com/coding-hui/ai-terminal/internal/cli/options"
-	"github.com/coding-hui/ai-terminal/internal/cli/util"
+	"github.com/coding-hui/ai-terminal/internal/util"
 	"github.com/coding-hui/ai-terminal/internal/util/templates"
 )
 

@@ -11,7 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	cmdutil "github.com/coding-hui/ai-terminal/internal/cli/util"
+	cmdutil "github.com/coding-hui/ai-terminal/internal/util"
 	"github.com/coding-hui/ai-terminal/internal/util/templates"
 )
 

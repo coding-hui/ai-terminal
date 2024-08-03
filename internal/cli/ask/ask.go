@@ -17,13 +17,13 @@ import (
 
 	"github.com/coding-hui/iam/pkg/cli/genericclioptions"
 
-	"github.com/coding-hui/ai-terminal/internal/cli/llm"
 	"github.com/coding-hui/ai-terminal/internal/cli/options"
-	"github.com/coding-hui/ai-terminal/internal/cli/ui"
-	"github.com/coding-hui/ai-terminal/internal/cli/util"
 	"github.com/coding-hui/ai-terminal/internal/display"
+	"github.com/coding-hui/ai-terminal/internal/llm"
 	"github.com/coding-hui/ai-terminal/internal/runner"
 	"github.com/coding-hui/ai-terminal/internal/system"
+	"github.com/coding-hui/ai-terminal/internal/ui"
+	"github.com/coding-hui/ai-terminal/internal/util"
 	"github.com/coding-hui/ai-terminal/internal/util/templates"
 )
 
@@ -137,7 +137,7 @@ func (o *Options) Run(args []string) error {
 		if err != nil {
 			display.FatalErr(err, "Failed to load ask cmd config")
 		}
-		engine, err := llm.NewDefaultEngine(llm.ChatEngineMode, cfg)
+		engine, err := llm.NewLLMEngine(llm.ChatEngineMode, cfg)
 		if err != nil {
 			display.FatalErr(err, "Failed to initialize engine")
 		}

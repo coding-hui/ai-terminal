@@ -10,8 +10,8 @@ const (
 )
 
 var (
-	errMongoInvalidURL       = errors.New("invalid mongo url option")
-	errMongoInvalidSessionID = errors.New("invalid mongo session id option")
+	errMongoInvalidURL            = errors.New("invalid mongo url option")
+	errMongoInvalidChatEngineMode = errors.New("invalid mongo chat engine mode option")
 )
 
 type ChatMessageHistoryOption func(m *ChatMessageHistory)
@@ -29,8 +29,8 @@ func applyMongoDBChatOptions(options ...ChatMessageHistoryOption) (*ChatMessageH
 	if h.url == "" {
 		return nil, errMongoInvalidURL
 	}
-	if h.sessionID == "" {
-		return nil, errMongoInvalidSessionID
+	if h.chatEngineMode == "" {
+		return nil, errMongoInvalidChatEngineMode
 	}
 
 	return h, nil
@@ -43,11 +43,11 @@ func WithConnectionURL(connectionURL string) ChatMessageHistoryOption {
 	}
 }
 
-// WithSessionID is an arbitrary key that is used to store the messages of a single chat session,
-// like user name, email, chat id etc. Must be set.
-func WithSessionID(sessionID string) ChatMessageHistoryOption {
+// WithChatEngineMode is an arbitrary key that is used to store the messages of a single chat session,
+// like exec,chat etc. Must be set.
+func WithChatEngineMode(chatEngineMode string) ChatMessageHistoryOption {
 	return func(p *ChatMessageHistory) {
-		p.sessionID = sessionID
+		p.chatEngineMode = chatEngineMode
 	}
 }
 

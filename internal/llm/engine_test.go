@@ -8,6 +8,7 @@ import (
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms/openai"
 
 	"github.com/coding-hui/ai-terminal/internal/cli/options"
+	"github.com/coding-hui/ai-terminal/internal/session/simple"
 )
 
 func TestEngine_ExecCompletion(t *testing.T) {
@@ -28,8 +29,8 @@ func TestEngine_ExecCompletion(t *testing.T) {
 		channel:     make(chan EngineChatStreamOutput),
 		pipe:        "",
 		running:     false,
-		chatHistory: NewChatMessageHistory(),
-		execHistory: NewChatMessageHistory(),
+		chatHistory: simple.NewChatMessageHistory(),
+		execHistory: simple.NewChatMessageHistory(),
 	}
 	type args struct {
 		input string

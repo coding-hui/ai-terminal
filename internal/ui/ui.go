@@ -13,9 +13,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
 
-	"github.com/coding-hui/ai-terminal/internal/cli/llm"
 	"github.com/coding-hui/ai-terminal/internal/cli/options"
-	"github.com/coding-hui/ai-terminal/internal/history"
+	"github.com/coding-hui/ai-terminal/internal/llm"
 	"github.com/coding-hui/ai-terminal/internal/runner"
 )
 
@@ -56,7 +55,7 @@ type Ui struct {
 	config          *options.Config
 	waitForUserChan chan struct{}
 	engine          *llm.Engine
-	history         *history.History
+	history         *History
 }
 
 func NewUi(input *Input) *Ui {
@@ -88,7 +87,7 @@ func NewUi(input *Input) *Ui {
 			),
 			spinner: NewSpinner(),
 		},
-		history:         history.NewHistory(),
+		history:         NewHistory(),
 		waitForUserChan: make(chan struct{}, 1),
 	}
 }
@@ -463,7 +462,7 @@ func (u *Ui) startRepl(config *options.Config) tea.Cmd {
 				engineMode = llm.ChatEngineMode
 			}
 
-			engine, err := llm.NewDefaultEngine(engineMode, config)
+			engine, err := llm.NewLLMEngine(engineMode, config)
 			if err != nil {
 				return err
 			}
@@ -494,7 +493,7 @@ func (u *Ui) startCli(config *options.Config) tea.Cmd {
 		engineMode = llm.ChatEngineMode
 	}
 
-	engine, err := llm.NewDefaultEngine(engineMode, config)
+	engine, err := llm.NewLLMEngine(engineMode, config)
 	if err != nil {
 		u.state.error = err
 		return nil
@@ -584,7 +583,7 @@ func (u *Ui) finishConfig(key string) tea.Cmd {
 	}
 	u.config = config
 
-	engine, err := llm.NewDefaultEngine(llm.ChatEngineMode, config)
+	engine, err := llm.NewLLMEngine(llm.ChatEngineMode, config)
 	if err != nil {
 		u.state.error = err
 		return nil
@@ -721,7 +720,7 @@ func (u *Ui) editSettings() tea.Cmd {
 		}
 
 		u.config = cfg
-		engine, err := llm.NewDefaultEngine(llm.ExecEngineMode, cfg)
+		engine, err := llm.NewLLMEngine(llm.ExecEngineMode, cfg)
 		if u.state.pipe != "" {
 			engine.SetPipe(u.state.pipe)
 		}

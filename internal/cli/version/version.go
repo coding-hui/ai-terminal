@@ -13,11 +13,11 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
 
-	"github.com/coding-hui/ai-terminal/internal/cli/util"
-	"github.com/coding-hui/ai-terminal/internal/util/templates"
-
 	"github.com/coding-hui/common/version"
 	"github.com/coding-hui/iam/pkg/cli/genericclioptions"
+
+	"github.com/coding-hui/ai-terminal/internal/util"
+	"github.com/coding-hui/ai-terminal/internal/util/templates"
 )
 
 var versionExample = templates.Examples(`

@@ -1,4 +1,4 @@
-package llm
+package simple
 
 import "github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
 
@@ -8,15 +8,15 @@ type ChatMessageHistoryOption func(m *ChatMessageHistory)
 
 // WithPreviousMessages is an option for NewChatMessageHistory for adding
 // previous messages to the history.
-func WithPreviousMessages(previousMessages []llms.ChatMessage) ChatMessageHistoryOption {
+func WithPreviousMessages(sessionID string, previousMessages []llms.ChatMessage) ChatMessageHistoryOption {
 	return func(m *ChatMessageHistory) {
-		m.messages = append(m.messages, previousMessages...)
+		m.messages[sessionID] = append(m.messages[sessionID], previousMessages...)
 	}
 }
 
 func applyChatOptions(options ...ChatMessageHistoryOption) *ChatMessageHistory {
 	h := &ChatMessageHistory{
-		messages: make([]llms.ChatMessage, 0),
+		messages: make(map[string][]llms.ChatMessage),
 	}
 
 	for _, option := range options {

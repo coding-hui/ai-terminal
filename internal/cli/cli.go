@@ -26,6 +26,9 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/cli/options"
 	"github.com/coding-hui/ai-terminal/internal/cli/version"
 	"github.com/coding-hui/ai-terminal/internal/util/templates"
+
+	_ "github.com/coding-hui/ai-terminal/internal/session/mongo"
+	_ "github.com/coding-hui/ai-terminal/internal/session/simple"
 )
 
 var logFlushFreq = pflag.Duration(options.FlagLogFlushFrequency, 5*time.Second, "Maximum number of seconds between log flushes")

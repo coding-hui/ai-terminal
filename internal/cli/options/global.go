@@ -99,7 +99,7 @@ func (f *ConfigFlags) AddFlags(flags *pflag.FlagSet) {
 // NewConfigFlags returns ConfigFlags with default values set.
 func NewConfigFlags(usePersistentConfig bool) *ConfigFlags {
 	return &ConfigFlags{
-		SessionId:           pointer.ToString("default"),
+		SessionId:           pointer.ToString("temp_session"),
 		usePersistentConfig: usePersistentConfig,
 	}
 }

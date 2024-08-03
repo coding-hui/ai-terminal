@@ -35,26 +35,29 @@ func runTestContainer() (string, error) {
 func TestMongoDBChatMessageHistory(t *testing.T) {
 	t.Parallel()
 
+	sessionID := "test"
+	chatEngineMode := "chat"
+
 	url, err := runTestContainer()
 	require.NoError(t, err)
 
 	ctx := context.Background()
-	_, err = NewMongoDBChatMessageHistory(ctx, WithSessionID("test"))
+	_, err = NewMongoDBChatMessageSession(ctx)
 	assert.Equal(t, errMongoInvalidURL, err)
 
-	_, err = NewMongoDBChatMessageHistory(ctx, WithConnectionURL(url))
-	assert.Equal(t, errMongoInvalidSessionID, err)
+	_, err = NewMongoDBChatMessageSession(ctx, WithConnectionURL(url))
+	assert.Equal(t, errMongoInvalidChatEngineMode, err)
 
-	history, err := NewMongoDBChatMessageHistory(ctx, WithConnectionURL(url), WithSessionID("testSessionXX"))
+	history, err := NewMongoDBChatMessageSession(ctx, WithConnectionURL(url), WithChatEngineMode(chatEngineMode))
 	require.NoError(t, err)
 
-	err = history.AddAIMessage(ctx, "Hi")
+	err = history.AddAIMessage(ctx, sessionID, "Hi")
 	require.NoError(t, err)
 
-	err = history.AddUserMessage(ctx, "Hello")
+	err = history.AddUserMessage(ctx, sessionID, "Hello")
 	require.NoError(t, err)
 
-	messages, err := history.Messages(ctx)
+	messages, err := history.Messages(ctx, sessionID)
 	require.NoError(t, err)
 
 	assert.Len(t, messages, 2)
@@ -62,7 +65,13 @@ func TestMongoDBChatMessageHistory(t *testing.T) {
 	assert.Equal(t, "Hi", messages[0].GetContent())
 	assert.Equal(t, llms.ChatMessageTypeHuman, messages[1].GetType())
 	assert.Equal(t, "Hello", messages[1].GetContent())
+
+	sessions, err := history.Sessions(ctx)
+	require.NoError(t, err)
+	assert.Len(t, sessions, 1)
+	assert.Equal(t, sessionID, sessions[0])
+
 	t.Cleanup(func() {
-		require.NoError(t, history.Clear(ctx))
+		require.NoError(t, history.Clear(ctx, sessionID))
 	})
 }
