@@ -86,7 +86,7 @@ lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes
 
 .PHONY: goreleaser
 release: ## Release go bin to github
-	$(GO_RELEASER) release --auto-snapshot --clean
+	$(GO_RELEASER) release --auto-snapshot --clean --draft
 
 ##@ Build
 

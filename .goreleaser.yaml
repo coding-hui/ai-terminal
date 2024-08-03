@@ -59,16 +59,28 @@ archives:
 changelog:
   sort: asc
   filters:
+    include:
+      - "^feat:"
+      - "^fix:"
+      - "^perf:"
+      - "^refactor:"
     exclude:
       - "^docs:"
       - "^test:"
+      - "^chore:"
   groups:
     - title: Features
       regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
       order: 0
-    - title: "Bug fixes"
-      regexp: '^.*?bug(\([[:word:]]+\))??!?:.+$'
+    - title: "Bug Fixes"
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
       order: 1
+    - title: "Performance Improvements"
+      regexp: '^.*?perf(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: "Code Refactoring"
+      regexp: '^.*?refactor(\([[:word:]]+\))??!?:.+$'
+      order: 3
     - title: Others
       order: 999
 
