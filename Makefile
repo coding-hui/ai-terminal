@@ -82,6 +82,12 @@ lint: golangci-lint ## Run golangci-lint linter
 lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes
 	$(GOLANGCI_LINT) run --fix
 
+##@ Release
+
+.PHONY: goreleaser
+release: ## Release go bin to github
+	$(GO_RELEASER) release --auto-snapshot --clean
+
 ##@ Build
 
 .PHONY: build
@@ -163,6 +169,7 @@ CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen-$(CONTROLLER_TOOLS_VERSION)
 ENVTEST ?= $(LOCALBIN)/setup-envtest-$(ENVTEST_VERSION)
 GOLANGCI_LINT = $(LOCALBIN)/golangci-lint-$(GOLANGCI_LINT_VERSION)
 GIT_CHGLOG = $(LOCALBIN)/git-chglog-$(GIT_CHGLOG_VERSION)
+GO_RELEASER = $(LOCALBIN)/goreleaser-$(GO_RELEASER_VERSION)
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.4.1
@@ -170,6 +177,7 @@ CONTROLLER_TOOLS_VERSION ?= v0.15.0
 ENVTEST_VERSION ?= release-0.18
 GOLANGCI_LINT_VERSION ?= v1.57.2
 GIT_CHGLOG_VERSION ?= v0.15.4
+GO_RELEASER_VERSION ?= v2.1.0
 
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary.
@@ -195,6 +203,11 @@ $(GOLANGCI_LINT): $(LOCALBIN)
 git-chglog: $(GIT_CHGLOG) ## Download git-chglog locally if necessary.
 $(GIT_CHGLOG): $(LOCALBIN)
 	$(call go-install-tool,$(GIT_CHGLOG),github.com/git-chglog/git-chglog/cmd/git-chglog,${GIT_CHGLOG_VERSION})
+
+.PHONY: goreleaser
+goreleaser: $(GO_RELEASER) ## Download goreleaser locally if necessary.
+$(GO_RELEASER): $(LOCALBIN)
+	$(call go-install-tool,$(GO_RELEASER),github.com/goreleaser/goreleaser/v2,${GO_RELEASER_VERSION})
 
 # go-install-tool will 'go install' any package with custom target and name of binary, if it doesn't exist
 # $1 - target path with name of binary (ideally with version)

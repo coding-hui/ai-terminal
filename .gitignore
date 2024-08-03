@@ -28,3 +28,4 @@ go.work
 
 logs
 *.log
+dist/

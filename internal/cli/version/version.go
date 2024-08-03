@@ -55,7 +55,7 @@ func NewCmdVersion(ioStreams genericclioptions.IOStreams) *cobra.Command {
 	}
 
 	cmd.Flags().BoolVar(&o.Short, "short", o.Short, "If true, print just the version number.")
-	cmd.Flags().StringVarP(&o.Output, "output", "o", o.Output, "One of 'yaml' or 'json'.")
+	cmd.Flags().StringVarP(&o.Output, "output", "", o.Output, "One of 'yaml' or 'json'.")
 
 	return cmd
 }

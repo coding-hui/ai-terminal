@@ -14,12 +14,32 @@ before:
     - go mod tidy
 
 builds:
-  - env:
+  - id: ai-cli
+    main: ./cmd/cli
+    env:
       - CGO_ENABLED=0
+      - VERSION_PACKAGE=github.com/coding-hui/common/version
+    binary: ai
     goos:
       - linux
       - windows
       - darwin
+    goarch:
+      - amd64
+    # List of combinations of GOOS + GOARCH + GOARM to ignore.
+    ignore:
+      - goos: windows
+        goarch: i386
+      - goos: darwin
+        goarch: 386
+      - goos: linux
+        goarch: arm
+        goarm: 7
+      - goarm: mips64
+      - gomips: hardfloat
+      - goamd64: v4
+    ldflags:
+      - -s -w -X {{ .Env.VERSION_PACKAGE }}.GitVersion={{ .Version }} -X {{ .Env.VERSION_PACKAGE }}.GitCommit={{ .Commit }} -X {{ .Env.VERSION_PACKAGE }}.GitTreeState={{ .IsGitDirty }} -X {{ .Env.VERSION_PACKAGE }}.BuildDate={{ .CommitDate }}
 
 archives:
   - format: tar.gz
@@ -42,3 +62,14 @@ changelog:
     exclude:
       - "^docs:"
       - "^test:"
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: "Bug fixes"
+      regexp: '^.*?bug(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: Others
+      order: 999
+
+report_sizes: true
