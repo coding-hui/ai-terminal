@@ -1,17 +1,14 @@
 package ui
 
 import (
-	"errors"
 	"fmt"
 	"strings"
-
-	"github.com/spf13/viper"
-	"k8s.io/klog/v2"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
+	"k8s.io/klog/v2"
 
 	"github.com/coding-hui/ai-terminal/internal/cli/options"
 	"github.com/coding-hui/ai-terminal/internal/llm"
@@ -93,21 +90,10 @@ func NewUi(input *Input) *Ui {
 }
 
 func (u *Ui) Init() tea.Cmd {
-	cfg, err := options.NewConfig()
+	cfg := options.NewConfig()
 	u.config = cfg
 	klog.V(2).InfoS("begin init tea model.", "cfg", cfg)
 	firstInit := false
-	if err != nil {
-		var configFileNotFoundError viper.ConfigFileNotFoundError
-		if errors.As(err, &configFileNotFoundError) {
-			firstInit = true
-		} else {
-			return tea.Sequence(
-				tea.Println(u.components.renderer.RenderError(fmt.Sprintf("[ERROR] failed to init chat ui: %v", err))),
-				tea.Quit,
-			)
-		}
-	}
 	if cfg.Ai.Token == "" || cfg.Ai.Model == "" || cfg.Ai.ApiBase == "" || firstInit {
 		if u.state.runMode == ReplMode {
 			return tea.Sequence(
@@ -710,10 +696,7 @@ func (u *Ui) editSettings() tea.Cmd {
 			return runner.NewRunOutput(err, "[settings error]", "")
 		}
 
-		cfg, err := options.NewConfig()
-		if err != nil {
-			return runner.NewRunOutput(err, "[settings error]", "")
-		}
+		cfg := options.NewConfig()
 
 		u.config = cfg
 		engine, err := llm.NewLLMEngine(llm.ExecEngineMode, cfg)

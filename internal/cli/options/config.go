@@ -16,9 +16,6 @@ import (
 )
 
 const (
-	// RecommendedHomeDir defines the default directory used to place all iam service configurations.
-	RecommendedHomeDir = ".wecoding"
-
 	// RecommendedEnvPrefix defines the ENV prefix used by all iam service.
 	RecommendedEnvPrefix = "AI"
 )
@@ -26,24 +23,31 @@ const (
 // Config is a structure used to configure a AI.
 // Its members are sorted roughly in order of importance for composers.
 type Config struct {
-	DefaultPromptMode string           `yaml:"default-prompt-mode,omitempty" mapstructure:"default-prompt-mode,omitempty"`
-	SessionId         string           `yaml:"session-id,omitempty" mapstructure:"session-id,omitempty"`
-	Ai                AiConfig         `yaml:"inline" mapstructure:"inline" json:"inline"`
-	DataStore         DataStoreOptions `yaml:"datastore" mapstructure:"datastore" json:"datastore"`
+	DefaultPromptMode string    `yaml:"default-prompt-mode,omitempty"`
+	ChatID            string    `yaml:"chat-id,omitempty"`
+	Ai                Ai        `yaml:"ai"`
+	DataStore         DataStore `yaml:"datastore"`
 
 	System *system.Analysis
 }
 
-type AiConfig struct {
-	SystemPrompt string       `yaml:"system-prompt,omitempty" mapstructure:"system-prompt,omitempty"`
-	Token        string       `yaml:"token,omitempty" mapstructure:"token,omitempty"`
-	Model        string       `yaml:"model,omitempty" mapstructure:"model,omitempty"`
-	ApiBase      string       `yaml:"api-base,omitempty" mapstructure:"api-base,omitempty"`
-	Temperature  float64      `yaml:"temperature,omitempty" mapstructure:"temperature,omitempty"`
-	TopP         float64      `yaml:"top-p,omitempty" mapstructure:"top-p,omitempty"`
-	MaxTokens    int          `yaml:"max-tokens,omitempty" mapstructure:"max-tokens,omitempty"`
-	Proxy        string       `yaml:"proxy,omitempty" mapstructure:"proxy,omitempty"`
-	OutputFormat OutputFormat `yaml:"output-format,omitempty" mapstructure:"output-format,omitempty"`
+type Ai struct {
+	SystemPrompt string       `yaml:"system-prompt,omitempty"`
+	Token        string       `yaml:"token,omitempty"`
+	Model        string       `yaml:"model,omitempty"`
+	ApiBase      string       `yaml:"api-base,omitempty"`
+	Temperature  float64      `yaml:"temperature,omitempty"`
+	TopP         float64      `yaml:"top-p,omitempty"`
+	MaxTokens    int          `yaml:"max-tokens,omitempty"`
+	Proxy        string       `yaml:"proxy,omitempty"`
+	OutputFormat OutputFormat `yaml:"output-format,omitempty"`
+}
+
+type DataStore struct {
+	Type     string `yaml:"type,omitempty"`
+	Url      string `yaml:"url,omitempty"`
+	Username string `yaml:"username,omitempty"`
+	Password string `yaml:"password,omitempty"`
 }
 
 type OutputFormat string
@@ -54,10 +58,10 @@ const (
 )
 
 // NewConfig returns a Config struct with the default values.
-func NewConfig() (*Config, error) {
+func NewConfig() *Config {
 	return &Config{
-		SessionId: viper.GetString(FlagChatSessionId),
-		Ai: AiConfig{
+		ChatID: viper.GetString(FlagChatID),
+		Ai: Ai{
 			SystemPrompt: viper.GetString(FlagDefaultSystemPrompt),
 			Token:        viper.GetString(FlagAiToken),
 			Model:        viper.GetString(FlagAiModel),
@@ -68,14 +72,14 @@ func NewConfig() (*Config, error) {
 			OutputFormat: OutputFormat(viper.GetString(FlagOutputFormat)),
 			Proxy:        "",
 		},
-		DataStore: DataStoreOptions{
+		DataStore: DataStore{
 			Type:     viper.GetString(FlagDatastoreType),
 			Url:      viper.GetString(FlagDatastoreUrl),
 			Username: viper.GetString(FlagDatastoreUsername),
 			Password: viper.GetString(FlagDatastorePassword),
 		},
 		System: system.Analyse(),
-	}, nil
+	}
 }
 
 // LoadConfig reads in config file and ENV variables if set.
@@ -84,7 +88,7 @@ func LoadConfig(cfg string, defaultName string) {
 		viper.SetConfigFile(cfg)
 	} else {
 		viper.AddConfigPath(".")
-		viper.AddConfigPath(filepath.Join(homedir.HomeDir(), RecommendedHomeDir))
+		viper.AddConfigPath(filepath.Join(homedir.HomeDir(), ".config", "wecoding"))
 		viper.AddConfigPath("/etc/wecoding/.config")
 		viper.SetConfigName(defaultName)
 	}
@@ -92,7 +96,7 @@ func LoadConfig(cfg string, defaultName string) {
 	// Use config file from the flag.
 	viper.SetConfigType("yaml")              // set the type of the configuration to yaml.
 	viper.AutomaticEnv()                     // read in environment variables that match.
-	viper.SetEnvPrefix(RecommendedEnvPrefix) // set ENVIRONMENT variables prefix to IAM.
+	viper.SetEnvPrefix(RecommendedEnvPrefix) // set ENVIRONMENT variables prefix to AI.
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 
 	// If a config file is found, read it in.
@@ -113,7 +117,7 @@ func WriteConfig(model, apiBase, apiToken string, write bool) (*Config, error) {
 	viper.SetConfigType("yaml")
 
 	if write {
-		defConfFile := system.GetDefaultConfigFile()
+		defConfFile := system.GetConfigFile()
 		log.Debugf("Writing config file: %s", defConfFile)
 		if err := os.MkdirAll(filepath.Dir(defConfFile), 0755); err != nil {
 			klog.Warningf("WARNING: failed to create config dir: %s", err.Error())
@@ -127,5 +131,5 @@ func WriteConfig(model, apiBase, apiToken string, write bool) (*Config, error) {
 		}
 	}
 
-	return NewConfig()
+	return NewConfig(), nil
 }

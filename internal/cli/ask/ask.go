@@ -11,7 +11,6 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"k8s.io/klog/v2"
 
@@ -40,9 +39,6 @@ var askExample = templates.Examples(`
 
 // Options is a struct to support ask command.
 type Options struct {
-	model     *options.ModelOptions
-	datastore *options.DataStoreOptions
-
 	interactive    bool
 	prompts        []string
 	promptFile     string
@@ -94,27 +90,11 @@ func NewCmdASK(ioStreams genericclioptions.IOStreams) *cobra.Command {
 	cmd.Flags().BoolVarP(&o.interactive, "interactive", "i", o.interactive, "Interactive dialogue model.")
 	cmd.Flags().StringVarP(&o.promptFile, "file", "f", o.promptFile, "File containing prompt.")
 
-	o.model = options.NewModelFlags(false)
-	o.model.AddFlags(cmd.Flags())
-
-	o.datastore = options.NewDatastoreOptions(false)
-	o.datastore.AddFlags(cmd.Flags())
-
-	cmd.Flags().VisitAll(func(flag *pflag.Flag) {
-		_ = viper.BindPFlag(flag.Name, flag)
-	})
-
 	return cmd
 }
 
 // Validate validates the provided options.
 func (o *Options) Validate() error {
-	if err := o.model.Validate(); err != nil {
-		return err
-	}
-	if err := o.datastore.Validate(); err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -132,11 +112,8 @@ func (o *Options) Run(args []string) error {
 
 	klog.V(2).InfoS("start ask cli mode.", "args", args, "runMode", runMode, "pipe", input.GetPipe())
 
-	if o.model.OutputFormat != nil && *o.model.OutputFormat == string(options.RawOutputFormat) {
-		cfg, err := options.NewConfig()
-		if err != nil {
-			display.FatalErr(err, "Failed to load ask cmd config")
-		}
+	if viper.GetString(options.FlagOutputFormat) == string(options.RawOutputFormat) {
+		cfg := options.NewConfig()
 		engine, err := llm.NewLLMEngine(llm.ChatEngineMode, cfg)
 		if err != nil {
 			display.FatalErr(err, "Failed to initialize engine")

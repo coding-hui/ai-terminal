@@ -10,9 +10,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 	"k8s.io/klog/v2"
+
+	"github.com/coding-hui/iam/pkg/cli/genericclioptions"
 
 	"github.com/coding-hui/ai-terminal/internal/cli/options"
 	"github.com/coding-hui/ai-terminal/internal/llm"
@@ -65,20 +65,16 @@ func (m listModel) View() string {
 }
 
 type ls struct {
-	model     *options.ModelOptions
-	datastore *options.DataStoreOptions
+	genericclioptions.IOStreams
 }
 
 // newLs returns initialized ls.
-func newLs(model *options.ModelOptions, datastore *options.DataStoreOptions) *ls {
-	return &ls{
-		model:     model,
-		datastore: datastore,
-	}
+func newLs(ioStreams genericclioptions.IOStreams) *ls {
+	return &ls{IOStreams: ioStreams}
 }
 
-func newCmdLsHistory(model *options.ModelOptions, datastore *options.DataStoreOptions) *cobra.Command {
-	o := newLs(model, datastore)
+func newCmdLsHistory(ioStreams genericclioptions.IOStreams) *cobra.Command {
+	o := newLs(ioStreams)
 	cmd := &cobra.Command{
 		Use:     "ls",
 		Short:   "show chat session history.",
@@ -93,10 +89,6 @@ func newCmdLsHistory(model *options.ModelOptions, datastore *options.DataStoreOp
 		},
 	}
 
-	cmd.Flags().VisitAll(func(flag *pflag.Flag) {
-		_ = viper.BindPFlag(flag.Name, flag)
-	})
-
 	return cmd
 }
 
@@ -107,10 +99,7 @@ func (o *ls) Validate() error {
 
 // Run executes history command.
 func (o *ls) Run(_ []string) error {
-	cfg, err := options.NewConfig()
-	if err != nil {
-		return err
-	}
+	cfg := options.NewConfig()
 	engine, err := llm.NewLLMEngine(llm.ChatEngineMode, cfg)
 	if err != nil {
 		return err
@@ -138,12 +127,12 @@ func (o *ls) Run(_ []string) error {
 
 			messages, err := chatHistory.Messages(context.Background(), sessionId)
 			if err != nil {
-				klog.Error(err)
+				klog.Fatal(err)
 			}
 
 			summary, err := engine.SummaryMessages(messages)
 			if err != nil {
-				klog.Error(err)
+				klog.Fatal(err)
 			}
 
 			mutex.Lock()

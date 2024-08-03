@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	mongoSessionIDKey      = "SessionId"
+	mongoSessionIDKey      = "ChatID"
 	mongoChatEngineModeKey = "ChatEngineMode"
 )
 
@@ -56,7 +56,7 @@ type ChatMessageHistory struct {
 type chatMessageModel struct {
 	CreateTime     time.Time `bson:"CreateTime" json:"CreateTime"`
 	ChatEngineMode string    `bson:"ChatEngineMode" json:"ChatEngineMode"`
-	SessionID      string    `bson:"SessionId" json:"SessionId"`
+	SessionID      string    `bson:"ChatID" json:"ChatID"`
 	History        string    `bson:"History"   json:"History"`
 }
 

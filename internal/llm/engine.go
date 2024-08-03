@@ -18,21 +18,17 @@ import (
 )
 
 const (
-	noExec                         = "[noexec]"
-	mongoDefaultDBName             = "chat_history"
-	mongoDefaultCollectionName     = "message_store"
-	mongoDefaultExecDBName         = "exec_history"
-	mongoDefaultExecCollectionName = "message_store"
+	noExec = "[noexec]"
 )
 
 type Engine struct {
-	mode      EngineMode
-	config    *options.Config
-	llm       *openai.Model
-	channel   chan EngineChatStreamOutput
-	pipe      string
-	running   bool
-	sessionId string
+	mode    EngineMode
+	config  *options.Config
+	llm     *openai.Model
+	channel chan EngineChatStreamOutput
+	pipe    string
+	running bool
+	chatID  string
 
 	execHistory, chatHistory session.History
 }
@@ -58,7 +54,7 @@ func NewLLMEngine(mode EngineMode, config *options.Config) (*Engine, error) {
 	}
 
 	var execHistory, chatHistory session.History = simple.NewChatMessageHistory(), simple.NewChatMessageHistory()
-	if config.SessionId != "temp_session" {
+	if config.ChatID != "temp_session" {
 		chatHistory, err = session.GetHistoryStore(*config, ChatEngineMode.String())
 		if err != nil {
 			return nil, err
@@ -76,7 +72,7 @@ func NewLLMEngine(mode EngineMode, config *options.Config) (*Engine, error) {
 		channel:     make(chan EngineChatStreamOutput),
 		pipe:        "",
 		running:     false,
-		sessionId:   config.SessionId,
+		chatID:      config.ChatID,
 		chatHistory: chatHistory,
 		execHistory: execHistory,
 	}, nil
@@ -111,12 +107,12 @@ func (e *Engine) Interrupt() {
 
 func (e *Engine) Clear() {
 	if e.mode == ExecEngineMode {
-		err := e.execHistory.Clear(context.Background(), e.sessionId)
+		err := e.execHistory.Clear(context.Background(), e.chatID)
 		if err != nil {
 			klog.Fatal("failed to clean exec history.", err)
 		}
 	} else {
-		err := e.chatHistory.Clear(context.Background(), e.sessionId)
+		err := e.chatHistory.Clear(context.Background(), e.chatID)
 		if err != nil {
 			klog.Fatal("failed to clean chat history.", err)
 		}
@@ -124,18 +120,18 @@ func (e *Engine) Clear() {
 }
 
 func (e *Engine) Reset() {
-	err := e.execHistory.Clear(context.Background(), e.sessionId)
+	err := e.execHistory.Clear(context.Background(), e.chatID)
 	if err != nil {
 		klog.Fatal("failed to clean exec history.", err)
 	}
-	err = e.chatHistory.Clear(context.Background(), e.sessionId)
+	err = e.chatHistory.Clear(context.Background(), e.chatID)
 	if err != nil {
 		klog.Fatal("failed to clean chat history.", err)
 	}
 }
 
 func (e *Engine) SummaryChatHistory() (string, error) {
-	messages, err := e.chatHistory.Messages(context.Background(), e.sessionId)
+	messages, err := e.chatHistory.Messages(context.Background(), e.chatID)
 	if err != nil {
 		return "", err
 	}
@@ -253,11 +249,11 @@ func (e *Engine) appendUserMessage(content string) {
 		return
 	}
 	if e.mode == ExecEngineMode {
-		if err := e.execHistory.AddUserMessage(context.Background(), e.sessionId, content); err != nil {
+		if err := e.execHistory.AddUserMessage(context.Background(), e.chatID, content); err != nil {
 			klog.Fatal("failed to add user exec input message to history", err)
 		}
 	} else {
-		if err := e.chatHistory.AddUserMessage(context.Background(), e.sessionId, content); err != nil {
+		if err := e.chatHistory.AddUserMessage(context.Background(), e.chatID, content); err != nil {
 			klog.Fatal("failed to add user chat input message to history", err)
 		}
 	}
@@ -265,11 +261,11 @@ func (e *Engine) appendUserMessage(content string) {
 
 func (e *Engine) appendAssistantMessage(content string) {
 	if e.mode == ExecEngineMode {
-		if err := e.execHistory.AddAIMessage(context.Background(), e.sessionId, content); err != nil {
+		if err := e.execHistory.AddAIMessage(context.Background(), e.chatID, content); err != nil {
 			klog.Fatal("failed to add assistant exec output message to history", err)
 		}
 	} else {
-		if err := e.chatHistory.AddAIMessage(context.Background(), e.sessionId, content); err != nil {
+		if err := e.chatHistory.AddAIMessage(context.Background(), e.chatID, content); err != nil {
 			klog.Fatal("failed to add assistant chat output message to history", err)
 		}
 	}
@@ -296,13 +292,13 @@ func (e *Engine) prepareCompletionMessages() []llms.MessageContent {
 	}
 
 	if e.mode == ExecEngineMode {
-		history, err := e.execHistory.Messages(context.Background(), e.sessionId)
+		history, err := e.execHistory.Messages(context.Background(), e.chatID)
 		if err != nil {
 			klog.Fatal("failed to get exec history messages", err)
 		}
 		messages = append(messages, slices.Map(history, convert)...)
 	} else {
-		history, err := e.chatHistory.Messages(context.Background(), e.sessionId)
+		history, err := e.chatHistory.Messages(context.Background(), e.chatID)
 		if err != nil {
 			klog.Fatal("failed to get chat history messages", err)
 		}

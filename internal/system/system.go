@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/mitchellh/go-homedir"
+	"github.com/spf13/viper"
 
 	"github.com/coding-hui/ai-terminal/internal/runner"
 )
@@ -66,7 +67,7 @@ func Analyse() *Analysis {
 		homeDirectory:   GetHomeDirectory(),
 		username:        GetUsername(),
 		editor:          GetEditor(),
-		configFile:      GetDefaultConfigFile(),
+		configFile:      GetConfigFile(),
 	}
 }
 
@@ -153,6 +154,10 @@ func GetEditor() string {
 	return editor
 }
 
-func GetDefaultConfigFile() string {
-	return filepath.Join(GetHomeDirectory(), ".wecoding", strings.ToLower(DefaultApplicationName))
+func GetConfigFile() string {
+	defConfFile := viper.GetString("config")
+	if defConfFile == "" {
+		defConfFile = filepath.Join(GetHomeDirectory(), ".config", "wecoding", strings.ToLower(DefaultApplicationName))
+	}
+	return defConfFile
 }

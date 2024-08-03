@@ -86,20 +86,6 @@ func NewAICommand(in io.Reader, out, err io.Writer) *cobra.Command {
 	ioStreams := genericclioptions.IOStreams{In: in, Out: out, ErrOut: err}
 
 	groups := templates.CommandGroups{
-		//templates.CommandGroup{
-		//	Message: "Basic Commands:",
-		//	Commands: []*cobra.Command{
-		//		info.NewCmdInfo(f, ioStreams),
-		//		color.NewCmdColor(f, ioStreams),
-		//		new.NewCmdNew(f, ioStreams),
-		//	},
-		//},
-		//templates.CommandGroup{
-		//	Message: "Troubleshooting and Debugging Commands:",
-		//	Commands: []*cobra.Command{
-		//		validate.NewCmdValidate(f, ioStreams),
-		//	},
-		//},
 		templates.CommandGroup{
 			Message: "Chat Commands:",
 			Commands: []*cobra.Command{
