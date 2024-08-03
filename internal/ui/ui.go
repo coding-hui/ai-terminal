@@ -700,11 +700,7 @@ func (u *Ui) editSettings() tea.Cmd {
 	u.state.confirming = false
 	u.state.executing = true
 
-	c := runner.PrepareEditSettingsCommand(fmt.Sprintf(
-		"%s %s",
-		u.config.System.GetEditor(),
-		u.config.System.GetConfigFile(),
-	))
+	c := runner.PrepareEditSettingsCommand(u.config.System.GetEditor(), u.config.System.GetConfigFile())
 
 	return tea.ExecProcess(c, func(err error) tea.Msg {
 		u.state.executing = false

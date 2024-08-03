@@ -191,7 +191,7 @@ func (o *Options) getEditorPrompt() string {
 	}
 
 	editor := system.Analyse().GetEditor()
-	editorCmd := runner.PrepareEditSettingsCommand(fmt.Sprintf("%s %s", editor, filename))
+	editorCmd := runner.PrepareEditSettingsCommand(editor, filename)
 	editorCmd.Stdin = os.Stdin
 	editorCmd.Stdout = os.Stdout
 	editorCmd.Stderr = os.Stderr

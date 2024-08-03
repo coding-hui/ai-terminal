@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os/exec"
 	"runtime"
-	"strings"
 )
 
 const (
@@ -28,29 +27,36 @@ func PrepareInteractiveCommand(input string) *exec.Cmd {
 	return prepareUnixCommand(input)
 }
 
-func PrepareEditSettingsCommand(input string) *exec.Cmd {
-	if isWindows() {
-		return prepareWindowsCommand(input)
+func PrepareEditSettingsCommand(editor, filename string) *exec.Cmd {
+	var args []string
+	switch editor {
+	case "vim":
+		args = []string{editor, "+normal G$", "+startinsert!", filename}
+	case "nano":
+		args = []string{editor, "+99999999", filename}
+	default:
+		args = []string{editor, filename}
 	}
-	return prepareUnixCommand(input)
+	if isWindows() {
+		return prepareWindowsCommand(args...)
+	}
+	return prepareUnixCommand(args...)
 }
 
 func isWindows() bool {
 	return runtime.GOOS == "windows"
 }
 
-func prepareWindowsCommand(input string) *exec.Cmd {
+func prepareWindowsCommand(args ...string) *exec.Cmd {
 	return exec.Command(
 		defaultShellWin,
-		"/c",
-		strings.TrimRight(input, "&"),
+		append([]string{"/c"}, args...)...,
 	)
 }
 
-func prepareUnixCommand(input string) *exec.Cmd {
+func prepareUnixCommand(args ...string) *exec.Cmd {
 	return exec.Command(
 		defaultShellUnix,
-		"-c",
-		fmt.Sprintf("%s; echo \"\n\";", strings.TrimRight(input, ";")),
+		append([]string{"-c"}, args...)...,
 	)
 }

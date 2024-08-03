@@ -13,9 +13,7 @@ import (
 
 const (
 	DefaultApplicationName = "ai"
-
-	WindowsDefaultEditor = "notepad.exe"
-	LinuxDefaultEditor   = "vim"
+	DefaultEditor          = "vim"
 )
 
 type Analysis struct {
@@ -145,22 +143,14 @@ func GetUsername() string {
 }
 
 func GetEditor() string {
-	name, err := runner.Run("echo", os.Getenv("EDITOR"))
-	if err != nil {
-		return "nano"
+	editor := os.Getenv("EDITOR")
+	if editor == "" {
+		editor = os.Getenv("VISUAL")
+		if editor == "" {
+			editor = DefaultEditor
+		}
 	}
-
-	name = strings.TrimSpace(name)
-	if len(name) > 0 {
-		return name
-	}
-
-	name = LinuxDefaultEditor
-	if GetOperatingSystem() == WindowsOperatingSystem {
-		name = WindowsDefaultEditor
-	}
-
-	return name
+	return editor
 }
 
 func GetDefaultConfigFile() string {

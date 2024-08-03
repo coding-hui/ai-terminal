@@ -18,7 +18,7 @@ func testPrepareUnixEditSettingsCommand(t *testing.T) {
 	expectedCmd := exec.Command(
 		"bash",
 		"-c",
-		"ai.json; echo \"\n\";",
+		"ai.json",
 	)
 
 	assert.Equal(t, expectedCmd.Args, cmd.Args, "The command arguments should be the same.")
