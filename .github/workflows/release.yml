@@ -1,10 +1,11 @@
 # .github/workflows/release.yaml
 
-name: release
+name: Release
 
 on:
-  release:
-    types: [created, published]
+  push:
+    tags:
+      - '*'
 
 permissions:
   contents: write
