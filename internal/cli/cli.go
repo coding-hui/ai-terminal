@@ -25,6 +25,7 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/cli/completion"
 	"github.com/coding-hui/ai-terminal/internal/cli/history"
 	"github.com/coding-hui/ai-terminal/internal/cli/options"
+	"github.com/coding-hui/ai-terminal/internal/cli/review"
 	"github.com/coding-hui/ai-terminal/internal/cli/version"
 	"github.com/coding-hui/ai-terminal/internal/util/templates"
 
@@ -93,6 +94,7 @@ func NewAICommand(in io.Reader, out, err io.Writer) *cobra.Command {
 				ask.NewCmdASK(ioStreams),
 				history.NewCmdHistory(ioStreams),
 				commit.NewCmdCommit(ioStreams),
+				review.NewCmdCommit(ioStreams),
 			},
 		},
 		templates.CommandGroup{
