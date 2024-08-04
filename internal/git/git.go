@@ -117,7 +117,7 @@ func (c *Command) UninstallHook() error {
 }
 
 func (c *Command) excludeFiles() []string {
-	var excludedFiles []string
+	excludedFiles := []string{}
 	for _, f := range c.excludeList {
 		excludedFiles = append(excludedFiles, ":(exclude,top)"+f)
 	}
