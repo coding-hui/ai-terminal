@@ -11,9 +11,6 @@ func NewCmdHook() *cobra.Command {
 	hookCmd := &cobra.Command{
 		Use:   "hook",
 		Short: "install/uninstall git prepare-commit-msg hook",
-		PostRunE: func(c *cobra.Command, args []string) error {
-			return nil
-		},
 	}
 
 	hookCmd.AddCommand(
