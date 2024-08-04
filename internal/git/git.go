@@ -23,6 +23,7 @@ fi
 var excludeFromDiff = []string{
 	"package-lock.json",
 	"pnpm-lock.yaml",
+	// yarn.lock,npm.lock...
 	"*.lock",
 	"go.sum",
 }
