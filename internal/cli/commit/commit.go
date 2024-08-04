@@ -212,7 +212,7 @@ func (o *Options) summarizePrefix(engine *llm.Engine, vars map[string]any) error
 		return err
 	}
 
-	vars[prompt.SummarizePrefixKey] = resp.Explanation
+	vars[prompt.SummarizePrefixKey] = strings.ToLower(resp.Explanation)
 
 	return nil
 }
