@@ -32,9 +32,13 @@ func (h *mongoDBChatMessageHistoryFactory) Type() string {
 
 func (h *mongoDBChatMessageHistoryFactory) Create(cfg options.Config, chatEngineMode string) (session.History, error) {
 	datastore := cfg.DataStore
+	url := datastore.Url
+	if url == "" {
+		url = "mongodb://localhost:27017/"
+	}
 	chatHistory, err := NewMongoDBChatMessageSession(context.Background(),
 		WithChatEngineMode(chatEngineMode),
-		WithConnectionURL(datastore.Url),
+		WithConnectionURL(url),
 		WithDataBaseName(mongoDefaultDBName),
 		WithCollectionName(mongoDefaultCollectionName),
 	)
