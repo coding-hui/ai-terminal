@@ -31,16 +31,17 @@ type Options struct {
 	templateFile   string
 	templateString string
 	commitAmend    bool
-	promptOnly     bool
 	noConfirm      bool
 
-	templateVars     []string
-	templateVarsFile string
+	genericclioptions.IOStreams
 }
 
 // NewCmdCommit returns a cobra command for commit msg.
 func NewCmdCommit(ioStreams genericclioptions.IOStreams) *cobra.Command {
-	ops := &Options{noConfirm: false, promptOnly: false}
+	ops := &Options{
+		noConfirm: false,
+		IOStreams: ioStreams,
+	}
 
 	commitCmd := &cobra.Command{
 		Use:   "commit",
@@ -55,7 +56,6 @@ func NewCmdCommit(ioStreams genericclioptions.IOStreams) *cobra.Command {
 	commitCmd.Flags().StringVar(&ops.templateFile, "template-file", "", "git commit message file")
 	commitCmd.Flags().StringVar(&ops.templateString, "template-string", "", "git commit message string")
 	commitCmd.Flags().BoolVar(&ops.commitAmend, "amend", false, "replace the tip of the current branch by creating a new commit.")
-	commitCmd.Flags().BoolVar(&ops.promptOnly, "prompt-only", false, "show prompt only, don't send request to openai")
 	commitCmd.Flags().BoolVar(&ops.noConfirm, "no-confirm", false, "skip confirmation prompt")
 
 	return commitCmd
@@ -82,20 +82,20 @@ func (o *Options) autoCommit(cmd *cobra.Command, args []string) error {
 	}
 
 	vars := map[string]any{
-		"file_diffs": diff,
+		prompt.FileDiffsKey: diff,
 	}
 
-	_, err = o.codeReviewMessage(llmEngine, vars)
+	err = o.codeReview(llmEngine, vars)
 	if err != nil {
 		return err
 	}
 
-	_, err = o.summarizeTitle(llmEngine, vars)
+	err = o.summarizeTitle(llmEngine, vars)
 	if err != nil {
 		return err
 	}
 
-	_, err = o.summarizePrefix(llmEngine, vars)
+	err = o.summarizePrefix(llmEngine, vars)
 	if err != nil {
 		return err
 	}
@@ -105,16 +105,15 @@ func (o *Options) autoCommit(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	outputFile := viper.GetString("output.file")
-	if outputFile == "" {
+	if o.commitMsgFile == "" {
 		out, err := g.GitDir()
 		if err != nil {
 			return err
 		}
-		outputFile = path.Join(strings.TrimSpace(out), "COMMIT_EDITMSG")
+		o.commitMsgFile = path.Join(strings.TrimSpace(out), "COMMIT_EDITMSG")
 	}
-	color.Cyan("Write the commit message to " + outputFile + " file")
-	err = os.WriteFile(outputFile, []byte(commitMessage), 0o600)
+	color.Cyan("Write the commit message to " + o.commitMsgFile + " file")
+	err = os.WriteFile(o.commitMsgFile, []byte(commitMessage), 0o600)
 	if err != nil {
 		return err
 	}
@@ -159,64 +158,63 @@ func (o *Options) autoCommit(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// codeReviewMessage get code review message from diff datas
-func (o *Options) codeReviewMessage(engine *llm.Engine, vars map[string]any) (string, error) {
+// codeReview summary code review message from diff datas
+func (o *Options) codeReview(engine *llm.Engine, vars map[string]any) error {
 	color.Cyan("We are trying to summarize a git diff")
 
 	p, err := prompt.GetPromptStringByTemplateName(prompt.SummarizeFileDiffTemplate, vars)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	resp, err := engine.ExecCompletion(strings.TrimSpace(p))
 	if err != nil {
-		return "", err
+		return err
 	}
+	codeReviewResult := strings.TrimSpace(resp.Explanation)
+	vars[prompt.SummarizePointsKey] = codeReviewResult
+	vars[prompt.SummarizeMessageKey] = codeReviewResult
 
-	vars["summary_points"] = resp.Explanation
-	vars[prompt.SummarizeMessageKey] = resp.Explanation
-
-	return strings.TrimSpace(resp.Explanation), nil
+	return nil
 }
 
-func (o *Options) summarizeTitle(engine *llm.Engine, vars map[string]any) (string, error) {
+func (o *Options) summarizeTitle(engine *llm.Engine, vars map[string]any) error {
 	color.Cyan("We are trying to summarize a title for pull request")
 
 	p, err := prompt.GetPromptStringByTemplateName(prompt.SummarizeTitleTemplate, vars)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	resp, err := engine.ExecCompletion(strings.TrimSpace(p))
 	if err != nil {
-		return "", err
+		return err
 	}
 	summarizeTitle := resp.Explanation
 	summarizeTitle = strings.TrimRight(strings.ToLower(string(summarizeTitle[0]))+summarizeTitle[1:], ".")
 
 	vars[prompt.SummarizeTitleKey] = summarizeTitle
-	vars[prompt.SummarizePointsKey] = summarizeTitle
 
-	return summarizeTitle, nil
+	return nil
 }
 
-func (o *Options) summarizePrefix(engine *llm.Engine, vars map[string]any) (string, error) {
+func (o *Options) summarizePrefix(engine *llm.Engine, vars map[string]any) error {
 	message := "We are trying to get conventional commit prefix"
 	color.Cyan(message + " (Tools)")
 
 	p, err := prompt.GetPromptStringByTemplateName(prompt.ConventionalCommitTemplate, vars)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	resp, err := engine.ExecCompletion(strings.TrimSpace(p))
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	vars[prompt.SummarizePrefixKey] = resp.Explanation
 
-	return resp.Explanation, nil
+	return nil
 }
 
 func (o *Options) generateCommitMsg(engine *llm.Engine, vars map[string]any) (string, error) {
