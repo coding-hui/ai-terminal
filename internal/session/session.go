@@ -30,4 +30,7 @@ type History interface {
 
 	// Clear removes all session from the store.
 	Clear(ctx context.Context, sessionID string) error
+
+	//Exists checks if the given chat session exists.
+	Exists(ctx context.Context, sessionID string) (bool, error)
 }

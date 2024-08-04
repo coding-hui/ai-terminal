@@ -71,3 +71,7 @@ func (h *ChatMessageHistory) Clear(_ context.Context, sessionID string) error {
 	h.messages[sessionID] = make([]llms.ChatMessage, 0)
 	return nil
 }
+
+func (h *ChatMessageHistory) Exists(_ context.Context, sessionID string) (bool, error) {
+	return len(h.messages[sessionID]) > 0, nil
+}

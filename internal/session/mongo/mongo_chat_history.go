@@ -192,3 +192,12 @@ func (h *ChatMessageHistory) Clear(ctx context.Context, sessionID string) error 
 	_, err := h.collection.DeleteMany(ctx, filter)
 	return err
 }
+
+func (h *ChatMessageHistory) Exists(ctx context.Context, sessionID string) (bool, error) {
+	filter := bson.M{mongoSessionIDKey: sessionID}
+	count, err := h.collection.CountDocuments(ctx, filter)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}

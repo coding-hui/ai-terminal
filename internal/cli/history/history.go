@@ -26,6 +26,7 @@ func NewCmdHistory(ioStreams genericclioptions.IOStreams) *cobra.Command {
 	}
 
 	cmd.AddCommand(newCmdLsHistory(ioStreams))
+	cmd.AddCommand(newCmdRemoveHistory(ioStreams))
 
 	return cmd
 }
