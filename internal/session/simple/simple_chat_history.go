@@ -130,7 +130,7 @@ func (h *ChatMessageHistory) load(_ context.Context, sessionID string) error {
 	if err != nil {
 		return err
 	}
-	var messages []llms.ChatMessage
+	messages := []llms.ChatMessage{}
 	for _, msg := range rawMessages {
 		messages = append(messages, msg.ToChatMessage())
 	}
@@ -142,7 +142,7 @@ func (h *ChatMessageHistory) persistent(_ context.Context, sessionID string) err
 	if len(h.messages[sessionID]) == 0 || h.isTempSession(sessionID) {
 		return nil
 	}
-	var rawMessages []llms.ChatMessageModel
+	rawMessages := []llms.ChatMessageModel{}
 	for _, msg := range h.messages[sessionID] {
 		rawMessages = append(rawMessages, llms.ConvertChatMessageToModel(msg))
 	}
