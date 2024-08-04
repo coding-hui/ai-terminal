@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/coding-hui/common/util/fileutil"
@@ -87,7 +88,10 @@ func (h *ChatMessageHistory) Sessions(_ context.Context) ([]string, error) {
 			return err
 		}
 		if !info.IsDir() {
-			sessions = append(sessions, strings.Split(info.Name(), "_")[0])
+			name := strings.Split(info.Name(), "_")[0]
+			if len(name) > 0 && !slices.Contains(sessions, name) {
+				sessions = append(sessions, name)
+			}
 		}
 		return nil
 	})
