@@ -15,7 +15,7 @@ const (
 	HookPrepareCommitMessageTemplate = `#!/bin/sh
 
 if [[ "$2" != "message" && "$2" != "commit" ]]; then
-  ai commit --file $1 --preview --no_confirm
+  ai commit --file $1 --preview --no-confirm
 fi
 `
 )
