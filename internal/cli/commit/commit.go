@@ -11,7 +11,6 @@ import (
 	"github.com/erikgeiser/promptkit/confirmation"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/coding-hui/iam/pkg/cli/genericclioptions"
 
@@ -32,6 +31,7 @@ type Options struct {
 	templateString string
 	commitAmend    bool
 	noConfirm      bool
+	commitLang     string
 
 	genericclioptions.IOStreams
 }
@@ -57,6 +57,8 @@ func NewCmdCommit(ioStreams genericclioptions.IOStreams) *cobra.Command {
 	commitCmd.Flags().StringVar(&ops.templateString, "template-string", "", "git commit message string")
 	commitCmd.Flags().BoolVar(&ops.commitAmend, "amend", false, "replace the tip of the current branch by creating a new commit.")
 	commitCmd.Flags().BoolVar(&ops.noConfirm, "no-confirm", false, "skip confirmation prompt")
+	commitCmd.Flags().StringVar(&ops.commitLang, "lang", "en", "summarizing language uses English by default. "+
+		"support en, zh-cn, zh-tw, ja, pt, pt-br.")
 
 	return commitCmd
 }
@@ -218,8 +220,6 @@ func (o *Options) summarizePrefix(engine *llm.Engine, vars map[string]any) error
 }
 
 func (o *Options) generateCommitMsg(engine *llm.Engine, vars map[string]any) (commitMessage string, err error) {
-	color.Cyan("We are trying to translate a git commit message to " + prompt.GetLanguage(viper.GetString("output.lang")) + " language")
-
 	if o.templateFile != "" {
 		format, err := os.ReadFile(o.templateFile)
 		if err != nil {
@@ -241,20 +241,25 @@ func (o *Options) generateCommitMsg(engine *llm.Engine, vars map[string]any) (co
 		}
 	}
 
-	vars[prompt.OutputLanguageKey] = prompt.GetLanguage(viper.GetString("output.lang"))
-	vars[prompt.OutputMessageKey] = commitMessage
-	translationPrompt, err := prompt.GetPromptStringByTemplateName(prompt.TranslationTemplate, vars)
-	if err != nil {
-		return "", err
-	}
+	if prompt.GetLanguage(o.commitLang) != prompt.DefaultLanguage {
+		color.Cyan("We are trying to translate a git commit message to " + o.commitLang + " language")
+		translationPrompt, err := prompt.GetPromptStringByTemplateName(prompt.TranslationTemplate, map[string]any{
+			prompt.OutputLanguageKey: prompt.GetLanguage(o.commitLang),
+			prompt.OutputMessageKey:  commitMessage,
+		})
+		if err != nil {
+			return "", err
+		}
 
-	resp, err := engine.ExecCompletion(strings.TrimSpace(translationPrompt))
-	if err != nil {
-		return "", err
+		resp, err := engine.ExecCompletion(strings.TrimSpace(translationPrompt))
+		if err != nil {
+			return "", err
+		}
+		commitMessage = resp.Explanation
 	}
 
 	// unescape html entities in commit message
-	commitMessage = html.UnescapeString(resp.Explanation)
+	commitMessage = html.UnescapeString(commitMessage)
 	commitMessage = strings.TrimSpace(commitMessage)
 
 	// Output commit summary data from AI

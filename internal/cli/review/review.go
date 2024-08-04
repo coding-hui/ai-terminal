@@ -40,7 +40,8 @@ func NewCmdCommit(ioStreams genericclioptions.IOStreams) *cobra.Command {
 	reviewCmd.Flags().IntVar(&ops.diffUnified, "diff-unified", 3, "generate diffs with <n> lines of context, default is 3")
 	reviewCmd.Flags().StringSliceVar(&ops.excludeList, "exclude-list", []string{}, "exclude file from git diff command")
 	reviewCmd.Flags().BoolVar(&ops.commitAmend, "amend", false, "replace the tip of the current branch by creating a new commit.")
-	reviewCmd.Flags().StringVar(&ops.commitLang, "lang", "en", "summarizing language uses English by default")
+	reviewCmd.Flags().StringVar(&ops.commitLang, "lang", "en", "summarizing language uses English by default. "+
+		"support en, zh-cn, zh-tw, ja, pt, pt-br.")
 
 	return reviewCmd
 }
@@ -80,7 +81,7 @@ func (o *Options) reviewCode(cmd *cobra.Command, args []string) error {
 	}
 
 	reviewMessage := reviewResp.Explanation
-	if o.commitLang != prompt.DefaultLanguage {
+	if prompt.GetLanguage(o.commitLang) != prompt.DefaultLanguage {
 		translationPrompt, err := prompt.GetPromptStringByTemplateName(
 			prompt.TranslationTemplate, map[string]any{
 				prompt.OutputLanguageKey: prompt.GetLanguage(o.commitLang),
