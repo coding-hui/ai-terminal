@@ -96,7 +96,7 @@ func NewAICommand(in io.Reader, out, err io.Writer) *cobra.Command {
 		templates.CommandGroup{
 			Message: "Settings Commands:",
 			Commands: []*cobra.Command{
-				completion.NewCmdCompletion(ioStreams.Out, ""),
+				completion.NewCmdCompletion(),
 			},
 		},
 	}
