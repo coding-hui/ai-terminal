@@ -21,6 +21,7 @@ import (
 	"github.com/coding-hui/iam/pkg/cli/genericclioptions"
 
 	"github.com/coding-hui/ai-terminal/internal/cli/ask"
+	"github.com/coding-hui/ai-terminal/internal/cli/commit"
 	"github.com/coding-hui/ai-terminal/internal/cli/completion"
 	"github.com/coding-hui/ai-terminal/internal/cli/history"
 	"github.com/coding-hui/ai-terminal/internal/cli/options"
@@ -87,10 +88,11 @@ func NewAICommand(in io.Reader, out, err io.Writer) *cobra.Command {
 
 	groups := templates.CommandGroups{
 		templates.CommandGroup{
-			Message: "Chat Commands:",
+			Message: "AI Commands:",
 			Commands: []*cobra.Command{
 				ask.NewCmdASK(ioStreams),
 				history.NewCmdHistory(ioStreams),
+				commit.NewCmdCommit(ioStreams),
 			},
 		},
 		templates.CommandGroup{

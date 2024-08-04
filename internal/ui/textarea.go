@@ -1,4 +1,4 @@
-package cmd
+package ui
 
 import (
 	"fmt"
@@ -10,29 +10,29 @@ import (
 
 type errMsg error
 
-type model struct {
-	textarea textarea.Model
-	err      error
+type TextareaModel struct {
+	Textarea textarea.Model
+	Err      error
 }
 
-func initialPrompt(value string) model {
+func InitialTextareaPrompt(value string) TextareaModel {
 	ti := textarea.New()
 	ti.InsertString(value)
 	ti.SetWidth(80)
 	ti.SetHeight(len(strings.Split(value, "\n")))
 	ti.Focus()
 
-	return model{
-		textarea: ti,
-		err:      nil,
+	return TextareaModel{
+		Textarea: ti,
+		Err:      nil,
 	}
 }
 
-func (m model) Init() tea.Cmd {
+func (m TextareaModel) Init() tea.Cmd {
 	return textarea.Blink
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m TextareaModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
 
@@ -40,33 +40,33 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type { //nolint:exhaustive
 		case tea.KeyEsc:
-			if m.textarea.Focused() {
-				m.textarea.Blur()
+			if m.Textarea.Focused() {
+				m.Textarea.Blur()
 			}
 		case tea.KeyCtrlC:
 			return m, tea.Quit
 		default:
-			if !m.textarea.Focused() {
-				cmd = m.textarea.Focus()
+			if !m.Textarea.Focused() {
+				cmd = m.Textarea.Focus()
 				cmds = append(cmds, cmd)
 			}
 		}
 
 	// We handle errors just like any other message
 	case errMsg:
-		m.err = msg
+		m.Err = msg
 		return m, nil
 	}
 
-	m.textarea, cmd = m.textarea.Update(msg)
+	m.Textarea, cmd = m.Textarea.Update(msg)
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 }
 
-func (m model) View() string {
+func (m TextareaModel) View() string {
 	return fmt.Sprintf(
 		"Please confirm the following commit message.\n\n%s\n\n%s",
-		m.textarea.View(),
+		m.Textarea.View(),
 		"(ctrl+c to continue.)",
 	) + "\n\n"
 }
