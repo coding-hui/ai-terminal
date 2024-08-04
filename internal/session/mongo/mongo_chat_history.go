@@ -184,7 +184,7 @@ func (h *ChatMessageHistory) Sessions(ctx context.Context) ([]string, error) {
 
 // Clear clear session memory from MongoDB.
 func (h *ChatMessageHistory) Clear(ctx context.Context, sessionID string) error {
-	filter := bson.M{mongoSessionIDKey: sessionID, mongoChatEngineModeKey: h.chatEngineMode}
+	filter := bson.M{mongoSessionIDKey: sessionID}
 	_, err := h.collection.DeleteMany(ctx, filter)
 	return err
 }
