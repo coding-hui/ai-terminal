@@ -68,13 +68,8 @@ type ls struct {
 	genericclioptions.IOStreams
 }
 
-// newLs returns initialized ls.
-func newLs(ioStreams genericclioptions.IOStreams) *ls {
-	return &ls{IOStreams: ioStreams}
-}
-
 func newCmdLsHistory(ioStreams genericclioptions.IOStreams) *cobra.Command {
-	o := newLs(ioStreams)
+	o := &ls{IOStreams: ioStreams}
 	cmd := &cobra.Command{
 		Use:     "ls",
 		Short:   "show chat session history.",
