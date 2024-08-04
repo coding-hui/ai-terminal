@@ -16,7 +16,11 @@ func TestChatMessageHistory(t *testing.T) {
 	sessionID := "test"
 
 	h := NewChatMessageHistory()
-	err := h.AddAIMessage(context.Background(), sessionID, "foo")
+
+	err := h.invalidate(context.Background(), sessionID)
+	require.NoError(t, err)
+
+	err = h.AddAIMessage(context.Background(), sessionID, "foo")
 	require.NoError(t, err)
 	err = h.AddUserMessage(context.Background(), sessionID, "bar")
 	require.NoError(t, err)
@@ -29,13 +33,9 @@ func TestChatMessageHistory(t *testing.T) {
 		llms.HumanChatMessage{Content: "bar"},
 	}, messages)
 
-	h = NewChatMessageHistory(
-		WithPreviousMessages(sessionID, []llms.ChatMessage{
-			llms.AIChatMessage{Content: "foo"},
-			llms.SystemChatMessage{Content: "bar"},
-		}),
-	)
-	err = h.AddUserMessage(context.Background(), sessionID, "zoo")
+	h = NewChatMessageHistory()
+
+	err = h.AddAIMessage(context.Background(), sessionID, "zoo")
 	require.NoError(t, err)
 
 	messages, err = h.Messages(context.Background(), sessionID)
@@ -43,8 +43,8 @@ func TestChatMessageHistory(t *testing.T) {
 
 	assert.Equal(t, []llms.ChatMessage{
 		llms.AIChatMessage{Content: "foo"},
-		llms.SystemChatMessage{Content: "bar"},
-		llms.HumanChatMessage{Content: "zoo"},
+		llms.HumanChatMessage{Content: "bar"},
+		llms.AIChatMessage{Content: "zoo"},
 	}, messages)
 
 	sessions, err := h.Sessions(context.Background())
@@ -52,4 +52,6 @@ func TestChatMessageHistory(t *testing.T) {
 	assert.Len(t, sessions, 1)
 	assert.Equal(t, sessionID, sessions[0])
 
+	err = h.invalidate(context.Background(), sessionID)
+	require.NoError(t, err)
 }

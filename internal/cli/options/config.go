@@ -46,6 +46,7 @@ type Ai struct {
 type DataStore struct {
 	Type     string `yaml:"type,omitempty"`
 	Url      string `yaml:"url,omitempty"`
+	Path     string `yaml:"path,omitempty"`
 	Username string `yaml:"username,omitempty"`
 	Password string `yaml:"password,omitempty"`
 }
@@ -75,6 +76,7 @@ func NewConfig() *Config {
 		DataStore: DataStore{
 			Type:     viper.GetString(FlagDatastoreType),
 			Url:      viper.GetString(FlagDatastoreUrl),
+			Path:     viper.GetString(FlagDatastorePath),
 			Username: viper.GetString(FlagDatastoreUsername),
 			Password: viper.GetString(FlagDatastorePassword),
 		},

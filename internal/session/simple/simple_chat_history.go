@@ -2,9 +2,14 @@ package simple
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
+	"os"
+	"path/filepath"
+	"strings"
 
+	"github.com/coding-hui/common/util/fileutil"
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
-	"golang.org/x/exp/maps"
 
 	"github.com/coding-hui/ai-terminal/internal/cli/options"
 	"github.com/coding-hui/ai-terminal/internal/session"
@@ -17,18 +22,21 @@ func init() {
 type simpleChatMessageHistoryFactory struct{}
 
 func (h *simpleChatMessageHistoryFactory) Type() string {
-	return "memory"
+	return "file"
 }
 
-func (h *simpleChatMessageHistoryFactory) Create(_ options.Config, _ string) (session.History, error) {
-	return &ChatMessageHistory{
-		messages: make(map[string][]llms.ChatMessage),
-	}, nil
+func (h *simpleChatMessageHistoryFactory) Create(cfg options.Config, chatEngineMode string) (session.History, error) {
+	return NewChatMessageHistory(
+		WithStorePath(cfg.DataStore.Path),
+		WithChatEngineMode(chatEngineMode),
+	), nil
 }
 
 // ChatMessageHistory is a struct that stores chat messages.
 type ChatMessageHistory struct {
-	messages map[string][]llms.ChatMessage
+	storePath      string
+	chatEngineMode string
+	messages       map[string][]llms.ChatMessage
 }
 
 // Statically assert that History implement the chat message history interface.
@@ -49,29 +57,102 @@ func (h *ChatMessageHistory) AddUserMessage(ctx context.Context, sessionID, mess
 	return h.AddMessage(ctx, sessionID, llms.HumanChatMessage{Content: message})
 }
 
-func (h *ChatMessageHistory) AddMessage(_ context.Context, sessionID string, message llms.ChatMessage) error {
+func (h *ChatMessageHistory) AddMessage(ctx context.Context, sessionID string, message llms.ChatMessage) error {
+	if err := h.load(ctx, sessionID); err != nil {
+		return err
+	}
 	h.messages[sessionID] = append(h.messages[sessionID], message)
-	return nil
+	return h.persistent(ctx, sessionID)
 }
 
-func (h *ChatMessageHistory) SetMessages(_ context.Context, sessionID string, messages []llms.ChatMessage) error {
+func (h *ChatMessageHistory) SetMessages(ctx context.Context, sessionID string, messages []llms.ChatMessage) error {
 	h.messages[sessionID] = messages
-	return nil
+	if err := h.invalidate(ctx, sessionID); err != nil {
+		return err
+	}
+	return h.persistent(ctx, sessionID)
 }
 
-func (h *ChatMessageHistory) Messages(_ context.Context, sessionID string) ([]llms.ChatMessage, error) {
+func (h *ChatMessageHistory) Messages(ctx context.Context, sessionID string) ([]llms.ChatMessage, error) {
+	if err := h.load(ctx, sessionID); err != nil {
+		return nil, err
+	}
 	return h.messages[sessionID], nil
 }
 
 func (h *ChatMessageHistory) Sessions(_ context.Context) ([]string, error) {
-	return maps.Keys(h.messages), nil
+	var sessions []string
+	err := filepath.Walk(h.storePath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			sessions = append(sessions, strings.Split(info.Name(), "_")[0])
+		}
+		return nil
+	})
+	return sessions, err
 }
 
-func (h *ChatMessageHistory) Clear(_ context.Context, sessionID string) error {
+func (h *ChatMessageHistory) Clear(ctx context.Context, sessionID string) error {
 	h.messages[sessionID] = make([]llms.ChatMessage, 0)
+	return h.invalidate(ctx, sessionID)
+}
+
+func (h *ChatMessageHistory) Exists(ctx context.Context, sessionID string) (bool, error) {
+	if err := h.load(ctx, sessionID); err != nil {
+		return false, err
+	}
+	return len(h.messages[sessionID]) > 0, nil
+}
+
+func (h *ChatMessageHistory) invalidate(_ context.Context, sessionID string) error {
+	filePath := filepath.Join(h.storePath, sessionID+"_"+h.chatEngineMode)
+	if err := os.Remove(filePath); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
 	return nil
 }
 
-func (h *ChatMessageHistory) Exists(_ context.Context, sessionID string) (bool, error) {
-	return len(h.messages[sessionID]) > 0, nil
+func (h *ChatMessageHistory) load(_ context.Context, sessionID string) error {
+	if h.isTempSession(sessionID) {
+		return nil
+	}
+	bytes, err := os.ReadFile(filepath.Join(h.storePath, sessionID+"_"+h.chatEngineMode))
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	if len(bytes) == 0 {
+		return nil
+	}
+	var rawMessages []llms.ChatMessageModel
+	err = json.Unmarshal(bytes, &rawMessages)
+	if err != nil {
+		return err
+	}
+	var messages []llms.ChatMessage
+	for _, msg := range rawMessages {
+		messages = append(messages, msg.ToChatMessage())
+	}
+	h.messages[sessionID] = messages
+	return nil
+}
+
+func (h *ChatMessageHistory) persistent(_ context.Context, sessionID string) error {
+	if len(h.messages[sessionID]) == 0 || h.isTempSession(sessionID) {
+		return nil
+	}
+	var rawMessages []llms.ChatMessageModel
+	for _, msg := range h.messages[sessionID] {
+		rawMessages = append(rawMessages, llms.ConvertChatMessageToModel(msg))
+	}
+	bytes, err := json.Marshal(rawMessages)
+	if err != nil {
+		return err
+	}
+	return fileutil.WriteFile(filepath.Join(h.storePath, sessionID+"_"+h.chatEngineMode), bytes)
+}
+
+func (h *ChatMessageHistory) isTempSession(sessionID string) bool {
+	return sessionID == "temp_session"
 }

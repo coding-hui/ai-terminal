@@ -31,7 +31,7 @@ type ConfigFlags struct {
 // NewConfigFlags returns ConfigFlags with default values set.
 func NewConfigFlags(usePersistentConfig bool) *ConfigFlags {
 	return &ConfigFlags{
-		ds:                  NewDatastoreFlags("memory"),
+		ds:                  NewDatastoreFlags("file"),
 		model:               NewModelFlags(),
 		SessionId:           pointer.ToString("temp_session"),
 		usePersistentConfig: usePersistentConfig,

@@ -11,6 +11,7 @@ import (
 const (
 	FlagDatastoreType     = "datastore.type"
 	FlagDatastoreUrl      = "datastore.url"
+	FlagDatastorePath     = "datastore.path"
 	FlagDatastoreUsername = "datastore.username"
 	FlagDatastorePassword = "datastore.password"
 )
@@ -18,6 +19,7 @@ const (
 type DataStoreFlags struct {
 	Type     *string
 	Url      *string
+	Path     *string
 	Username *string
 	Password *string
 }
@@ -40,6 +42,10 @@ func (d *DataStoreFlags) AddFlags(flags *pflag.FlagSet) {
 		flags.StringVar(d.Url, FlagDatastoreUrl, *d.Url, "Datastore connection url")
 		_ = viper.BindPFlag(FlagDatastoreUrl, flags.Lookup(FlagDatastoreUrl))
 	}
+	if d.Path != nil {
+		flags.StringVar(d.Path, FlagDatastorePath, *d.Path, "Datastore save path")
+		_ = viper.BindPFlag(FlagDatastorePath, flags.Lookup(FlagDatastorePath))
+	}
 	if d.Username != nil {
 		flags.StringVar(d.Username, FlagDatastoreUsername, *d.Username, "Datastore username")
 		_ = viper.BindPFlag(FlagDatastoreUsername, flags.Lookup(FlagDatastoreUsername))
@@ -53,7 +59,7 @@ func (d *DataStoreFlags) AddFlags(flags *pflag.FlagSet) {
 func (d *DataStoreFlags) Validate() error {
 	if d.Type != nil {
 		dsType := *d.Type
-		if dsType != "memory" && dsType != "mongo" {
+		if dsType != "file" && dsType != "mongo" {
 			return fmt.Errorf("invalid datastore type: %s", dsType)
 		}
 	}

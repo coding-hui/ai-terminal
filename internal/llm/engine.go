@@ -14,7 +14,6 @@ import (
 
 	"github.com/coding-hui/ai-terminal/internal/cli/options"
 	"github.com/coding-hui/ai-terminal/internal/session"
-	"github.com/coding-hui/ai-terminal/internal/session/simple"
 )
 
 const (
@@ -53,16 +52,14 @@ func NewLLMEngine(mode EngineMode, config *options.Config) (*Engine, error) {
 		llm.CallbacksHandler = LogHandler{}
 	}
 
-	var execHistory, chatHistory session.History = simple.NewChatMessageHistory(), simple.NewChatMessageHistory()
-	if config.ChatID != "temp_session" {
-		chatHistory, err = session.GetHistoryStore(*config, ChatEngineMode.String())
-		if err != nil {
-			return nil, err
-		}
-		execHistory, err = session.GetHistoryStore(*config, ExecEngineMode.String())
-		if err != nil {
-			return nil, err
-		}
+	var execHistory, chatHistory session.History
+	chatHistory, err = session.GetHistoryStore(*config, ChatEngineMode.String())
+	if err != nil {
+		return nil, err
+	}
+	execHistory, err = session.GetHistoryStore(*config, ExecEngineMode.String())
+	if err != nil {
+		return nil, err
 	}
 
 	return &Engine{
