@@ -217,12 +217,28 @@ func (o *Options) summarizePrefix(engine *llm.Engine, vars map[string]any) error
 	return nil
 }
 
-func (o *Options) generateCommitMsg(engine *llm.Engine, vars map[string]any) (string, error) {
+func (o *Options) generateCommitMsg(engine *llm.Engine, vars map[string]any) (commitMessage string, err error) {
 	color.Cyan("We are trying to translate a git commit message to " + prompt.GetLanguage(viper.GetString("output.lang")) + " language")
 
-	commitMessage, err := prompt.GetPromptStringByTemplateName(prompt.CommitMessageTemplate, vars)
-	if err != nil {
-		return "", err
+	if o.templateFile != "" {
+		format, err := os.ReadFile(o.templateFile)
+		if err != nil {
+			return "", err
+		}
+		commitMessage, err = prompt.GetPromptStringByTemplate(string(format), vars)
+		if err != nil {
+			return "", err
+		}
+	} else if o.templateString != "" {
+		commitMessage, err = prompt.GetPromptStringByTemplate(o.templateString, vars)
+		if err != nil {
+			return "", err
+		}
+	} else {
+		commitMessage, err = prompt.GetPromptStringByTemplateName(prompt.CommitMessageTemplate, vars)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	vars[prompt.OutputLanguageKey] = prompt.GetLanguage(viper.GetString("output.lang"))
