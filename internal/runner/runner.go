@@ -28,19 +28,14 @@ func PrepareInteractiveCommand(input string) *exec.Cmd {
 }
 
 func PrepareEditSettingsCommand(editor, filename string) *exec.Cmd {
-	var args []string
 	switch editor {
 	case "vim":
-		args = []string{editor, "+normal G$", "+startinsert!", filename}
+		return exec.Command(editor, "+normal G$", "+startinsert!", filename)
 	case "nano":
-		args = []string{editor, "+99999999", filename}
+		return exec.Command(editor, "+99999999", filename)
 	default:
-		args = []string{editor, filename}
+		return exec.Command(editor, filename)
 	}
-	if isWindows() {
-		return prepareWindowsCommand(args...)
-	}
-	return prepareUnixCommand(args...)
 }
 
 // IsCommandAvailable checks whether a command is available in the PATH.
