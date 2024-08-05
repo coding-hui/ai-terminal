@@ -22,7 +22,6 @@ func NewCmdOptions(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "options",
 		Short:   "Print the list of flags inherited by all commands",
-		Long:    "Print the list of flags inherited by all commands",
 		Example: optionsExample,
 		Run: func(cmd *cobra.Command, args []string) {
 			_ = cmd.Usage()

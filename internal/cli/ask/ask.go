@@ -60,7 +60,6 @@ func NewCmdASK(ioStreams genericclioptions.IOStreams) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "ask",
 		Short:   "CLI mode is made to be integrated in your command lines workflow.",
-		Long:    "CLI mode is made to be integrated in your command lines workflow.",
 		Example: askExample,
 		PreRunE: func(c *cobra.Command, args []string) error {
 			err := o.preparePrompts(args)

@@ -72,8 +72,7 @@ func newCmdLsHistory(ioStreams genericclioptions.IOStreams) *cobra.Command {
 	o := &ls{IOStreams: ioStreams}
 	cmd := &cobra.Command{
 		Use:     "ls",
-		Short:   "show chat session history.",
-		Long:    "show chat session history.",
+		Short:   "Show chat session history.",
 		Example: lsHistoryExample,
 		Run: func(cmd *cobra.Command, args []string) {
 			util.CheckErr(o.Validate())

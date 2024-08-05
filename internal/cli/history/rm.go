@@ -23,7 +23,7 @@ func newCmdRemoveHistory(ioStreams genericclioptions.IOStreams) *cobra.Command {
 	o := &rm{IOStreams: ioStreams}
 	cmd := &cobra.Command{
 		Use:          "rm",
-		Short:        "remove chat session history.",
+		Short:        "Remove chat session history.",
 		SilenceUsage: true,
 		Args:         cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {

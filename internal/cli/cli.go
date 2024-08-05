@@ -48,13 +48,8 @@ func NewAICommand(in io.Reader, out, err io.Writer) *cobra.Command {
 	// Parent command to which all subcommands are added.
 	cmds := &cobra.Command{
 		Use:   "ai",
-		Short: "ai controls the iam platform",
-		Long: templates.LongDesc(`
-		ai controls the iam platform, is the client side tool for iam platform.
-
-		Find more information at:
-			https://docs.wecoding.top/iam/docs/guide/en-US/cmd/ai/ai.md`),
-		Run: runHelp,
+		Short: "AI driven development in your terminal.",
+		Run:   runHelp,
 		// Hook before and after Run initialize and write profiles to disk,
 		// respectively.
 		PersistentPreRunE: func(*cobra.Command, []string) error {
