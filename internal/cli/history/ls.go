@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"k8s.io/klog/v2"
 
@@ -107,6 +108,12 @@ func (o *ls) Run(_ []string) error {
 	allSession, err := chatHistory.Sessions(context.Background())
 	if err != nil {
 		return err
+	}
+
+	// Fix: Return early if there is no history session
+	if len(allSession) == 0 {
+		color.Cyan("Could not find any chat sessions.")
+		return nil
 	}
 
 	var (
