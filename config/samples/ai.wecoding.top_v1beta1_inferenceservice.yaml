@@ -1,9 +1,0 @@
-apiVersion: ai.wecoding.top.top.wecoding/v1beta1
-kind: InferenceService
-metadata:
-  labels:
-    app.kubernetes.io/name: ai-terminal
-    app.kubernetes.io/managed-by: kustomize
-  name: inferenceservice-sample
-spec:
-# TODO(user): Add fields here
