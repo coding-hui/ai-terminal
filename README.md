@@ -21,9 +21,6 @@ AI-Terminal brings intelligence to the traditional CLI, enabling users to execut
 ### Prerequisites
 
 - go version v1.22.0+
-- docker version 17.03+.
-- kubectl version v1.11.3+.
-- Access to a Kubernetes v1.11.3+ cluster.
 
 ### To Install
 
