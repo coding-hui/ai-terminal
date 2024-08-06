@@ -127,14 +127,6 @@ func (e *Engine) Reset() {
 	}
 }
 
-func (e *Engine) SummaryChatHistory() (string, error) {
-	messages, err := e.chatHistory.Messages(context.Background(), e.chatID)
-	if err != nil {
-		return "", err
-	}
-	return e.SummaryMessages(messages)
-}
-
 func (e *Engine) SummaryMessages(messages []llms.ChatMessage) (string, error) {
 	ctx := context.Background()
 
