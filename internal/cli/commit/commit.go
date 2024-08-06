@@ -198,7 +198,6 @@ func (o *Options) summarizeTitle(engine *llm.Engine, vars map[string]any) error 
 	if err != nil {
 		return err
 	}
-	color.Cyan("\n" + p + "\n\n")
 
 	resp, err := engine.ExecCompletion(strings.TrimSpace(p))
 	if err != nil {
@@ -220,8 +219,6 @@ func (o *Options) summarizePrefix(engine *llm.Engine, vars map[string]any) error
 	if err != nil {
 		return err
 	}
-
-	color.Cyan("\n" + p + "\n\n")
 
 	resp, err := engine.ExecCompletion(strings.TrimSpace(p))
 	if err != nil {
