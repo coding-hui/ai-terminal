@@ -4,21 +4,13 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/coding-hui/iam/pkg/cli/genericclioptions"
-
-	"github.com/coding-hui/ai-terminal/internal/util/templates"
 )
-
-var historyExample = templates.Examples(`
-		# Managing session history:
-          ai history ls
-`)
 
 // NewCmdHistory returns a cobra command for manager history.
 func NewCmdHistory(ioStreams genericclioptions.IOStreams) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "history",
-		Short:   "Managing chat session history.",
-		Example: historyExample,
+		Use:   "history",
+		Short: "Managing chat session history.",
 		PostRunE: func(c *cobra.Command, args []string) error {
 			return nil
 		},
