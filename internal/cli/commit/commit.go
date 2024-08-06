@@ -32,6 +32,7 @@ type Options struct {
 	commitAmend    bool
 	noConfirm      bool
 	commitLang     string
+	userPrompt     string
 
 	genericclioptions.IOStreams
 }
@@ -63,9 +64,14 @@ func NewCmdCommit(ioStreams genericclioptions.IOStreams) *cobra.Command {
 	return commitCmd
 }
 
-func (o *Options) autoCommit(cmd *cobra.Command, args []string) error {
+func (o *Options) autoCommit(_ *cobra.Command, args []string) error {
 	if !runner.IsCommandAvailable("git") {
 		return errors.New("git command not found on your system's PATH. Please install Git and try again")
+	}
+
+	o.userPrompt = ""
+	if len(args) > 0 {
+		o.userPrompt = strings.TrimSpace(strings.Join(args, " "))
 	}
 
 	llmEngine, err := llm.NewLLMEngine(llm.ChatEngineMode, options.NewConfig())
@@ -88,7 +94,8 @@ func (o *Options) autoCommit(cmd *cobra.Command, args []string) error {
 	}
 
 	vars := map[string]any{
-		prompt.FileDiffsKey: diff,
+		prompt.FileDiffsKey:         diff,
+		prompt.UserAdditionalPrompt: o.userPrompt,
 	}
 
 	err = o.codeReview(llmEngine, vars)
@@ -191,6 +198,7 @@ func (o *Options) summarizeTitle(engine *llm.Engine, vars map[string]any) error 
 	if err != nil {
 		return err
 	}
+	color.Cyan("\n" + p + "\n\n")
 
 	resp, err := engine.ExecCompletion(strings.TrimSpace(p))
 	if err != nil {
@@ -212,6 +220,8 @@ func (o *Options) summarizePrefix(engine *llm.Engine, vars map[string]any) error
 	if err != nil {
 		return err
 	}
+
+	color.Cyan("\n" + p + "\n\n")
 
 	resp, err := engine.ExecCompletion(strings.TrimSpace(p))
 	if err != nil {

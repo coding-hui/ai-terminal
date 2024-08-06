@@ -19,13 +19,14 @@ const (
 	TranslationTemplate        = "translation.tmpl"
 	CommitMessageTemplate      = "commit-msg.tmpl"
 
-	SummarizePrefixKey  = "summarize_prefix"
-	SummarizeTitleKey   = "summarize_title"
-	SummarizeMessageKey = "summarize_message"
-	SummarizePointsKey  = "summary_points"
-	FileDiffsKey        = "file_diffs"
-	OutputLanguageKey   = "output_language"
-	OutputMessageKey    = "output_message"
+	UserAdditionalPrompt = "user_additional_prompt"
+	SummarizePrefixKey   = "summarize_prefix"
+	SummarizeTitleKey    = "summarize_title"
+	SummarizeMessageKey  = "summarize_message"
+	SummarizePointsKey   = "summary_points"
+	FileDiffsKey         = "file_diffs"
+	OutputLanguageKey    = "output_language"
+	OutputMessageKey     = "output_message"
 )
 
 type prompt struct {
