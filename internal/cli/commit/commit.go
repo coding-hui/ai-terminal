@@ -88,10 +88,6 @@ func (o *Options) autoCommit(_ *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	if diff == "" {
-		color.Red("No git diff found. Please add your staged changes using git add <files...>.")
-		return nil
-	}
 
 	vars := map[string]any{
 		prompt.FileDiffsKey:         diff,
