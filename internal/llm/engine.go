@@ -232,6 +232,54 @@ func (e *Engine) ChatStreamCompletion(input string) error {
 	return nil
 }
 
+func (e *Engine) ChatStream(ctx context.Context, messages []llms.MessageContent, options ...llms.CallOption) error {
+	e.running = true
+
+	streamingFunc := func(ctx context.Context, chunk []byte) error {
+		e.channel <- EngineChatStreamOutput{
+			content: string(chunk),
+			last:    false,
+		}
+		return nil
+	}
+
+	ops := []llms.CallOption{
+		llms.WithModel(e.config.Ai.Model),
+		llms.WithMaxTokens(e.config.Ai.MaxTokens),
+		llms.WithTemperature(e.config.Ai.Temperature),
+		llms.WithTopP(e.config.Ai.TopP),
+		llms.WithStreamingFunc(streamingFunc),
+	}
+
+	for _, o := range options {
+		ops = append(ops, o)
+	}
+
+	rsp, err := e.llm.GenerateContent(ctx, messages, ops...)
+	if err != nil {
+		e.running = false
+		return err
+	}
+
+	executable := false
+	output := rsp.Choices[0].Content
+
+	if e.mode == ExecEngineMode {
+		if !strings.HasPrefix(output, noExec) && !strings.Contains(output, "\n") {
+			executable = true
+		}
+	}
+
+	e.channel <- EngineChatStreamOutput{
+		content:    "",
+		last:       true,
+		executable: executable,
+	}
+	e.running = false
+
+	return nil
+}
+
 func (e *Engine) appendUserMessage(content string) {
 	if len(strings.TrimSpace(content)) == 0 {
 		klog.V(2).Info("user input content is empty")
