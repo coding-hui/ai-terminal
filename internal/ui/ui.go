@@ -93,8 +93,7 @@ func (u *Ui) Init() tea.Cmd {
 	cfg := options.NewConfig()
 	u.config = cfg
 	klog.V(2).InfoS("begin init tea model.", "cfg", cfg)
-	firstInit := false
-	if cfg.Ai.Token == "" || cfg.Ai.Model == "" || cfg.Ai.ApiBase == "" || firstInit {
+	if cfg.Ai.Token == "" || cfg.Ai.Model == "" || cfg.Ai.ApiBase == "" {
 		if u.state.runMode == ReplMode {
 			return tea.Sequence(
 				tea.ClearScreen,
