@@ -19,9 +19,9 @@ Here are the labels you can choose from:
 
 THE FILE SUMMARIES:
 
+{{- if .user_additional_prompt }}
+# {{ .user_additional_prompt }}
+{{- end }}
 {{ .summary_points }}
 
 Based on the changes described in the file summaries, What's the best label for the commit? Your answer must be one of the labels above. Don't describe the changes, just write the label.
-{{- if .user_additional_prompt }}
-Refer to the user's change summary: {{ .user_additional_prompt }}.
-{{- end }}

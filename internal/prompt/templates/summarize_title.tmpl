@@ -6,9 +6,6 @@ Write your response using the imperative tense following the kernel git commit s
 Write a high level title.
 Do not repeat the commit summaries or the file summaries.
 Do not list individual changes in the title.
-{{- if .user_additional_prompt }}
-Refer to the user's change summary: {{ .user_additional_prompt }}.
-{{- end }}
 
 EXAMPLE SUMMARY COMMENTS:
 ```
@@ -20,6 +17,9 @@ Schedule all GitHub actions on all OSs
 
 THE FILE SUMMARIES:
 
+{{- if .user_additional_prompt }}
+{{ .user_additional_prompt }}
+{{- end }}
 {{ .summary_points }}
 
 Remember to write only one line, no more than 50 characters.
