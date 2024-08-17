@@ -79,9 +79,10 @@ func (c *command) addFiles(files ...string) tea.Msg {
 		return c.coder.Error("Please provide at least one file")
 	}
 
-	var matchedFiles []string
-	var addedFiles []string
-	var err error
+	var (
+		err          error
+		matchedFiles = make([]string, len(files))
+	)
 
 	for _, file := range files {
 		filePath := filepath.Join(c.coder.codeBasePath, file)
@@ -117,7 +118,6 @@ func (c *command) addFiles(files ...string) tea.Msg {
 		}
 
 		c.coder.absFileNames[absPath] = struct{}{}
-		addedFiles = append(addedFiles, f)
 
 		c.coder.Successf("Added file [%s] to chat context", f)
 	}

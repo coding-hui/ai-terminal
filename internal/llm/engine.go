@@ -250,11 +250,7 @@ func (e *Engine) ChatStream(ctx context.Context, messages []llms.MessageContent,
 		llms.WithTopP(e.config.Ai.TopP),
 		llms.WithStreamingFunc(streamingFunc),
 	}
-
-	for _, o := range options {
-		ops = append(ops, o)
-	}
-
+	ops = append(ops, options...)
 	rsp, err := e.llm.GenerateContent(ctx, messages, ops...)
 	if err != nil {
 		e.running = false

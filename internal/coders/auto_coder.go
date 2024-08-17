@@ -20,13 +20,9 @@ import (
 var program *tea.Program
 
 type State struct {
-	error      error
-	runMode    RunMode
-	promptMode PromptMode
-	args       string
-	pipe       string
-	buffer     string
-	command    string
+	error   error
+	buffer  string
+	command string
 }
 
 // AutoCoder is a auto generate coders user interface.
