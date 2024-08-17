@@ -266,7 +266,10 @@ func (a *AutoCoder) View() string {
 			}
 		}
 		if !done {
-			return components.spinner.ViewWithMessage(doneMsg, a.state.buffer, a.checkpoints[len(a.checkpoints)-1].Desc)
+			if len(a.state.buffer) > 0 {
+				return components.renderer.RenderContent(a.state.buffer)
+			}
+			return components.spinner.ViewWithMessage(doneMsg, a.checkpoints[len(a.checkpoints)-1].Desc)
 		}
 
 		return fmt.Sprintf("\n%s\n%s",

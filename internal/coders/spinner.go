@@ -49,16 +49,13 @@ func (s *Spinner) View() string {
 	)
 }
 
-func (s *Spinner) ViewWithMessage(prefix, suffix, spinnerMsg string) string {
+func (s *Spinner) ViewWithMessage(prefix, spinnerMsg string) string {
 	msg := fmt.Sprintf(
 		"\n%s %s %s...",
 		prefix,
 		s.spinner.View(),
 		s.spinner.Style.Render(spinnerMsg),
 	)
-	if len(suffix) > 0 {
-		msg += "\n" + components.renderer.RenderContent(suffix)
-	}
 	return msg
 }
 

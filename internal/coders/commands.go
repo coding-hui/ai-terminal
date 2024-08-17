@@ -81,7 +81,7 @@ func (c *command) addFiles(files ...string) tea.Msg {
 
 	var (
 		err          error
-		matchedFiles = make([]string, len(files))
+		matchedFiles = []string{}
 	)
 
 	for _, file := range files {
@@ -191,47 +191,57 @@ func (c *command) awaitChatCompleted() tea.Cmd {
 	}
 }
 
-func (c *command) prepareCompletionMessages(userInput string) (messages []llms.MessageContent, err error) {
+func (c *command) prepareCompletionMessages(userInput string) ([]llms.MessageContent, error) {
 	addedFileMessages, err := c.getFilesMessages()
 	if err != nil {
 		return nil, c.coder.Error(err)
 	}
 
-	messages = append(messages, addedFileMessages...)
-	messages = append(messages, llms.MessageContent{
-		Role:  llms.ChatMessageTypeHuman,
-		Parts: []llms.ContentPart{llms.TextPart(userInput)},
+	messages, err := promptBaseCoder.FormatMessages(map[string]any{
+		addedFilesKey:   addedFileMessages,
+		userQuestionKey: userInput,
 	})
+	if err != nil {
+		return nil, c.coder.Error(err)
+	}
 
-	return
+	ret := make([]llms.MessageContent, 0, len(messages))
+	for _, msg := range messages {
+		switch msg.GetType() {
+		case llms.ChatMessageTypeAI:
+			ret = append(ret, llms.MessageContent{
+				Role:  llms.ChatMessageTypeAI,
+				Parts: []llms.ContentPart{llms.TextPart(msg.GetContent())},
+			})
+		case llms.ChatMessageTypeHuman:
+			ret = append(ret, llms.MessageContent{
+				Role:  llms.ChatMessageTypeHuman,
+				Parts: []llms.ContentPart{llms.TextPart(msg.GetContent())},
+			})
+		case llms.ChatMessageTypeSystem:
+			ret = append(ret, llms.MessageContent{
+				Role:  llms.ChatMessageTypeSystem,
+				Parts: []llms.ContentPart{llms.TextPart(msg.GetContent())},
+			})
+		}
+	}
+
+	return ret, nil
 }
 
-func (c *command) getFilesMessages() ([]llms.MessageContent, error) {
-	var messagesParts []llms.ContentPart
-
-	messagesParts = append(messagesParts, llms.TextPart(FileContentPrefix))
+func (c *command) getFilesMessages() (string, error) {
+	addedFiles := ""
 	if len(c.coder.absFileNames) > 0 {
 		for file := range c.coder.absFileNames {
 			content, err := c.readFileContent(file)
 			if err != nil {
-				return nil, c.coder.Error(err)
+				return "", c.coder.Error(err)
 			}
-			messagesParts = append(messagesParts, llms.TextPart(content))
+			addedFiles += content
 		}
 	}
 
-	messages := []llms.MessageContent{
-		{
-			Role:  llms.ChatMessageTypeHuman,
-			Parts: messagesParts,
-		},
-		{
-			Role:  llms.ChatMessageTypeAI,
-			Parts: []llms.ContentPart{llms.TextPart("Ok, any changes I propose will be to those files.")},
-		},
-	}
-
-	return messages, nil
+	return addedFiles, nil
 }
 
 func (c *command) readFileContent(filePath string) (string, error) {
