@@ -63,7 +63,7 @@ func (c *command) askFiles(args ...string) tea.Msg {
 	c.coder.state.buffer = ""
 	c.coder.state.command = ""
 
-	messages, err := c.prepareCompletionMessages(input)
+	messages, err := c.prepareAskCompletionMessages(input)
 	if err != nil {
 		return c.coder.Error(err)
 	}
@@ -196,13 +196,13 @@ func (c *command) awaitChatCompleted() tea.Cmd {
 	}
 }
 
-func (c *command) prepareCompletionMessages(userInput string) ([]llms.MessageContent, error) {
+func (c *command) prepareAskCompletionMessages(userInput string) ([]llms.MessageContent, error) {
 	addedFileMessages, err := c.getFilesMessages()
 	if err != nil {
 		return nil, c.coder.Error(err)
 	}
 
-	messages, err := promptBaseCoder.FormatMessages(map[string]any{
+	messages, err := promptAsk.FormatMessages(map[string]any{
 		addedFilesKey:   addedFileMessages,
 		userQuestionKey: userInput,
 	})
