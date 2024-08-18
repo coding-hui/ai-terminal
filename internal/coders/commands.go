@@ -31,6 +31,7 @@ func (c *command) registryCmds() {
 	supportCommands["/list"] = c.listFiles
 	supportCommands["/remove"] = c.removeFiles
 	supportCommands["/ask"] = c.askFiles
+	supportCommands["/drop"] = c.dropFiles
 }
 
 func (c *command) isCommand(input string) bool {
@@ -174,6 +175,17 @@ func (c *command) removeFiles(files ...string) tea.Msg {
 
 	return nil
 }
+
+func (c *command) dropFiles(_ ...string) tea.Msg {
+	dropCount := len(c.coder.absFileNames)
+	c.coder.absFileNames = map[string]struct{}{}
+	c.coder.Infof("Dropped %d files", dropCount)
+
+	defer c.coder.Done()
+
+	return nil
+}
+
 func (c *command) absFilePath(matchedFile string) (abs string, err error) {
 	abs = filepath.Join(c.coder.codeBasePath, matchedFile)
 	if filepath.IsAbs(matchedFile) {
