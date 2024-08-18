@@ -243,7 +243,7 @@ func (a *AutoCoder) View() string {
 	done := started && a.checkpoints[len(a.checkpoints)-1].Done
 
 	if started && a.checkpoints[len(a.checkpoints)-1].Error != nil {
-		return fmt.Sprintf("%s\n\n%s\n",
+		return fmt.Sprintf("\n%s\n\n%s\n",
 			components.renderer.RenderError(fmt.Sprintf("%s", a.checkpoints[len(a.checkpoints)-1].Error)),
 			components.prompt.View(),
 		)
