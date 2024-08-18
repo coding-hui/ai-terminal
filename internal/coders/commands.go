@@ -40,7 +40,10 @@ func (c *command) isCommand(input string) bool {
 
 func (c *command) run(input string) tea.Cmd {
 	return func() tea.Msg {
-		cmd, args := extractCmdArgs(input)
+		cmd, args := "/ask", []string{input}
+		if c.isCommand(input) {
+			cmd, args = extractCmdArgs(input)
+		}
 
 		cmdFunc, ok := supportCommands[cmd]
 		if !ok {

@@ -174,15 +174,13 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				components.prompt.SetValue("")
 				components.prompt.Focus()
 				components.prompt, promptCmd = components.prompt.Update(msg)
-				if a.command.isCommand(input) {
-					cmds = append(
-						cmds,
-						promptCmd,
-						tea.Println(inputPrint),
-						a.command.run(input),
-						a.command.awaitChatCompleted(),
-					)
-				}
+				cmds = append(
+					cmds,
+					promptCmd,
+					tea.Println(inputPrint),
+					a.command.run(input),
+					a.command.awaitChatCompleted(),
+				)
 			}
 
 		// clear
