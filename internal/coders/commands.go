@@ -134,12 +134,14 @@ func (c *command) listFiles(_ ...string) tea.Msg {
 	fileCount := len(c.coder.absFileNames)
 	c.coder.Infof("Loaded %d files", fileCount)
 
+	no := 1
 	for file := range c.coder.absFileNames {
 		relPath, err := filepath.Rel(c.coder.codeBasePath, file)
 		if err != nil {
 			return c.coder.Error(err)
 		}
-		c.coder.Info(relPath)
+		c.coder.Infof("%d. %s", no, relPath)
+		no++
 	}
 
 	defer c.coder.Done()
