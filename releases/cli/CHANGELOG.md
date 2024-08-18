@@ -1,6 +1,34 @@
 # Change Log
 
 
+<a name="v0.1.4"></a>
+## [v0.1.4] - 2024-08-18
+### Bug Fixes
+- improve UI responsiveness and efficiency
+- simplify UI Initialization Condition
+
+### Code Refactoring
+- improve command handling in AutoCoder
+- improve Coder UI and Chat Integration
+- refactor coder and LLM modules
+- optimize Prompt Templates and Actions Configuration
+- remove empty diff checks in commands
+- integrate chat history summary logic
+- remove redundant color formatting in prompts
+- remove PROJECT configuration file
+- remove InferenceService and Related Components
+- simplify edit settings command execution
+- simplify hook command handling
+
+### Features
+- improve file listing output formatting
+- introduce AutoCoder for file-based chat assistance
+- add User Custom Prompts to Commit Cmd
+- add colored console feedback for no sessions
+- add empty diff checks in CLI commands
+- release v0.1.3-1 with enhancements and fixes
+
+
 <a name="v0.1.3-1"></a>
 ## [v0.1.3-1] - 2024-08-04
 ### Code Refactoring
@@ -60,7 +88,8 @@
 - add ask cmd
 
 
-[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.1.3-1...HEAD
+[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.1.4...HEAD
+[v0.1.4]: https://github.com/coding-hui/ai-terminal/compare/v0.1.3-1...v0.1.4
 [v0.1.3-1]: https://github.com/coding-hui/ai-terminal/compare/v0.1.3...v0.1.3-1
 [v0.1.3]: https://github.com/coding-hui/ai-terminal/compare/v0.1.2...v0.1.3
 [v0.1.2]: https://github.com/coding-hui/ai-terminal/compare/v0.1.1...v0.1.2
