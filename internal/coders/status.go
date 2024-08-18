@@ -83,7 +83,14 @@ func (a *AutoCoder) changeStatus(statusType StatusType, desc string) {
 }
 
 func (a *AutoCoder) statusTickCmd() tea.Cmd {
-	return tea.Tick(time.Millisecond*750, func(t time.Time) tea.Msg {
+	return tea.Tick(time.Second*1, func(t time.Time) tea.Msg {
 		return <-a.checkpointChan
 	})
+}
+
+func (a *AutoCoder) isQuerying() bool {
+	if len(a.checkpoints) == 0 {
+		return false
+	}
+	return !a.checkpoints[len(a.checkpoints)-1].Done
 }

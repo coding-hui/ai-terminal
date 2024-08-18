@@ -104,7 +104,7 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case spinner.TickMsg:
-		if len(a.checkpoints) > 0 && !a.checkpoints[len(a.checkpoints)-1].Done {
+		if a.isQuerying() && len(a.state.buffer) <= 0 {
 			components.spinner, spinnerCmd = components.spinner.Update(msg)
 			cmds = append(
 				cmds,
@@ -146,7 +146,7 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// history
 		case tea.KeyUp, tea.KeyDown:
-			if len(a.checkpoints) <= 0 || (len(a.checkpoints) > 0 && a.checkpoints[len(a.checkpoints)-1].Done) {
+			if !a.isQuerying() {
 				var input *string
 				if msg.Type == tea.KeyUp {
 					input = a.history.GetPrevious()
@@ -166,7 +166,7 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// handle user input
 		case tea.KeyEnter:
 			input := components.prompt.GetValue()
-			if len(input) > 0 {
+			if input != "" {
 				a.state.buffer = ""
 				a.checkpoints = make([]Checkpoint, 0)
 				a.history.Add(input)
@@ -271,11 +271,12 @@ func (a *AutoCoder) View() string {
 			}
 			return components.spinner.ViewWithMessage(doneMsg, a.checkpoints[len(a.checkpoints)-1].Desc)
 		}
-
-		return fmt.Sprintf("\n%s\n%s",
-			doneMsg,
-			components.prompt.View(),
-		)
+		if len(doneMsg) > 0 {
+			return fmt.Sprintf("\n%s\n%s",
+				doneMsg,
+				components.prompt.View(),
+			)
+		}
 	}
 
 	return components.prompt.View()

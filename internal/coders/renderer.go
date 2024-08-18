@@ -49,7 +49,6 @@ func NewRenderer(options ...glamour.TermRendererOption) *Renderer {
 func (r *Renderer) RenderContent(in string) string {
 	contents := lipgloss.NewStyle().
 		Width(defaultWidth). // pad to width.
-		Height(defaultHeight).
 		MaxWidth(defaultWidth).
 		Render(in)
 	out, _ := r.contentRenderer.Render(contents)
