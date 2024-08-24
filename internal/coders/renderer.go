@@ -88,13 +88,18 @@ func (r *Renderer) RenderApiBaseConfigMessage() string {
 
 func (r *Renderer) RenderHelpMessage() string {
 	help := "**Help**\n"
-	help += "- `↑`/`↓` : navigate in history\n"
-	help += "- `/add`  : switch between `🚀 exec` and `💬 chat` prompt modes\n"
-	help += "- `ctrl+h`: show help\n"
-	help += "- `ctrl+s`: edit settings\n"
-	help += "- `ctrl+r`: clear terminal and reset discussion history\n"
-	help += "- `ctrl+l`: clear terminal but keep discussion history\n"
-	help += "- `ctrl+c`: exit or interrupt command execution\n"
+	help += "- `↑`/`↓`   : navigate in history\n"
+	help += "- `/add`    : Add files to the chat so GPT can edit them or review them in detail\n"
+	help += "- `/list`   : List files added to the chat\n"
+	help += "- `/remove` : Remove files from the chat\n"
+	help += "- `/drop`   : Drop all files from the chat\n"
+	help += "- `/coding` : Execute coding tasks on added files\n"
+	help += "- `/ask`    : Ask a question about the added files\n"
+	help += "- `ctrl+h`  : show help\n"
+	help += "- `ctrl+s`  : edit settings\n"
+	help += "- `ctrl+r`  : clear terminal and reset discussion history\n"
+	help += "- `ctrl+l`  : clear terminal but keep discussion history\n"
+	help += "- `ctrl+c`  : exit or interrupt command execution\n"
 
 	return help
 }

@@ -59,6 +59,11 @@ func (e *EditBlockCoder) GetEdits(_ context.Context) ([]PartialCodeBlock, error)
 }
 
 func (e *EditBlockCoder) ApplyEdits(ctx context.Context, edits []PartialCodeBlock) error {
+	var (
+		passed = []PartialCodeBlock{}
+		failed = []PartialCodeBlock{}
+	)
+
 	for _, block := range edits {
 		absPath, err := absFilePath(e.coder.codeBasePath, block.Path)
 		if err != nil {
@@ -81,19 +86,74 @@ func (e *EditBlockCoder) ApplyEdits(ctx context.Context, edits []PartialCodeBloc
 
 		newFileContent := doReplace(absPath, string(rawFileContent), block.OriginalText, block.UpdatedText, e.fence)
 		if len(newFileContent) == 0 {
-			return fmt.Errorf("code block is empty and cannot be updated to file %s", block.Path)
+			failed = append(failed, block)
+			e.coder.Warningf("code block is empty and cannot be updated to file %s", block.Path)
+			continue
 		}
+
 		err = fileutil.WriteFile(absPath, []byte(newFileContent))
+		if err != nil {
+			failed = append(failed, block)
+			continue
+		}
+
+		passed = append(passed, block)
+		e.coder.Successf("Applied edit to file block %s", block.Path)
+	}
+
+	blocks := "block"
+	if len(failed) > 1 {
+		blocks = "blocks"
+	}
+
+	errMsg := fmt.Sprintf("# %d SEARCH/REPLACE %s failed to match!\n", len(failed), blocks)
+
+	for _, block := range failed {
+		absPath, err := absFilePath(e.coder.codeBasePath, block.Path)
 		if err != nil {
 			return err
 		}
+
+		content, err := os.ReadFile(absPath)
+		if err != nil {
+			return err
+		}
+
+		errMsg += fmt.Sprintf(`
+## SearchReplaceNoExactMatch: This SEARCH block failed to exactly match lines in %s
+<<<<<<< SEARCH
+%s=======
+%s>>>>>>> REPLACE
+
+`, block.Path, block.OriginalText, block.UpdatedText)
+
+		didYouMean := findSimilarLines(block.OriginalText, string(content))
+		if len(didYouMean) > 0 {
+			errMsg += fmt.Sprintf(`Did you mean to match some of these actual lines from %s?
+
+%s
+%s
+%s
+
+`, block.Path, e.fence[0], didYouMean, e.fence[1])
+		}
+
+		if strings.Contains(string(content), block.UpdatedText) {
+			errMsg += fmt.Sprintf(`Are you sure you need this SEARCH/REPLACE block?
+The REPLACE lines are already in %s!
+
+The SEARCH section must exactly match an existing block of lines including all white  space, comments, indentation, docstrings, etc.
+`, block.Path)
+		}
+
+		e.coder.Warning(errMsg)
 	}
 
 	return nil
 }
 
 func (e *EditBlockCoder) Execute(ctx context.Context, messages []llms.MessageContent) error {
-	e.coder.Loading("Please wait while we design the code...")
+	e.coder.Loading("Please wait while we design the code")
 
 	output, err := e.coder.llmEngine.Completion(ctx, messages)
 	if err != nil {
@@ -127,7 +187,7 @@ func findOriginalUpdateBlocks(content string, fence []string) ([]PartialCodeBloc
 		endBlock := pieces[i+3]
 
 		if !strings.Contains(headBlock, startFence) {
-			return nil, fmt.Errorf("opening fence %s cannot be found in block:\n%s\n", startFence, endFence)
+			return nil, fmt.Errorf("opening fence %s cannot be found in block:\n%s\n", startFence, headBlock)
 		}
 
 		if !strings.HasPrefix(endBlock, endFence) {
@@ -411,6 +471,41 @@ func replaceClosestEditDistance(wholeLines []string, part string, partLines []st
 	modifiedWholeStr := strings.Join(modifiedWhole, "")
 
 	return modifiedWholeStr
+}
+
+func findSimilarLines(search, content string) string {
+	bestRatio := 0.0
+	bestMatch := []string{}
+	threshold := 0.6
+	bestMatchLineIdx := 0
+	search, searchLines := split(search)
+	content, contentLines := split(content)
+
+	for i := 0; i < len(contentLines)-len(searchLines)+1; i++ {
+		chunkLine := contentLines[i : i+len(searchLines)]
+		chunk := strings.Join(contentLines[i:i+len(searchLines)], "")
+
+		ratio := 1.0 - float64(ld(strings.Join(searchLines, ""), chunk, false))/float64(max(len(search), len(chunk)))
+		if ratio > bestRatio {
+			bestRatio = ratio
+			bestMatch = chunkLine
+			bestMatchLineIdx = i
+		}
+	}
+
+	if bestRatio < threshold {
+		return ""
+	}
+
+	if bestMatch[0] == searchLines[0] && bestMatch[len(bestMatch)-1] == searchLines[len(searchLines)-1] {
+		return strings.Join(bestMatch, "\n")
+	}
+
+	N := 5
+	bestMatchEnd := min(len(contentLines), bestMatchLineIdx+len(searchLines)+N)
+	bestMatchLineIdx = max(0, bestMatchLineIdx-N)
+
+	return strings.Join(contentLines[bestMatchLineIdx:bestMatchEnd], "\n")
 }
 
 // ld compares two strings and returns the levenshtein distance between them.
