@@ -314,18 +314,3 @@ func (a *AutoCoder) reset() {
 	a.absFileNames = make(map[string]struct{})
 	a.state.buffer = ""
 }
-
-func checkpointIcon(checkpointType StatusType) string {
-	switch checkpointType {
-	case StatusLoading:
-		return " ✅ "
-	case StatusSuccess:
-		return " ✅ "
-	case StatusWarning:
-		return " ⚠️ "
-	case StatusError:
-		return " ❌ "
-	default:
-		return " ✅ "
-	}
-}

@@ -14,6 +14,12 @@ const (
 	StatusSuccess
 	StatusWarning
 	StatusError
+
+	StatusLoadingIcon = " ✅ "
+	StatusInfoIcon    = " ✅ "
+	StatusSuccessIcon = " ✅ "
+	StatusErrorIcon   = " ❌ "
+	StatusWarningIcon = " ⚠️ "
 )
 
 type StatusType int
@@ -121,4 +127,19 @@ func (a *AutoCoder) isQuerying() bool {
 		return false
 	}
 	return !a.checkpoints[len(a.checkpoints)-1].Done
+}
+
+func checkpointIcon(checkpointType StatusType) string {
+	switch checkpointType {
+	case StatusLoading:
+		return StatusLoadingIcon
+	case StatusSuccess:
+		return StatusSuccessIcon
+	case StatusWarning:
+		return StatusWarningIcon
+	case StatusError:
+		return StatusErrorIcon
+	default:
+		return StatusInfoIcon
+	}
 }

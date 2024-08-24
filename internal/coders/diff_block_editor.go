@@ -60,7 +60,6 @@ func (e *EditBlockCoder) GetEdits(_ context.Context) ([]PartialCodeBlock, error)
 
 func (e *EditBlockCoder) ApplyEdits(ctx context.Context, edits []PartialCodeBlock) error {
 	var (
-		passed = []PartialCodeBlock{}
 		failed = []PartialCodeBlock{}
 	)
 
@@ -119,7 +118,6 @@ Are you sure you want to apply these edits? (Y/n)`,
 			continue
 		}
 
-		passed = append(passed, block)
 		e.coder.Successf("Applied edit to file block %s", block.Path)
 	}
 
@@ -313,10 +311,10 @@ func split(content string) (string, []string) {
 	return content, lines
 }
 
-func replaceMostSimilarChunk(whole, part, replace string) string {
-	whole, wholeLines := split(whole)
-	part, partLines := split(part)
-	replace, replaceLines := split(replace)
+func replaceMostSimilarChunk(rawWhole, rawPart, rawReplace string) string {
+	_, wholeLines := split(rawWhole)
+	part, partLines := split(rawPart)
+	_, replaceLines := split(rawReplace)
 
 	res := perfectOrWhitespace(wholeLines, partLines, replaceLines)
 	if len(res) > 0 {
@@ -324,7 +322,7 @@ func replaceMostSimilarChunk(whole, part, replace string) string {
 	}
 
 	// try fuzzy matching
-	res = replaceClosestEditDistance(wholeLines, strings.Join(partLines, ""), partLines, replaceLines)
+	res = replaceClosestEditDistance(wholeLines, part, partLines, replaceLines)
 	if len(res) > 0 {
 		return res
 	}
@@ -495,13 +493,13 @@ func replaceClosestEditDistance(wholeLines []string, part string, partLines []st
 	return modifiedWholeStr
 }
 
-func findSimilarLines(search, content string) string {
+func findSimilarLines(rawSearch, rawContent string) string {
 	bestRatio := 0.0
 	bestMatch := []string{}
 	threshold := 0.6
 	bestMatchLineIdx := 0
-	search, searchLines := split(search)
-	content, contentLines := split(content)
+	search, searchLines := split(rawSearch)
+	_, contentLines := split(rawContent)
 
 	for i := 0; i < len(contentLines)-len(searchLines)+1; i++ {
 		chunkLine := contentLines[i : i+len(searchLines)]

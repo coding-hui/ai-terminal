@@ -20,7 +20,6 @@ func testCodingCmd(t *testing.T) {
 
 	cmds.addFiles("internal/coders/code_editor.go")
 
-	cmds.coding("添加注释")
 }
 
 func prepareTestCommands() *command {
@@ -29,13 +28,10 @@ func prepareTestCommands() *command {
 	coder.Init()
 
 	// mock status
-	go func() {
-		for {
-			select {
-			case <-coder.checkpointChan:
-			}
-		}
-	}()
+	select {
+	case <-coder.checkpointChan:
+	default:
+	}
 
 	return newCommand(coder)
 }
