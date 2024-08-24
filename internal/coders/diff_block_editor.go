@@ -146,7 +146,8 @@ The SEARCH section must exactly match an existing block of lines including all w
 `, block.Path)
 		}
 
-		e.coder.Warning(errMsg)
+		//e.coder.Warning(errMsg)
+		e.coder.state.buffer = errMsg
 	}
 
 	return nil
@@ -421,7 +422,7 @@ func matchButForLeadingWhitespace(wholeLines []string, partLines []string) strin
 
 	add := make(map[string]bool)
 	for i, line := range wholeLines {
-		if strings.TrimSpace(line) != "" {
+		if strings.TrimSpace(line) != "" && len(line) >= len(partLines) {
 			add[line[:len(line)-len(partLines[i])]] = true
 		}
 	}

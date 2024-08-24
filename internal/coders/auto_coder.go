@@ -250,17 +250,18 @@ func (a *AutoCoder) View() string {
 	if started {
 		doneMsg := ""
 		for _, s := range a.checkpoints[:len(a.checkpoints)-1] {
+			icon := checkpointIcon(s.Type)
 			switch s.Type {
 			case StatusLoading:
 				if !done {
-					doneMsg += " ✅  " + s.Desc + "\n"
+					doneMsg += icon + s.Desc + "\n"
 				}
 			case StatusSuccess:
-				doneMsg += " " + components.renderer.RenderSuccess(s.Desc) + "\n"
+				doneMsg += icon + components.renderer.RenderSuccess(s.Desc) + "\n"
 			case StatusWarning:
-				doneMsg += " " + components.renderer.RenderWarning(s.Desc) + "\n"
+				doneMsg += icon + components.renderer.RenderWarning(s.Desc) + "\n"
 			default:
-				doneMsg += " " + s.Desc + "\n"
+				doneMsg += icon + s.Desc + "\n"
 			}
 		}
 		if !done {
@@ -285,4 +286,19 @@ func (a *AutoCoder) reset() {
 	a.history.Reset()
 	a.absFileNames = make(map[string]struct{})
 	a.state.buffer = ""
+}
+
+func checkpointIcon(checkpointType StatusType) string {
+	switch checkpointType {
+	case StatusLoading:
+		return " ✅ "
+	case StatusSuccess:
+		return " ✅ "
+	case StatusWarning:
+		return " ⚠️ "
+	case StatusError:
+		return " ❌ "
+	default:
+		return " ℹ️ "
+	}
 }
