@@ -23,13 +23,14 @@ const (
 type Engine struct {
 	mode    EngineMode
 	config  *options.Config
-	llm     *openai.Model
 	channel chan EngineChatStreamOutput
 	pipe    string
 	running bool
 	chatID  string
 
 	execHistory, chatHistory session.History
+
+	Model *openai.Model
 }
 
 func NewLLMEngine(mode EngineMode, config *options.Config) (*Engine, error) {
@@ -65,7 +66,7 @@ func NewLLMEngine(mode EngineMode, config *options.Config) (*Engine, error) {
 	return &Engine{
 		mode:        mode,
 		config:      config,
-		llm:         llm,
+		Model:       llm,
 		channel:     make(chan EngineChatStreamOutput),
 		pipe:        "",
 		running:     false,
@@ -136,7 +137,7 @@ func (e *Engine) SummaryMessages(messages []llms.ChatMessage) (string, error) {
 		Parts: []llms.ContentPart{llms.TextPart(summaryMessagesPrompt)},
 	})
 
-	rsp, err := e.llm.GenerateContent(ctx, messageParts,
+	rsp, err := e.Model.GenerateContent(ctx, messageParts,
 		llms.WithModel(e.config.Ai.Model),
 		llms.WithTemperature(e.config.Ai.Temperature),
 		llms.WithTopP(e.config.Ai.TopP),
@@ -157,7 +158,7 @@ func (e *Engine) ExecCompletion(input string) (*EngineExecOutput, error) {
 	e.appendUserMessage(input)
 
 	messages := e.prepareCompletionMessages()
-	rsp, err := e.llm.GenerateContent(ctx, messages,
+	rsp, err := e.Model.GenerateContent(ctx, messages,
 		llms.WithModel(e.config.Ai.Model),
 		llms.WithMaxTokens(e.config.Ai.MaxTokens),
 		llms.WithTemperature(e.config.Ai.Temperature),
@@ -200,7 +201,7 @@ func (e *Engine) ChatStreamCompletion(input string) error {
 
 	messages := e.prepareCompletionMessages()
 	klog.V(2).InfoS("prepareCompletionMessages", "input", input, "messages", messages)
-	rsp, err := e.llm.GenerateContent(ctx, messages,
+	rsp, err := e.Model.GenerateContent(ctx, messages,
 		llms.WithModel(e.config.Ai.Model),
 		llms.WithMaxTokens(e.config.Ai.MaxTokens),
 		llms.WithTemperature(e.config.Ai.Temperature),
@@ -232,6 +233,25 @@ func (e *Engine) ChatStreamCompletion(input string) error {
 	return nil
 }
 
+func (e *Engine) Completion(ctx context.Context, messages []llms.MessageContent, options ...llms.CallOption) (*llms.ContentResponse, error) {
+	e.running = true
+
+	ops := []llms.CallOption{
+		llms.WithModel(e.config.Ai.Model),
+		llms.WithMaxTokens(e.config.Ai.MaxTokens),
+		llms.WithTemperature(e.config.Ai.Temperature),
+		llms.WithTopP(e.config.Ai.TopP),
+	}
+	ops = append(ops, options...)
+	rsp, err := e.Model.GenerateContent(ctx, messages, ops...)
+	if err != nil {
+		e.running = false
+		return nil, err
+	}
+
+	return rsp, nil
+}
+
 func (e *Engine) ChatStream(ctx context.Context, messages []llms.MessageContent, options ...llms.CallOption) error {
 	e.running = true
 
@@ -251,7 +271,7 @@ func (e *Engine) ChatStream(ctx context.Context, messages []llms.MessageContent,
 		llms.WithStreamingFunc(streamingFunc),
 	}
 	ops = append(ops, options...)
-	rsp, err := e.llm.GenerateContent(ctx, messages, ops...)
+	rsp, err := e.Model.GenerateContent(ctx, messages, ops...)
 	if err != nil {
 		e.running = false
 		return err

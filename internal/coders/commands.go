@@ -32,6 +32,7 @@ func (c *command) registryCmds() {
 	supportCommands["/remove"] = c.removeFiles
 	supportCommands["/ask"] = c.askFiles
 	supportCommands["/drop"] = c.dropFiles
+	supportCommands["/coding"] = c.coding
 }
 
 func (c *command) isCommand(input string) bool {
@@ -112,7 +113,7 @@ func (c *command) addFiles(files ...string) tea.Msg {
 	}
 
 	for _, f := range matchedFiles {
-		absPath, err := c.absFilePath(f)
+		absPath, err := absFilePath(c.coder.codeBasePath, f)
 		if err != nil {
 			return c.coder.Error(err)
 		}
@@ -157,7 +158,7 @@ func (c *command) removeFiles(files ...string) tea.Msg {
 
 	deleteCount := 0
 	for _, file := range files {
-		abs, err := c.absFilePath(file)
+		abs, err := absFilePath(c.coder.codeBasePath, file)
 		if err != nil {
 			return c.coder.Error(err)
 		}
@@ -186,15 +187,54 @@ func (c *command) dropFiles(_ ...string) tea.Msg {
 	return nil
 }
 
-func (c *command) absFilePath(matchedFile string) (abs string, err error) {
-	abs = filepath.Join(c.coder.codeBasePath, matchedFile)
-	if filepath.IsAbs(matchedFile) {
-		abs, err = filepath.Abs(matchedFile)
-		if err != nil {
-			return "", err
-		}
+func (c *command) coding(args ...string) tea.Msg {
+	c.coder.Loading(components.spinner.randMsg)
+
+	userInput := strings.Join(args, " ")
+
+	addedFiles, err := c.getAddedFileContent()
+	if err != nil {
+		return c.coder.Error(err)
 	}
-	return
+
+	openFence, closeFence := chooseBestFence(addedFiles)
+	c.coder.Infof("Choose fence: %s %s", openFence, closeFence)
+
+	editor := NewEditBlockCoder(c.coder, []string{openFence, closeFence})
+
+	messages, err := editor.FormatMessages(map[string]any{
+		userQuestionKey: userInput,
+		addedFilesKey:   addedFiles,
+		openFenceKey:    openFence,
+		closeFenceKey:   closeFence,
+		lazyPromptKey:   lazyPrompt,
+	})
+	if err != nil {
+		return c.coder.Error(err)
+	}
+
+	err = editor.Execute(context.Background(), messages)
+	if err != nil {
+		return c.coder.Error(err)
+	}
+
+	edits, err := editor.GetEdits(context.Background())
+	if err != nil {
+		return c.coder.Error(err)
+	}
+
+	if len(edits) <= 0 {
+		return c.coder.Errorf("Nothing to edit.")
+	}
+
+	err = editor.ApplyEdits(context.Background(), edits)
+	if err != nil {
+		return c.coder.Error(err)
+	}
+
+	c.coder.Done()
+
+	return nil
 }
 
 func (c *command) awaitChatCompleted() tea.Cmd {
@@ -209,7 +249,7 @@ func (c *command) awaitChatCompleted() tea.Cmd {
 }
 
 func (c *command) prepareAskCompletionMessages(userInput string) ([]llms.MessageContent, error) {
-	addedFileMessages, err := c.getFilesMessages()
+	addedFileMessages, err := c.getAddedFileContent()
 	if err != nil {
 		return nil, c.coder.Error(err)
 	}
@@ -246,7 +286,7 @@ func (c *command) prepareAskCompletionMessages(userInput string) ([]llms.Message
 	return ret, nil
 }
 
-func (c *command) getFilesMessages() (string, error) {
+func (c *command) getAddedFileContent() (string, error) {
 	addedFiles := ""
 	if len(c.coder.absFileNames) > 0 {
 		for file := range c.coder.absFileNames {
@@ -282,4 +322,15 @@ func extractCmdArgs(input string) (string, []string) {
 		}
 	}
 	return words[0], args
+}
+
+func absFilePath(basePath, matchedFile string) (abs string, err error) {
+	abs = filepath.Join(basePath, matchedFile)
+	if filepath.IsAbs(matchedFile) {
+		abs, err = filepath.Abs(matchedFile)
+		if err != nil {
+			return "", err
+		}
+	}
+	return
 }

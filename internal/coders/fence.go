@@ -6,9 +6,9 @@ import (
 )
 
 var fences = [][]string{
+	{"<code>", "</code>"},
 	{"``" + "`", "``" + "`"},
 	{"<source>", "</source>"},
-	{"<code>", "</code>"},
 	{"<pre>", "</pre>"},
 	{"<codeblock>", "</codeblock>"},
 	{"<sourcecode>", "</sourcecode>"},

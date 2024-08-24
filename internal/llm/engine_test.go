@@ -22,7 +22,7 @@ func TestEngine_ExecCompletion(t *testing.T) {
 	e := &Engine{
 		mode:        ChatEngineMode,
 		config:      cfg,
-		llm:         llm,
+		Model:       llm,
 		channel:     make(chan EngineChatStreamOutput),
 		pipe:        "",
 		running:     false,
