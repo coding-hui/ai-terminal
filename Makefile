@@ -44,8 +44,8 @@ help: ## Display this help.
 ##@ Development
 
 .PHONY: git-chglog
-generate-chglog: ## Generate git chglog.
-	$(GIT_CHGLOG) -o releases/cli/CHANGELOG.md
+chglog: ## Generate git chglog.
+	$(GIT_CHGLOG) -o CHANGELOG.md
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.

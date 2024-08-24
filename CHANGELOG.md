@@ -1,6 +1,27 @@
 # Change Log
 
 
+<a name="v0.1.5"></a>
+## [v0.1.5] - 2024-08-24
+### Code Refactoring
+- refactor test suite for clarity and maintainability
+- refactor and simplify code across multiple files
+- enhance user interaction handling and code clarity
+- enhance UI rendering and input handling
+- remove deprecated CodeEditor module
+- update Assistant Name to ai in Prompts
+
+### Features
+- implement user confirmation workflow
+- improve User Onboarding Experience
+- improve coder UI and feedback messages
+- improve Checkpoint Display and Diff Handling
+- improve Edit Application and Error Handling
+- implement Code Editor with Search/Replace Blocks
+- add `/drop` command to clear tracked files
+- optimize asauto-coderk CMD Prompts
+
+
 <a name="v0.1.4"></a>
 ## [v0.1.4] - 2024-08-18
 ### Bug Fixes
@@ -21,6 +42,7 @@
 - simplify hook command handling
 
 ### Features
+- release v0.1.4 with fixes and features
 - improve file listing output formatting
 - introduce AutoCoder for file-based chat assistance
 - add User Custom Prompts to Commit Cmd
@@ -88,7 +110,8 @@
 - add ask cmd
 
 
-[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.1.4...HEAD
+[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.1.5...HEAD
+[v0.1.5]: https://github.com/coding-hui/ai-terminal/compare/v0.1.4...v0.1.5
 [v0.1.4]: https://github.com/coding-hui/ai-terminal/compare/v0.1.3-1...v0.1.4
 [v0.1.3-1]: https://github.com/coding-hui/ai-terminal/compare/v0.1.3...v0.1.3-1
 [v0.1.3]: https://github.com/coding-hui/ai-terminal/compare/v0.1.2...v0.1.3
