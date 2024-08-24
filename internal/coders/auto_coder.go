@@ -89,7 +89,7 @@ func (a *AutoCoder) Init() tea.Cmd {
 
 	return tea.Sequence(
 		tea.ClearScreen,
-		tea.Println(components.renderer.RenderContent(components.renderer.RenderHelpMessage())),
+		tea.Println(components.renderer.RenderContent(components.renderer.RenderWelcomeMessage(a.cfg.System.GetUsername()))),
 		textinput.Blink,
 		a.statusTickCmd(),
 	)

@@ -71,35 +71,25 @@ func (r *Renderer) RenderHelp(in string) string {
 	return r.helpRenderer.Render(in)
 }
 
-func (r *Renderer) RenderConfigMessage(username string) string {
+func (r *Renderer) RenderWelcomeMessage(username string) string {
 	welcome := "Welcome! **" + username + "** 👋  \n\n"
-	welcome += "I cannot find a configuration file, please enter an `LLM Model Name` you want to use"
 
 	return welcome
 }
 
-func (r *Renderer) RenderApiTokenConfigMessage() string {
-	return "Please enter an `API Token` for the model to access"
-}
-
-func (r *Renderer) RenderApiBaseConfigMessage() string {
-	return "Please enter the inference `Api Base` for your model"
-}
-
 func (r *Renderer) RenderHelpMessage() string {
 	help := "**Help**\n"
-	help += "- `↑`/`↓`   : navigate in history\n"
-	help += "- `/add`    : Add files to the chat so GPT can edit them or review them in detail\n"
-	help += "- `/list`   : List files added to the chat\n"
-	help += "- `/remove` : Remove files from the chat\n"
-	help += "- `/drop`   : Drop all files from the chat\n"
-	help += "- `/coding` : Execute coding tasks on added files\n"
-	help += "- `/ask`    : Ask a question about the added files\n"
-	help += "- `ctrl+h`  : show help\n"
-	help += "- `ctrl+s`  : edit settings\n"
-	help += "- `ctrl+r`  : clear terminal and reset discussion history\n"
-	help += "- `ctrl+l`  : clear terminal but keep discussion history\n"
-	help += "- `ctrl+c`  : exit or interrupt command execution\n"
+	help += "- `↑`/`↓`   : Navigate through history\n"
+	help += "- `/add`    : Add files to the chat for editing or detailed review by GPT\n"
+	help += "- `/list`   : List files currently added to the chat\n"
+	help += "- `/remove` : Remove specific files from the chat\n"
+	help += "- `/drop`   : Remove all files from the chat\n"
+	help += "- `/coding` : Execute coding tasks on files added to the chat\n"
+	help += "- `/ask`    : Ask a question about the files added to the chat\n"
+	help += "- `ctrl+h`  : Show this help message\n"
+	help += "- `ctrl+r`  : Clear the terminal and reset the discussion history\n"
+	help += "- `ctrl+l`  : Clear the terminal while preserving the discussion history\n"
+	help += "- `ctrl+c`  : Exit the application or interrupt command execution\n"
 
 	return help
 }

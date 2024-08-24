@@ -14,7 +14,7 @@ func TestUIRenderer(t *testing.T) {
 	t.Run("RenderWarning", testRenderWarning)
 	t.Run("RenderError", testRenderError)
 	t.Run("RenderHelp", testRenderHelp)
-	t.Run("RenderConfigMessage", testRenderConfigMessage)
+	t.Run("RenderWelcomeMessage", testRenderConfigMessage)
 	t.Run("RenderHelpMessage", testRenderHelpMessage)
 }
 
@@ -60,7 +60,7 @@ func testRenderHelp(t *testing.T) {
 
 func testRenderConfigMessage(t *testing.T) {
 	r := NewRenderer(glamour.WithAutoStyle())
-	output := r.RenderConfigMessage("test")
+	output := r.RenderWelcomeMessage("test")
 	assert.NotEmpty(t, output, "Rendered config message should not be empty.")
 }
 

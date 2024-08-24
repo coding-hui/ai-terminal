@@ -14,7 +14,7 @@ func TestUIRenderer(t *testing.T) {
 	t.Run("RenderWarning", testRenderWarning)
 	t.Run("RenderError", testRenderError)
 	t.Run("RenderHelp", testRenderHelp)
-	t.Run("RenderConfigMessage", testRenderConfigMessage)
+	t.Run("RenderWelcomeMessage", testRenderConfigMessage)
 	t.Run("RenderHelpMessage", testRenderHelpMessage)
 }
 
