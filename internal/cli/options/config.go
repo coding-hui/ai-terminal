@@ -32,15 +32,16 @@ type Config struct {
 }
 
 type Ai struct {
-	SystemPrompt string       `yaml:"system-prompt,omitempty"`
-	Token        string       `yaml:"token,omitempty"`
-	Model        string       `yaml:"model,omitempty"`
-	ApiBase      string       `yaml:"api-base,omitempty"`
-	Temperature  float64      `yaml:"temperature,omitempty"`
-	TopP         float64      `yaml:"top-p,omitempty"`
-	MaxTokens    int          `yaml:"max-tokens,omitempty"`
-	Proxy        string       `yaml:"proxy,omitempty"`
-	OutputFormat OutputFormat `yaml:"output-format,omitempty"`
+	SystemPrompt        string       `yaml:"system-prompt,omitempty"`
+	Token               string       `yaml:"token,omitempty"`
+	Model               string       `yaml:"model,omitempty"`
+	ApiBase             string       `yaml:"api-base,omitempty"`
+	Temperature         float64      `yaml:"temperature,omitempty"`
+	TopP                float64      `yaml:"top-p,omitempty"`
+	MaxTokens           int          `yaml:"max-tokens,omitempty"`
+	Proxy               string       `yaml:"proxy,omitempty"`
+	OutputFormat        OutputFormat `yaml:"output-format,omitempty"`
+	MultiContentEnabled bool         `yaml:"multi-content-enabled,omitempty"`
 }
 
 type DataStore struct {
@@ -63,15 +64,16 @@ func NewConfig() *Config {
 	return &Config{
 		ChatID: viper.GetString(FlagChatID),
 		Ai: Ai{
-			SystemPrompt: viper.GetString(FlagDefaultSystemPrompt),
-			Token:        viper.GetString(FlagAiToken),
-			Model:        viper.GetString(FlagAiModel),
-			ApiBase:      viper.GetString(FlagAiApiBase),
-			Temperature:  viper.GetFloat64(FlagAiTemperature),
-			TopP:         viper.GetFloat64(FlagAiTopP),
-			MaxTokens:    viper.GetInt(FlagAiMaxTokens),
-			OutputFormat: OutputFormat(viper.GetString(FlagOutputFormat)),
-			Proxy:        "",
+			SystemPrompt:        viper.GetString(FlagDefaultSystemPrompt),
+			Token:               viper.GetString(FlagAiToken),
+			Model:               viper.GetString(FlagAiModel),
+			ApiBase:             viper.GetString(FlagAiApiBase),
+			Temperature:         viper.GetFloat64(FlagAiTemperature),
+			TopP:                viper.GetFloat64(FlagAiTopP),
+			MaxTokens:           viper.GetInt(FlagAiMaxTokens),
+			OutputFormat:        OutputFormat(viper.GetString(FlagOutputFormat)),
+			MultiContentEnabled: viper.GetBool(FlagMultiContentEnabled),
+			Proxy:               "",
 		},
 		DataStore: DataStore{
 			Type:     viper.GetString(FlagDatastoreType),

@@ -56,8 +56,8 @@ github.com/coding-hui/common v0.8.7 h1:f9iHZcdQLgRFW/nIJHVfBINuzzCKsUcwVIhfboxXe
 github.com/coding-hui/common v0.8.7/go.mod h1:KaNHOP9IYLgHzouuvR8/IijT4tdFyKMzB5ghI+ShtIM=
 github.com/coding-hui/iam v0.9.1 h1:a/z0D91BYL1XZAwUupmouPTgVE2n120KnuOhtuELzZQ=
 github.com/coding-hui/iam v0.9.1/go.mod h1:LyaMEyJ9lEx9Hl4FcGV3vFPPWlP9nQFpB0iDhSebzms=
-github.com/coding-hui/wecoding-sdk-go v0.8.5 h1:5s+/WbCnt5KHFSZKyoFNpKOyPoEFg73jKD5mpsY84cU=
-github.com/coding-hui/wecoding-sdk-go v0.8.5/go.mod h1:toOoHe4zsHNBbGyEf+31NnvvEyihrBOw5zpLod6JbzY=
+github.com/coding-hui/wecoding-sdk-go v0.8.6 h1:xmN4uYDVGciq5KFrsuzwx63MVMJwxIQW3qvQTDbiLZk=
+github.com/coding-hui/wecoding-sdk-go v0.8.6/go.mod h1:toOoHe4zsHNBbGyEf+31NnvvEyihrBOw5zpLod6JbzY=
 github.com/containerd/containerd v1.7.20 h1:Sl6jQYk3TRavaU83h66QMbI2Nqg9Jm6qzwX57Vsn1SQ=
 github.com/containerd/containerd v1.7.20/go.mod h1:52GsS5CwquuqPuLncsXwG0t2CiUce+KsNHJZQJvAgR0=
 github.com/containerd/log v0.1.0 h1:TCJt7ioM2cr/tfR8GPbGf9/VRAX8D2B4PjzCpfX540I=

@@ -11,7 +11,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.13.0
 	github.com/coding-hui/common v0.8.7
 	github.com/coding-hui/iam v0.9.1
-	github.com/coding-hui/wecoding-sdk-go v0.8.5
+	github.com/coding-hui/wecoding-sdk-go v0.8.6
 	github.com/erikgeiser/promptkit v0.9.0
 	github.com/fatih/color v1.17.0
 	github.com/ghodss/yaml v1.0.0

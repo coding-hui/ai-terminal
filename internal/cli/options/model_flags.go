@@ -17,17 +17,19 @@ const (
 	FlagAiTopP              = "top-p"
 	FlagAiMaxTokens         = "max-tokens"
 	FlagOutputFormat        = "output-format"
+	FlagMultiContentEnabled = "multi-content-enabled"
 )
 
 type ModelFlags struct {
-	Token        *string
-	Model        *string
-	ApiBase      *string
-	Temperature  *float64
-	TopP         *float64
-	MaxTokens    *int
-	Proxy        *string
-	OutputFormat *string
+	Token               *string
+	Model               *string
+	ApiBase             *string
+	Temperature         *float64
+	TopP                *float64
+	MaxTokens           *int
+	Proxy               *string
+	OutputFormat        *string
+	MultiContentEnabled *bool
 }
 
 // NewModelFlags returns ModelFlags with default values set.
@@ -72,6 +74,10 @@ func (m *ModelFlags) AddFlags(flags *pflag.FlagSet) {
 	if m.OutputFormat != nil {
 		flags.StringVarP(m.OutputFormat, FlagOutputFormat, "o", *m.OutputFormat, "Output format. One of: (markdown, raw).")
 		_ = viper.BindPFlag(FlagOutputFormat, flags.Lookup(FlagOutputFormat))
+	}
+	if m.MultiContentEnabled != nil {
+		flags.BoolVar(m.MultiContentEnabled, FlagMultiContentEnabled, *m.MultiContentEnabled, "LLM multi content is enabled")
+		_ = viper.BindPFlag(FlagMultiContentEnabled, flags.Lookup(FlagMultiContentEnabled))
 	}
 }
 
