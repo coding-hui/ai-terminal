@@ -136,13 +136,15 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return a, tea.Quit
 		// help
 		case tea.KeyCtrlH:
-			components.prompt, promptCmd = components.prompt.Update(msg)
-			cmds = append(
-				cmds,
-				promptCmd,
-				tea.Println(components.renderer.RenderContent(components.renderer.RenderHelpMessage())),
-				textinput.Blink,
-			)
+			if !a.isQuerying() {
+				components.prompt, promptCmd = components.prompt.Update(msg)
+				cmds = append(
+					cmds,
+					promptCmd,
+					tea.Println(components.renderer.RenderContent(components.renderer.RenderHelpMessage())),
+					textinput.Blink,
+				)
+			}
 
 		// history
 		case tea.KeyUp, tea.KeyDown:
@@ -185,25 +187,30 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// clear
 		case tea.KeyCtrlL:
-			components.prompt, promptCmd = components.prompt.Update(msg)
-			cmds = append(
-				cmds,
-				promptCmd,
-				tea.ClearScreen,
-				textinput.Blink,
-			)
+			if !a.isQuerying() {
+				components.prompt.SetValue("")
+				components.prompt, promptCmd = components.prompt.Update(msg)
+				cmds = append(
+					cmds,
+					promptCmd,
+					tea.ClearScreen,
+					textinput.Blink,
+				)
+			}
 
 		// reset
 		case tea.KeyCtrlR:
-			a.reset()
-			components.prompt.SetValue("")
-			components.prompt, promptCmd = components.prompt.Update(msg)
-			cmds = append(
-				cmds,
-				promptCmd,
-				tea.ClearScreen,
-				textinput.Blink,
-			)
+			if !a.isQuerying() {
+				a.reset()
+				components.prompt.SetValue("")
+				components.prompt, promptCmd = components.prompt.Update(msg)
+				cmds = append(
+					cmds,
+					promptCmd,
+					tea.ClearScreen,
+					textinput.Blink,
+				)
+			}
 
 		default:
 			components.prompt.Focus()

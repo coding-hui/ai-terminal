@@ -146,8 +146,7 @@ The SEARCH section must exactly match an existing block of lines including all w
 `, block.Path)
 		}
 
-		//e.coder.Warning(errMsg)
-		e.coder.state.buffer = errMsg
+		e.coder.Warning(errMsg)
 	}
 
 	return nil

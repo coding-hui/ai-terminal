@@ -32,10 +32,6 @@ func NewPrompt(mode PromptMode) *Prompt {
 	input.TextStyle = getPromptStyle(mode)
 	input.Prompt = getPromptIcon(mode)
 
-	if mode == TokenConfigPromptMode {
-		input.EchoMode = textinput.EchoPassword
-	}
-
 	input.Focus()
 
 	return &Prompt{
@@ -116,10 +112,6 @@ func getPromptIcon(mode PromptMode) string {
 		return style.Render(execIcon)
 	case ChatPromptMode:
 		return style.Render(chatIcon)
-	case ModelConfigPromptMode:
-		return style.Render(botIcon)
-	case ApiBaseConfigPromptMode:
-		return style.Render(apiBaseIcon)
 	default:
 		return style.Render(configIcon)
 	}
@@ -129,12 +121,6 @@ func getPromptPlaceholder(mode PromptMode) string {
 	switch mode {
 	case ExecPromptMode:
 		return execPlaceholder
-	case TokenConfigPromptMode:
-		return tokenConfigPlaceholder
-	case ModelConfigPromptMode:
-		return modelConfigPlaceholder
-	case ApiBaseConfigPromptMode:
-		return apiBaseConfigPlaceholder
 	default:
 		return chatPlaceholder
 	}

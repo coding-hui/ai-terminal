@@ -188,7 +188,7 @@ func (c *command) dropFiles(_ ...string) tea.Msg {
 }
 
 func (c *command) coding(args ...string) tea.Msg {
-	c.coder.Loading(components.spinner.randMsg)
+	c.coder.Loading("Preparing to execute code editing...")
 
 	userInput := strings.Join(args, " ")
 
@@ -198,7 +198,7 @@ func (c *command) coding(args ...string) tea.Msg {
 	}
 
 	openFence, closeFence := chooseBestFence(addedFiles)
-	c.coder.Infof("Choose fence: %s %s", openFence, closeFence)
+	c.coder.Infof("Selected coder block fences %s %s", openFence, closeFence)
 
 	editor := NewEditBlockCoder(c.coder, []string{openFence, closeFence})
 
@@ -213,6 +213,7 @@ func (c *command) coding(args ...string) tea.Msg {
 		return c.coder.Error(err)
 	}
 
+	c.coder.Infof("Executing code editing...")
 	err = editor.Execute(context.Background(), messages)
 	if err != nil {
 		return c.coder.Error(err)
@@ -224,14 +225,16 @@ func (c *command) coding(args ...string) tea.Msg {
 	}
 
 	if len(edits) <= 0 {
-		return c.coder.Errorf("Nothing to edit.")
+		return c.coder.Errorf("No edits were made.")
 	}
 
+	c.coder.Infof("Applying %d edits...", len(edits))
 	err = editor.ApplyEdits(context.Background(), edits)
 	if err != nil {
 		return c.coder.Error(err)
 	}
 
+	c.coder.Successf("Code editing completed successfully.")
 	c.coder.Done()
 
 	return nil
