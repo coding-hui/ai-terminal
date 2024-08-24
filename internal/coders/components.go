@@ -10,6 +10,7 @@ type Components struct {
 	prompt   *Prompt
 	renderer *Renderer
 	spinner  *Spinner
+	confirm  *WaitFormUserConfirm
 }
 
 func NewComponents() *Components {

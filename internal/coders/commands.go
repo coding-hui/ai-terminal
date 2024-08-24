@@ -213,7 +213,6 @@ func (c *command) coding(args ...string) tea.Msg {
 		return c.coder.Error(err)
 	}
 
-	c.coder.Infof("Executing code editing...")
 	err = editor.Execute(context.Background(), messages)
 	if err != nil {
 		return c.coder.Error(err)
@@ -225,7 +224,7 @@ func (c *command) coding(args ...string) tea.Msg {
 	}
 
 	if len(edits) <= 0 {
-		return c.coder.Errorf("No edits were made.")
+		return c.coder.Errorf("No edits were made")
 	}
 
 	c.coder.Infof("Applying %d edits...", len(edits))
@@ -234,7 +233,7 @@ func (c *command) coding(args ...string) tea.Msg {
 		return c.coder.Error(err)
 	}
 
-	c.coder.Successf("Code editing completed successfully.")
+	c.coder.Successf("Code editing completed")
 	c.coder.Done()
 
 	return nil

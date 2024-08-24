@@ -74,6 +74,17 @@ func (a *AutoCoder) Errorf(format string, args ...interface{}) error {
 	return err
 }
 
+func (a *AutoCoder) WaitForUserConfirm(format string, args ...interface{}) bool {
+	a.state.confirming = true
+	defer func() {
+		a.state.confirming = false
+	}()
+
+	components.confirm = NewConfirmModel(fmt.Sprintf(format, args...))
+	program.Send(components.confirm)
+	return <-components.confirm.choice
+}
+
 func (a *AutoCoder) Done() {
 	a.checkpointChan <- Checkpoint{Done: true, time: time.Now()}
 }

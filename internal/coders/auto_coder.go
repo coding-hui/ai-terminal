@@ -20,9 +20,10 @@ import (
 var program *tea.Program
 
 type State struct {
-	error   error
-	buffer  string
-	command string
+	error      error
+	buffer     string
+	command    string
+	confirming bool
 }
 
 // AutoCoder is a auto generate coders user interface.
@@ -100,6 +101,7 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds       []tea.Cmd
 		promptCmd  tea.Cmd
 		spinnerCmd tea.Cmd
+		confirmCmd tea.Cmd
 	)
 
 	switch msg := msg.(type) {
@@ -127,6 +129,13 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds,
 			a.statusTickCmd(),
 			components.spinner.Tick,
+		)
+
+	case WaitFormUserConfirm:
+		components.confirm, confirmCmd = components.confirm.Update(msg)
+		return a, tea.Sequence(
+			confirmCmd,
+			textinput.Blink,
 		)
 
 	case tea.KeyMsg:
@@ -213,6 +222,13 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		default:
+			if a.state.confirming {
+				components.confirm, confirmCmd = components.confirm.Update(msg)
+				return a, tea.Sequence(
+					confirmCmd,
+					textinput.Blink,
+				)
+			}
 			components.prompt.Focus()
 			components.prompt, promptCmd = components.prompt.Update(msg)
 			cmds = append(
@@ -246,6 +262,10 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (a *AutoCoder) View() string {
 	started := len(a.checkpoints) > 0
 	done := started && a.checkpoints[len(a.checkpoints)-1].Done
+
+	if a.state.confirming {
+		return components.confirm.View()
+	}
 
 	if started && a.checkpoints[len(a.checkpoints)-1].Error != nil {
 		return fmt.Sprintf("\n%s\n\n%s\n",
@@ -306,6 +326,6 @@ func checkpointIcon(checkpointType StatusType) string {
 	case StatusError:
 		return " ❌ "
 	default:
-		return " ℹ️ "
+		return " ✅ "
 	}
 }

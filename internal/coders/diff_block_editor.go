@@ -84,10 +84,15 @@ func (e *EditBlockCoder) ApplyEdits(ctx context.Context, edits []PartialCodeBloc
 			return err
 		}
 
+		if ok := e.coder.WaitForUserConfirm("\n\n %s \n\nAre you sure you want to apply these edits?", block.String()); !ok {
+			e.coder.Warningf("Apply %s edit cancelled", block.Path)
+			return nil
+		}
+
 		newFileContent := doReplace(absPath, string(rawFileContent), block.OriginalText, block.UpdatedText, e.fence)
 		if len(newFileContent) == 0 {
 			failed = append(failed, block)
-			e.coder.Warningf("code block is empty and cannot be updated to file %s", block.Path)
+			e.coder.Warningf("Code block is empty and cannot be updated to file %s", block.Path)
 			continue
 		}
 

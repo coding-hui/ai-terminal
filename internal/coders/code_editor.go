@@ -3,6 +3,7 @@ package coders
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/prompts"
@@ -16,6 +17,12 @@ type PartialCodeBlock struct {
 	OriginalText string
 	// UpdatedText is the updated text of the code block.
 	UpdatedText string
+}
+
+func (p PartialCodeBlock) String() string {
+	return fmt.Sprintf("%s\n<<<<<< Original\n%s\n====== Updated\n%s",
+		p.Path, p.OriginalText, p.UpdatedText,
+	)
 }
 
 // Coder defines the interface for a code editor.
