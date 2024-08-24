@@ -9,16 +9,11 @@ import (
 )
 
 const (
-	execIcon                 = "🚀 > "
-	configIcon               = "🔒 > "
-	botIcon                  = "🤖 > "
-	apiBaseIcon              = "🛠️ > "
-	chatIcon                 = "💬 > "
-	execPlaceholder          = "Execute something..."
-	chatPlaceholder          = "Ask me something..."
-	modelConfigPlaceholder   = "Enter your LLM Model Name..."
-	apiBaseConfigPlaceholder = "Enter your LLM Api Base..."
-	tokenConfigPlaceholder   = "Enter your LLM API Token..."
+	execIcon        = "🚀 > "
+	configIcon      = "🔒 > "
+	chatIcon        = "💬 > "
+	execPlaceholder = "Execute something..."
+	chatPlaceholder = "Ask me something..."
 )
 
 type Prompt struct {

@@ -58,21 +58,19 @@ func (c *command) run(input string) tea.Cmd {
 }
 
 func (c *command) askFiles(args ...string) tea.Msg {
-	input := strings.Join(args, " ")
-
 	c.coder.Loading(components.spinner.randMsg)
 
 	c.coder.state.buffer = ""
 	c.coder.state.command = ""
 
-	messages, err := c.prepareAskCompletionMessages(input)
+	messages, err := c.prepareAskCompletionMessages(strings.Join(args, " "))
 	if err != nil {
-		return c.coder.Error(err)
+		return c.coder.Errorf("Failed to prepare ask completion messages: %v", err)
 	}
 
 	err = c.coder.llmEngine.ChatStream(context.Background(), messages)
 	if err != nil {
-		return c.coder.Error(err)
+		return c.coder.Errorf("Failed to chat stream: %v", err)
 	}
 
 	return nil
@@ -188,10 +186,6 @@ func (c *command) dropFiles(_ ...string) tea.Msg {
 }
 
 func (c *command) coding(args ...string) tea.Msg {
-	c.coder.Loading("Preparing to execute code editing...")
-
-	userInput := strings.Join(args, " ")
-
 	addedFiles, err := c.getAddedFileContent()
 	if err != nil {
 		return c.coder.Error(err)
@@ -202,6 +196,7 @@ func (c *command) coding(args ...string) tea.Msg {
 
 	editor := NewEditBlockCoder(c.coder, []string{openFence, closeFence})
 
+	userInput := strings.Join(args, " ")
 	messages, err := editor.FormatMessages(map[string]any{
 		userQuestionKey: userInput,
 		addedFilesKey:   addedFiles,
@@ -292,7 +287,7 @@ func (c *command) getAddedFileContent() (string, error) {
 	addedFiles := ""
 	if len(c.coder.absFileNames) > 0 {
 		for file := range c.coder.absFileNames {
-			content, err := c.readFileContent(file)
+			content, err := c.formatFileContent(file)
 			if err != nil {
 				return "", c.coder.Error(err)
 			}
@@ -303,7 +298,7 @@ func (c *command) getAddedFileContent() (string, error) {
 	return addedFiles, nil
 }
 
-func (c *command) readFileContent(filePath string) (string, error) {
+func (c *command) formatFileContent(filePath string) (string, error) {
 	content, err := os.ReadFile(filePath)
 	if err != nil {
 		return "", err
@@ -312,7 +307,8 @@ func (c *command) readFileContent(filePath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("\n%s%s", relPath, wrapFence(string(content))), nil
+	fileExt := filepath.Ext(filePath)
+	return fmt.Sprintf("\n%s%s", relPath, wrapFenceWithType(string(content), fileExt)), nil
 }
 
 func extractCmdArgs(input string) (string, []string) {

@@ -8,7 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// WaitFormUserConfirm represents a model that waits for user confirmation with a message and a viewport for display.
+// WaitFormUserConfirm is a model that displays a confirmation message to the user and waits for their response.
 type WaitFormUserConfirm struct {
 	message string         // The message to display to the user.
 	choice  chan bool      // Channel to receive the user's confirmation choice (true for yes, false for no).

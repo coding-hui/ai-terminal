@@ -59,9 +59,7 @@ func (e *EditBlockCoder) GetEdits(_ context.Context) ([]PartialCodeBlock, error)
 }
 
 func (e *EditBlockCoder) ApplyEdits(ctx context.Context, edits []PartialCodeBlock) error {
-	var (
-		failed = []PartialCodeBlock{}
-	)
+	var failed = []PartialCodeBlock{}
 
 	for _, block := range edits {
 		absPath, err := absFilePath(e.coder.codeBasePath, block.Path)
@@ -83,9 +81,10 @@ func (e *EditBlockCoder) ApplyEdits(ctx context.Context, edits []PartialCodeBloc
 			return err
 		}
 
+		fileExt := filepath.Ext(absPath)
 		confirmMsg := fmt.Sprintf(`
 %s
-%s
+%s%s
 <<<<<<< SEARCH
 %s
 =======
@@ -96,6 +95,7 @@ func (e *EditBlockCoder) ApplyEdits(ctx context.Context, edits []PartialCodeBloc
 Are you sure you want to apply these edits? (Y/n)`,
 			block.Path,
 			e.fence[0],
+			fileExt,
 			block.OriginalText,
 			block.UpdatedText,
 			e.fence[1],

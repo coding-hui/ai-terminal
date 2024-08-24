@@ -19,6 +19,11 @@ func wrapFence(rawContent string) string {
 	return fmt.Sprintf("\n%s\n%s\n%s\n", openFence, rawContent, closeFence)
 }
 
+func wrapFenceWithType(rawContent, fileExt string) string {
+	openFence, closeFence := chooseBestFence(rawContent)
+	return fmt.Sprintf("\n%s%s\n%s\n%s\n", openFence, fileExt, rawContent, closeFence)
+}
+
 func chooseBestFence(rawContent string) (open string, close string) {
 	for _, fence := range fences {
 		if strings.Contains(rawContent, fence[0]) || strings.Contains(rawContent, fence[1]) {
