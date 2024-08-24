@@ -9,7 +9,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_splitRawBlocks(t *testing.T) {
+func TestEditBlockCoder(t *testing.T) {
+	t.Run("splitRawBlocks", testSplitRawBlocks)
+	t.Run("findOriginalUpdateBlocks", testFindOriginalUpdateBlocks)
+	t.Run("findFilename", testFindFilename)
+	t.Run("replaceMostSimilarChunk", testReplaceMostSimilarChunk)
+}
+
+func testSplitRawBlocks(t *testing.T) {
 	content := `To add comments explaining the methods in **internal/coders/code_editor.go**, we will add them right
 above each method declaration.
 
@@ -64,7 +71,7 @@ type Coder interface {
 	assert.Equal(t, len(s), 4)
 }
 
-func Test_findOriginalUpdateBlocks(t *testing.T) {
+func testFindOriginalUpdateBlocks(t *testing.T) {
 
 	text := `To add comments explaining the methods in **internal/coders/code_editor.go**, we will add them right above each method declaration.
 
@@ -122,7 +129,7 @@ type Coder interface {
 	assert.Equal(t, "internal/coders/code_editor.go", edits[0].Path)
 }
 
-func Test_findFilename(t *testing.T) {
+func testFindFilename(t *testing.T) {
 	type args struct {
 		line  string
 		fence []string
@@ -167,7 +174,7 @@ internal/coders/code_editor.go
 	}
 }
 
-func Test_replaceMostSimilarChunk(t *testing.T) {
+func testReplaceMostSimilarChunk(t *testing.T) {
 	type args struct {
 		whole   string
 		part    string
