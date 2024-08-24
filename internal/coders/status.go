@@ -92,7 +92,9 @@ func (a *AutoCoder) WaitForUserConfirm(format string, args ...interface{}) bool 
 	}()
 
 	components.confirm = NewConfirmModel(fmt.Sprintf(format, args...))
+
 	program.Send(components.confirm)
+
 	return <-components.confirm.choice
 }
 

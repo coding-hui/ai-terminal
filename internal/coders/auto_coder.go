@@ -264,7 +264,7 @@ func (a *AutoCoder) View() string {
 	done := started && a.checkpoints[len(a.checkpoints)-1].Done
 
 	if a.state.confirming {
-		return components.renderer.RenderContent(components.confirm.View())
+		return components.confirm.View()
 	}
 
 	if started && a.checkpoints[len(a.checkpoints)-1].Error != nil {
