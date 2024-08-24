@@ -13,7 +13,7 @@ func NewCmdCoder() *cobra.Command {
 	ops := &Options{}
 	cmd := &cobra.Command{
 		Use:   "coder",
-		Short: "Auto coder.",
+		Short: "Automatically generate code based on prompts.",
 		RunE:  ops.run,
 	}
 
