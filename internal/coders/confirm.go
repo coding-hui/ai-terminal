@@ -39,5 +39,5 @@ func (m *WaitFormUserConfirm) Update(msg tea.Msg) (*WaitFormUserConfirm, tea.Cmd
 }
 
 func (m *WaitFormUserConfirm) View() string {
-	return fmt.Sprintf("\n\n %s (y/n)\n", m.message)
+	return fmt.Sprintf("\n\n %s \n", m.message)
 }

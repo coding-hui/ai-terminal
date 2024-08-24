@@ -84,7 +84,24 @@ func (e *EditBlockCoder) ApplyEdits(ctx context.Context, edits []PartialCodeBloc
 			return err
 		}
 
-		if ok := e.coder.WaitForUserConfirm("\n\n %s \n\nAre you sure you want to apply these edits?", block.String()); !ok {
+		confirmMsg := fmt.Sprintf(`
+%s
+%s
+<<<<<<< SEARCH
+%s
+=======
+%s
+>>>>>>> REPLACE
+%s
+
+Are you sure you want to apply these edits? (Y/n)`,
+			block.Path,
+			e.fence[0],
+			block.OriginalText,
+			block.UpdatedText,
+			e.fence[1],
+		)
+		if ok := e.coder.WaitForUserConfirm(confirmMsg); !ok {
 			e.coder.Warningf("Apply %s edit cancelled", block.Path)
 			return nil
 		}

@@ -20,7 +20,7 @@ type PartialCodeBlock struct {
 }
 
 func (p PartialCodeBlock) String() string {
-	return fmt.Sprintf("%s\n<<<<<< Original\n%s\n====== Updated\n%s",
+	return fmt.Sprintf("%s\n```<<<<<< Original\n%s\n====== Updated\n%s```",
 		p.Path, p.OriginalText, p.UpdatedText,
 	)
 }
