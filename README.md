@@ -1,6 +1,7 @@
 # AI-Terminal
 
-AI-Terminal is an advanced AI-powered CLI that enhances terminal workflows through AI-driven automation and optimization. It efficiently manages tasks such as file management, data processing, and system diagnostics.
+AI-Terminal is an advanced AI-powered CLI that enhances terminal workflows through AI-driven automation and
+optimization. It efficiently manages tasks such as file management, data processing, and system diagnostics.
 
 ## Key Features
 
@@ -50,9 +51,9 @@ Usage Examples:
 
 ## Contributing
 
-Contribution guidelines will be provided soon. For more information, run `make help` or refer to the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html).
+Contribution guidelines will be provided soon. For more information, run `make help`.
 
 ## License
 
-Copyright 2024 coding-hui. Licensed under the Apache License, Version 2.0. See [LICENSE](http://www.apache.org/licenses/LICENSE-2.0) for details.
+Copyright 2024 coding-hui. Licensed under the MIT License.
 
