@@ -2,6 +2,7 @@ package coders
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"os"
@@ -80,12 +81,20 @@ func (e *EditBlockCoder) ApplyEdits(ctx context.Context, edits []PartialCodeBloc
 		}
 
 		fileExists, err := fileutil.FileExists(absPath)
-		if err != nil {
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			return err
 		}
 
 		if !fileExists {
-			return fmt.Errorf("file %s does not exist", block.Path)
+			if ok := e.coder.WaitForUserConfirm("Whether to create the %s file? (Y/n)", block.Path); ok {
+				if err := fileutil.WriteFile(absPath, []byte("")); err != nil {
+					return err
+				}
+				e.coder.Successf("Created %s file", block.Path)
+			} else {
+				e.coder.Warningf("Apply %s edit cancelled, file cannot be found", block.Path)
+				continue
+			}
 		}
 
 		rawFileContent, err := os.ReadFile(absPath)
@@ -345,11 +354,7 @@ func doReplace(fileName string, content, beforeText, afterText string, fence []s
 		}
 	}
 
-	if content == "" {
-		return ""
-	}
-
-	if beforeText == "" {
+	if content == "" || beforeText == "" {
 		return content + afterText
 	}
 
