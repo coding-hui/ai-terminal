@@ -222,7 +222,7 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		default:
-			if a.state.confirming {
+			if a.state.confirming && components.confirm != nil {
 				components.confirm, confirmCmd = components.confirm.Update(msg)
 				return a, tea.Sequence(
 					confirmCmd,
@@ -263,7 +263,7 @@ func (a *AutoCoder) View() string {
 	started := len(a.checkpoints) > 0
 	done := started && a.checkpoints[len(a.checkpoints)-1].Done
 
-	if a.state.confirming {
+	if a.state.confirming && components.confirm != nil {
 		return components.confirm.View()
 	}
 

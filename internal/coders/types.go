@@ -1,13 +1,16 @@
 package coders
 
+// PromptMode represents the mode of the prompt.
 type PromptMode int
 
+// Constants representing different prompt modes.
 const (
-	ExecPromptMode PromptMode = iota
-	ChatPromptMode
-	DefaultPromptMode
+	ExecPromptMode    PromptMode = iota // ExecPromptMode represents the execution mode.
+	ChatPromptMode                      // ChatPromptMode represents the chat mode.
+	DefaultPromptMode                   // DefaultPromptMode represents the default mode.
 )
 
+// String returns the string representation of the PromptMode.
 func (m PromptMode) String() string {
 	switch m {
 	case ExecPromptMode:
@@ -19,6 +22,7 @@ func (m PromptMode) String() string {
 	}
 }
 
+// GetPromptModeFromString returns the PromptMode corresponding to the given string.
 func GetPromptModeFromString(s string) PromptMode {
 	switch s {
 	case "exec":

@@ -93,13 +93,14 @@ func (a *AutoCoder) Errorf(format string, args ...interface{}) error {
 // WaitForUserConfirm waits for user confirmation with the formatted message and returns the user's choice.
 func (a *AutoCoder) WaitForUserConfirm(format string, args ...interface{}) bool {
 	a.state.confirming = true
-	defer func() {
-		a.state.confirming = false
-	}()
 
 	components.confirm = NewConfirmModel(fmt.Sprintf(format, args...))
 
 	program.Send(components.confirm)
+
+	defer func() {
+		a.state.confirming = false
+	}()
 
 	return <-components.confirm.choice
 }
