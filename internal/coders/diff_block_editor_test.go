@@ -73,60 +73,124 @@ type Coder interface {
 
 func testFindOriginalUpdateBlocks(t *testing.T) {
 
-	text := `To add comments explaining the methods in **internal/coders/code_editor.go**, we will add them right above each method declaration.
+	text := `为了优化 supportCommands，我们需要为注册的方法添加 context.Context 参数。这将允许我们在这些方法中使用上下文进行取消操作或其他上下文相关的操作。
 
-Here are the *SEARCH/REPLACE* blocks:
+以下是需要进行的更改：
+
+1. 修改 supportCommands 的定义，使其包含 context.Context 参数。
+2. 更新所有注册的方法，使其接受 context.Context 参数。
+3. 更新 run 方法，使其传递 context.Context 参数给调用的方法。
+
+以下是具体的更改步骤：
 
 <code>go
-internal/coders/code_editor.go
+internal\coders\commands.go
 <<<<<<< SEARCH
-type Coder interface {
-    // Name Returns the name of the code editor.
-    Name() string
+var supportCommands = map[string]func(...string) tea.Msg{}
+=======
+var supportCommands = map[string]func(context.Context, ...string) tea.Msg{}
+>>>>>>> REPLACE
+</code>
 
-    // Prompt Returns the prompt template used by the code editor.
-    Prompt() prompts.ChatPromptTemplate
-
-    // FormatMessages formats the messages with the values and returns the formatted messages.
-    FormatMessages(values map[string]any) ([]llms.MessageContent, error)
-
-    GetEdits(ctx context.Context) ([]PartialCodeBlock, error)
-
-    ApplyEdits(ctx context.Context, edits []PartialCodeBlock) error
-
-    // Execute Executes the code editor with the given input.
-    Execute(ctx context.Context, messages []llms.MessageContent) error
+<code>go
+internal\coders\commands.go
+<<<<<<< SEARCH
+func (c *command) registryCmds() {
+	supportCommands["/add"] = c.addFiles
+	supportCommands["/list"] = c.listFiles
+	supportCommands["/remove"] = c.removeFiles
+	supportCommands["/ask"] = c.askFiles
+	supportCommands["/drop"] = c.dropFiles
+	supportCommands["/coding"] = c.coding
 }
 =======
-type Coder interface {
-    // Name returns the name of the code editor.
-    Name() string
+func (c *command) registryCmds() {
+	supportCommands["/add"] = c.addFiles
+	supportCommands["/list"] = c.listFiles
+	supportCommands["/remove"] = c.removeFiles
+	supportCommands["/ask"] = c.askFiles
+	supportCommands["/drop"] = c.dropFiles
+	supportCommands["/coding"] = c.coding
+}
 
-    // Prompt returns the prompt template used by the code editor.
-    Prompt() prompts.ChatPromptTemplate
+func (c *command) addFiles(ctx context.Context, files ...string) tea.Msg {
+	return c.addFiles(files...)
+}
 
-    // FormatMessages formats the messages with the provided values and returns the formatted messages.
-    FormatMessages(values map[string]any) ([]llms.MessageContent, error)
+func (c *command) listFiles(ctx context.Context, _ ...string) tea.Msg {
+	return c.listFiles()
+}
 
-    // GetEdits retrieves the list of edits made to the code.
-    GetEdits(ctx context.Context) ([]PartialCodeBlock, error)
+func (c *command) removeFiles(ctx context.Context, files ...string) tea.Msg {
+	return c.removeFiles(files...)
+}
 
-    // ApplyEdits applies the given list of edits to the code.
-    ApplyEdits(ctx context.Context, edits []PartialCodeBlock) error
+func (c *command) askFiles(ctx context.Context, args ...string) tea.Msg {
+	return c.askFiles(args...)
+}
 
-    // Execute executes the code editor with the given input messages.
-    Execute(ctx context.Context, messages []llms.MessageContent) error
+func (c *command) dropFiles(ctx context.Context, _ ...string) tea.Msg {
+	return c.dropFiles()
+}
+
+func (c *command) coding(ctx context.Context, args ...string) tea.Msg {
+	return c.coding(args...)
 }
 >>>>>>> REPLACE
 </code>
+
+<code>go
+internal\coders\commands.go
+<<<<<<< SEARCH
+func (c *command) run(input string) tea.Cmd {
+	return func() tea.Msg {
+		cmd, args := "/ask", []string{input}
+		if c.isCommand(input) {
+			cmd, args = extractCmdArgs(input)
+		}
+
+		cmdFunc, ok := supportCommands[cmd]
+		if !ok {
+			return c.coder.Errorf("Invalid command %s", cmd)
+		}
+
+		// do run
+		return cmdFunc(args...)
+	}
+}
+=======
+func (c *command) run(ctx context.Context, input string) tea.Cmd {
+	return func() tea.Msg {
+		cmd, args := "/ask", []string{input}
+		if c.isCommand(input) {
+			cmd, args = extractCmdArgs(input)
+		}
+
+		cmdFunc, ok := supportCommands[cmd]
+		if !ok {
+			return c.coder.Errorf("Invalid command %s", cmd)
+		}
+
+		// do run
+		return cmdFunc(ctx, args...)
+	}
+}
+>>>>>>> REPLACE
+</code>
+
+这些更改将为 supportCommands 中的所有方法添加 context.Context 参数，并确保在调用这些方法时传递上下文。
 `
 	editor := NewEditBlockCoder(NewAutoCoder(), []string{"<code>", "</code>"})
 	editor.partialResponseContent = text
 
+	go func() {
+		<-editor.coder.checkpointChan
+	}()
+
 	edits, err := editor.GetEdits(context.Background())
 	require.NoError(t, err)
 	assert.NotEmpty(t, edits)
-	assert.Equal(t, "internal/coders/code_editor.go", edits[0].Path)
+	assert.Equal(t, 3, len(edits))
 }
 
 func testFindFilename(t *testing.T) {

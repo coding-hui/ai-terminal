@@ -25,6 +25,10 @@ var (
 	separators = regexp.QuoteMeta(HEAD) + "|" + regexp.QuoteMeta(DIVIDER) + "|" + regexp.QuoteMeta(UPDATED)
 )
 
+type pathAndCode struct {
+	path, code string
+}
+
 type EditBlockCoder struct {
 	coder                  *AutoCoder
 	fence                  []string
@@ -55,10 +59,18 @@ func (e *EditBlockCoder) GetEdits(_ context.Context) ([]PartialCodeBlock, error)
 	if e.fence != nil && len(e.fence) == 2 {
 		openFence, closeFence = e.fence[0], e.fence[1]
 	}
-	return findOriginalUpdateBlocks(e.partialResponseContent, []string{openFence, closeFence})
+
+	edits, err := findOriginalUpdateBlocks(e.partialResponseContent, []string{openFence, closeFence})
+	if err != nil {
+		return nil, err
+	}
+
+	e.coder.Successf("Find %d code editing blocks", len(edits))
+
+	return edits, nil
 }
 
-func (e *EditBlockCoder) ApplyEdits(ctx context.Context, edits []PartialCodeBlock) error {
+func (e *EditBlockCoder) ApplyEdits(ctx context.Context, edits []PartialCodeBlock, needConfirm bool) error {
 	var failed = []PartialCodeBlock{}
 
 	for _, block := range edits {
@@ -81,7 +93,7 @@ func (e *EditBlockCoder) ApplyEdits(ctx context.Context, edits []PartialCodeBloc
 			return err
 		}
 
-		fileExt := filepath.Ext(absPath)
+		fileExt := strings.TrimLeft(filepath.Ext(absPath), ".")
 		confirmMsg := fmt.Sprintf(`
 %s
 %s%s
@@ -100,9 +112,12 @@ Are you sure you want to apply these edits? (Y/n)`,
 			block.UpdatedText,
 			e.fence[1],
 		)
-		if ok := e.coder.WaitForUserConfirm(confirmMsg); !ok {
-			e.coder.Warningf("Apply %s edit cancelled", block.Path)
-			return nil
+
+		if needConfirm {
+			if ok := e.coder.WaitForUserConfirm(confirmMsg); !ok {
+				e.coder.Warningf("Apply %s edit cancelled", block.Path)
+				return nil
+			}
 		}
 
 		newFileContent := doReplace(absPath, string(rawFileContent), block.OriginalText, block.UpdatedText, e.fence)
@@ -188,45 +203,88 @@ func (e *EditBlockCoder) Execute(ctx context.Context, messages []llms.MessageCon
 }
 
 func findOriginalUpdateBlocks(content string, fence []string) ([]PartialCodeBlock, error) {
-	if !strings.HasSuffix(content, "\n") {
-		content += "\n"
-	}
+	edits := findAllCodeBlocks(content, fence)
+	result := []PartialCodeBlock{}
 
-	var (
-		re         = regexp.MustCompile("(?m)^((?:" + separators + ")[ ]*\n)")
-		pieces     = re.Split(content, -1)
-		edits      = make([]PartialCodeBlock, 0)
-		startFence = fence[0]
-		endFence   = fence[1]
-	)
+	for _, edit := range edits {
+		heads := []string{}
+		updates := []string{}
+		inHead := false
+		inUpdated := false
 
-	for i := 0; i+3 < len(pieces); i += 4 {
-		headBlock := pieces[i]
-		originalBlock := pieces[i+1]
-		updatedBlock := pieces[i+2]
-		endBlock := pieces[i+3]
+		for _, line := range strings.Split(edit.code, "\n") {
+			if strings.TrimSpace(line) == HEAD {
+				inHead = true
+				continue
+			}
 
-		if !strings.Contains(headBlock, startFence) {
-			return nil, fmt.Errorf("opening fence %s cannot be found in block:\n%s\n", startFence, headBlock)
+			if strings.TrimSpace(line) == DIVIDER {
+				inHead = false
+				inUpdated = true
+				continue
+			}
+
+			if strings.TrimSpace(line) == UPDATED {
+				inHead = false
+				inUpdated = false
+				continue
+			}
+
+			if inHead {
+				heads = append(heads, line)
+			}
+
+			if inUpdated {
+				updates = append(updates, line)
+			}
 		}
 
-		if !strings.HasPrefix(endBlock, endFence) {
-			return nil, fmt.Errorf("closing fence %s cannot be found in block:\n%s\n", endBlock, endBlock)
-		}
-
-		filename := findFilename(headBlock, fence)
-		if filename == "" {
-			return nil, fmt.Errorf("filename must be alone on the line after the opening fence %s", startFence)
-		}
-
-		edits = append(edits, PartialCodeBlock{
-			Path:         filename,
-			OriginalText: originalBlock,
-			UpdatedText:  updatedBlock,
+		result = append(result, PartialCodeBlock{
+			edit.path,
+			strings.Join(heads, "\n"),
+			strings.Join(updates, "\n"),
 		})
 	}
 
-	return edits, nil
+	if len(result) != len(edits) {
+		return nil, fmt.Errorf("parsing code blocks failed, expecting %d, but only %d were found", len(edits), len(result))
+	}
+
+	return result, nil
+}
+
+func findAllCodeBlocks(content string, fence []string) []pathAndCode {
+	lines := strings.Split(content, "\n")
+
+	startMarker := func(line string, idx int) bool {
+		return strings.HasPrefix(strings.TrimSpace(line), fence[0]) && idx+1 < len(lines) && strings.TrimSpace(lines[idx+1]) != HEAD
+	}
+
+	endMarker := func(line string, idx int) bool {
+		return strings.HasPrefix(strings.TrimSpace(line), fence[1]) && strings.TrimSpace(lines[idx-1]) == UPDATED
+	}
+
+	blocks := []pathAndCode{}
+	currentBlock := []string{}
+	startMarkerCount := 0
+	for i := 0; i < len(lines); i++ {
+		line := lines[i]
+		if startMarker(line, i) && startMarkerCount == 0 {
+			startMarkerCount++
+		} else if endMarker(line, i) && startMarkerCount == 1 {
+			startMarkerCount--
+			if len(currentBlock) > 0 {
+				path := strings.TrimSpace(currentBlock[0])
+				code := strings.Join(currentBlock[1:], "\n")
+				currentBlock = []string{}
+				blocks = append(blocks, pathAndCode{path, code})
+			}
+		} else if startMarkerCount > 0 {
+			currentBlock = append(currentBlock, line)
+		}
+	}
+
+	return blocks
 }
 
 func findFilename(line string, fence []string) string {

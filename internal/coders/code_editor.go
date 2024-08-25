@@ -36,7 +36,7 @@ type Coder interface {
 	// GetEdits retrieves the list of edits made to the code.
 	GetEdits(ctx context.Context) ([]PartialCodeBlock, error)
 	// ApplyEdits applies the given list of edits to the code.
-	ApplyEdits(ctx context.Context, edits []PartialCodeBlock) error
+	ApplyEdits(ctx context.Context, edits []PartialCodeBlock, needConfirm bool) error
 	// Execute runs the code editor with the specified input messages.
 	Execute(ctx context.Context, messages []llms.MessageContent) error
 }

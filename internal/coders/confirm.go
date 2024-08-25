@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 // WaitFormUserConfirm is a model that displays a confirmation message to the user and waits for their response.
@@ -17,7 +18,7 @@ type WaitFormUserConfirm struct {
 
 func NewConfirmModel(message string) *WaitFormUserConfirm {
 	formatMsg := components.renderer.RenderContent(fmt.Sprintf("\n\n %s \n", message))
-	vp := viewport.New(defaultWidth, 30)
+	vp := viewport.New(defaultWidth, int(min(30, lipgloss.Height(formatMsg))))
 	vp.SetContent(formatMsg)
 	return &WaitFormUserConfirm{
 		message: message,

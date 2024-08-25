@@ -2,6 +2,7 @@ package coders
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 )
 
@@ -14,12 +15,8 @@ var fences = [][]string{
 	{"<sourcecode>", "</sourcecode>"},
 }
 
-func wrapFence(rawContent string) string {
-	openFence, closeFence := chooseBestFence(rawContent)
-	return fmt.Sprintf("\n%s\n%s\n%s\n", openFence, rawContent, closeFence)
-}
-
-func wrapFenceWithType(rawContent, fileExt string) string {
+func wrapFenceWithType(rawContent, filename string) string {
+	fileExt := strings.TrimLeft(filepath.Ext(filename), ".")
 	openFence, closeFence := chooseBestFence(rawContent)
 	return fmt.Sprintf("\n%s%s\n%s\n%s\n", openFence, fileExt, rawContent, closeFence)
 }

@@ -45,6 +45,7 @@ func NewDefaultAICommand() *cobra.Command {
 // NewAICommand returns new initialized instance of 'ai' root command.
 func NewAICommand(in io.Reader, out, err io.Writer) *cobra.Command {
 	klog.InitFlags(nil)
+	klog.LogToStderr(false)
 
 	// Parent command to which all subcommands are added.
 	cmds := &cobra.Command{

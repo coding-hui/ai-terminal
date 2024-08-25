@@ -14,7 +14,7 @@ import (
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
 )
 
-var supportCommands = map[string]func(...string) tea.Msg{}
+var supportCommands = map[string]func(context.Context, ...string) tea.Msg{}
 
 type command struct {
 	coder *AutoCoder
@@ -53,11 +53,11 @@ func (c *command) run(input string) tea.Cmd {
 		}
 
 		// do run
-		return cmdFunc(args...)
+		return cmdFunc(context.Background(), args...)
 	}
 }
 
-func (c *command) askFiles(args ...string) tea.Msg {
+func (c *command) askFiles(_ context.Context, args ...string) tea.Msg {
 	c.coder.Loading(components.spinner.randMsg)
 
 	c.coder.state.buffer = ""
@@ -77,7 +77,7 @@ func (c *command) askFiles(args ...string) tea.Msg {
 }
 
 // addFiles Add files to the chat so GPT can edit them or review them in detail
-func (c *command) addFiles(files ...string) tea.Msg {
+func (c *command) addFiles(_ context.Context, files ...string) tea.Msg {
 	if len(files) <= 0 {
 		return c.coder.Error("Please provide at least one file")
 	}
@@ -130,7 +130,7 @@ func (c *command) addFiles(files ...string) tea.Msg {
 	return nil
 }
 
-func (c *command) listFiles(_ ...string) tea.Msg {
+func (c *command) listFiles(_ context.Context, _ ...string) tea.Msg {
 	fileCount := len(c.coder.absFileNames)
 	c.coder.Infof("Loaded %d files", fileCount)
 
@@ -149,7 +149,7 @@ func (c *command) listFiles(_ ...string) tea.Msg {
 	return nil
 }
 
-func (c *command) removeFiles(files ...string) tea.Msg {
+func (c *command) removeFiles(_ context.Context, files ...string) tea.Msg {
 	if len(files) <= 0 {
 		return c.coder.Error("Please provide at least one file")
 	}
@@ -175,7 +175,7 @@ func (c *command) removeFiles(files ...string) tea.Msg {
 	return nil
 }
 
-func (c *command) dropFiles(_ ...string) tea.Msg {
+func (c *command) dropFiles(_ context.Context, _ ...string) tea.Msg {
 	dropCount := len(c.coder.absFileNames)
 	c.coder.absFileNames = map[string]struct{}{}
 	c.coder.Infof("Dropped %d files", dropCount)
@@ -185,7 +185,7 @@ func (c *command) dropFiles(_ ...string) tea.Msg {
 	return nil
 }
 
-func (c *command) coding(args ...string) tea.Msg {
+func (c *command) coding(ctx context.Context, args ...string) tea.Msg {
 	addedFiles, err := c.getAddedFileContent()
 	if err != nil {
 		return c.coder.Error(err)
@@ -208,12 +208,12 @@ func (c *command) coding(args ...string) tea.Msg {
 		return c.coder.Error(err)
 	}
 
-	err = editor.Execute(context.Background(), messages)
+	err = editor.Execute(ctx, messages)
 	if err != nil {
 		return c.coder.Error(err)
 	}
 
-	edits, err := editor.GetEdits(context.Background())
+	edits, err := editor.GetEdits(ctx)
 	if err != nil {
 		return c.coder.Error(err)
 	}
@@ -222,8 +222,11 @@ func (c *command) coding(args ...string) tea.Msg {
 		return c.coder.Errorf("No edits were made")
 	}
 
+	needConfirm := c.coder.WaitForUserConfirm("Whether to confirm the change? (Y/n)")
+
 	c.coder.Infof("Applying %d edits...", len(edits))
-	err = editor.ApplyEdits(context.Background(), edits)
+
+	err = editor.ApplyEdits(ctx, edits, needConfirm)
 	if err != nil {
 		return c.coder.Error(err)
 	}
@@ -307,8 +310,7 @@ func (c *command) formatFileContent(filePath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fileExt := filepath.Ext(filePath)
-	return fmt.Sprintf("\n%s%s", relPath, wrapFenceWithType(string(content), fileExt)), nil
+	return fmt.Sprintf("\n%s%s", relPath, wrapFenceWithType(string(content), filePath)), nil
 }
 
 func extractCmdArgs(input string) (string, []string) {
