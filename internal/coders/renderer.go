@@ -72,7 +72,7 @@ func (r *Renderer) RenderHelp(in string) string {
 }
 
 func (r *Renderer) RenderWelcomeMessage(username string) string {
-	welcome := "Welcome! **" + username + "** 👋  \n\n"
+	welcome := "\n\nWelcome! **" + username + "** 👋  \n\n"
 
 	return welcome
 }

@@ -6,9 +6,8 @@ import (
 	"path/filepath"
 
 	"github.com/charmbracelet/bubbles/spinner"
-	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/glamour"
 
 	"github.com/coding-hui/ai-terminal/internal/cli/options"
 	"github.com/coding-hui/ai-terminal/internal/git"
@@ -22,13 +21,15 @@ var program *tea.Program
 type State struct {
 	error      error
 	buffer     string
-	command    string
+	querying   bool
 	confirming bool
 }
 
 // AutoCoder is a auto generate coders user interface.
 type AutoCoder struct {
-	state State
+	state  State
+	width  int
+	height int
 
 	command      *command
 	gitRepo      *git.Command
@@ -45,7 +46,11 @@ type AutoCoder struct {
 
 func StartAutCoder() error {
 	coder := NewAutoCoder()
-	program = tea.NewProgram(coder)
+	program = tea.NewProgram(
+		coder,
+		// tea.WithAltScreen(),       // use the full size of the terminal in its "alternate screen buffer"
+		tea.WithMouseCellMotion(), // turn on mouse support so we can track the mouse wheel
+	)
 	if _, err := program.Run(); err != nil {
 		fmt.Println("Error running auto chat program:", err)
 		os.Exit(1)
@@ -54,44 +59,44 @@ func StartAutCoder() error {
 }
 
 func NewAutoCoder() *AutoCoder {
-	return &AutoCoder{
+	var err error
+	g := git.New()
+	cfg := options.NewConfig()
+
+	autoCoder := &AutoCoder{
 		state: State{
-			error:   nil,
-			buffer:  "",
-			command: "",
+			error:  nil,
+			buffer: "",
 		},
-		gitRepo:        git.New(),
-		cfg:            options.NewConfig(),
+		gitRepo:        g,
+		cfg:            cfg,
 		checkpoints:    []Checkpoint{},
 		history:        ui.NewHistory(),
 		absFileNames:   map[string]struct{}{},
 		checkpointChan: make(chan Checkpoint),
 	}
+
+	autoCoder.llmEngine, err = llm.NewLLMEngine(llm.ChatEngineMode, cfg)
+	if err != nil {
+		display.FatalErr(err)
+	}
+
+	root, err := g.GitDir()
+	if err != nil {
+		display.FatalErr(err)
+	}
+
+	autoCoder.codeBasePath = filepath.Dir(root)
+	autoCoder.command = newCommand(autoCoder)
+
+	return autoCoder
 }
 
 func (a *AutoCoder) Init() tea.Cmd {
-	var err error
-
-	a.cfg = options.NewConfig()
-	a.llmEngine, err = llm.NewLLMEngine(llm.ChatEngineMode, a.cfg)
-	if err != nil {
-		display.FatalErr(err)
-		return tea.Quit
-	}
-
-	root, err := a.gitRepo.GitDir()
-	if err != nil {
-		display.FatalErr(err)
-		return tea.Quit
-	}
-
-	a.codeBasePath = filepath.Dir(root)
-	a.command = newCommand(a)
-
 	return tea.Sequence(
 		tea.ClearScreen,
 		tea.Println(components.renderer.RenderContent(components.renderer.RenderWelcomeMessage(a.cfg.System.GetUsername()))),
-		textinput.Blink,
+		textarea.Blink,
 		a.statusTickCmd(),
 	)
 }
@@ -106,20 +111,18 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case spinner.TickMsg:
-		if a.isQuerying() && len(a.state.buffer) <= 0 {
+		if a.state.querying {
 			components.spinner, spinnerCmd = components.spinner.Update(msg)
 			cmds = append(
 				cmds,
 				spinnerCmd,
 			)
 		}
+
 	case tea.WindowSizeMsg:
-		components.renderer = NewRenderer(
-			glamour.WithEmoji(),
-			glamour.WithAutoStyle(),
-			glamour.WithPreservedNewLines(),
-			glamour.WithWordWrap(msg.Width),
-		)
+		a.width = msg.Width
+		a.height = msg.Height
+		components.prompt.SetWidth(msg.Width)
 
 	case Checkpoint:
 		if len(a.checkpoints) <= 0 || a.checkpoints[len(a.checkpoints)-1].Desc != msg.Desc {
@@ -135,7 +138,7 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		components.confirm, confirmCmd = components.confirm.Update(msg)
 		return a, tea.Sequence(
 			confirmCmd,
-			textinput.Blink,
+			textarea.Blink,
 		)
 
 	case tea.KeyMsg:
@@ -143,21 +146,23 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// quit
 		case tea.KeyCtrlC:
 			return a, tea.Quit
+
 		// help
 		case tea.KeyCtrlH:
-			if !a.isQuerying() {
+			if !a.state.querying && !a.state.confirming {
+				components.prompt.SetValue("")
 				components.prompt, promptCmd = components.prompt.Update(msg)
 				cmds = append(
 					cmds,
 					promptCmd,
 					tea.Println(components.renderer.RenderContent(components.renderer.RenderHelpMessage())),
-					textinput.Blink,
+					textarea.Blink,
 				)
 			}
 
 		// history
 		case tea.KeyUp, tea.KeyDown:
-			if !a.isQuerying() {
+			if !a.state.querying && !a.state.confirming {
 				var input *string
 				if msg.Type == tea.KeyUp {
 					input = a.history.GetPrevious()
@@ -177,13 +182,13 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// handle user input
 		case tea.KeyEnter:
 			input := components.prompt.GetValue()
-			if input != "" {
+			if !a.state.querying && !a.state.confirming && input != "" {
 				a.state.buffer = ""
 				a.checkpoints = make([]Checkpoint, 0)
 				a.history.Add(input)
 				inputPrint := components.prompt.AsString()
 				components.prompt.SetValue("")
-				components.prompt.Focus()
+				components.prompt.Blur()
 				components.prompt, promptCmd = components.prompt.Update(msg)
 				cmds = append(
 					cmds,
@@ -192,24 +197,26 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					a.command.run(input),
 					a.command.awaitChatCompleted(),
 				)
+				components.prompt.Focus()
 			}
 
 		// clear
 		case tea.KeyCtrlL:
-			if !a.isQuerying() {
+			if !a.state.querying && !a.state.confirming {
+				a.checkpoints = make([]Checkpoint, 0)
 				components.prompt.SetValue("")
 				components.prompt, promptCmd = components.prompt.Update(msg)
 				cmds = append(
 					cmds,
 					promptCmd,
 					tea.ClearScreen,
-					textinput.Blink,
+					textarea.Blink,
 				)
 			}
 
 		// reset
 		case tea.KeyCtrlR:
-			if !a.isQuerying() {
+			if !a.state.querying && !a.state.confirming {
 				a.reset()
 				components.prompt.SetValue("")
 				components.prompt, promptCmd = components.prompt.Update(msg)
@@ -217,7 +224,7 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmds,
 					promptCmd,
 					tea.ClearScreen,
-					textinput.Blink,
+					textarea.Blink,
 				)
 			}
 
@@ -226,7 +233,7 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				components.confirm, confirmCmd = components.confirm.Update(msg)
 				return a, tea.Sequence(
 					confirmCmd,
-					textinput.Blink,
+					textarea.Blink,
 				)
 			}
 			components.prompt.Focus()
@@ -234,7 +241,7 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(
 				cmds,
 				promptCmd,
-				textinput.Blink,
+				textarea.Blink,
 			)
 		}
 
@@ -245,7 +252,7 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			components.prompt.Focus()
 			return a, tea.Sequence(
 				tea.Println(output),
-				textinput.Blink,
+				textarea.Blink,
 			)
 		} else {
 			return a, a.command.awaitChatCompleted()
@@ -260,6 +267,10 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (a *AutoCoder) View() string {
+	if a.width == 0 || a.height == 0 {
+		return "Initializing..."
+	}
+
 	started := len(a.checkpoints) > 0
 	done := started && a.checkpoints[len(a.checkpoints)-1].Done
 

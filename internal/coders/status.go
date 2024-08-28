@@ -79,6 +79,7 @@ func (a *AutoCoder) Warningf(format string, args ...interface{}) {
 // Error sets the status to error with the given error message and returns the error.
 func (a *AutoCoder) Error(args interface{}) error {
 	err := fmt.Errorf("%s", args)
+	a.state.querying = false
 	a.checkpointChan <- Checkpoint{Type: StatusError, Error: err, Desc: err.Error(), time: time.Now()}
 	return err
 }
@@ -86,6 +87,7 @@ func (a *AutoCoder) Error(args interface{}) error {
 // Errorf sets the status to error with the formatted error message and returns the error.
 func (a *AutoCoder) Errorf(format string, args ...interface{}) error {
 	err := fmt.Errorf(format, args...)
+	a.state.querying = false
 	a.checkpointChan <- Checkpoint{Type: StatusError, Error: err, Desc: err.Error(), time: time.Now()}
 	return err
 }
@@ -107,11 +109,13 @@ func (a *AutoCoder) WaitForUserConfirm(format string, args ...interface{}) bool 
 
 // Done sets the checkpoint to done.
 func (a *AutoCoder) Done() {
+	a.state.querying = false
 	a.checkpointChan <- Checkpoint{Done: true, time: time.Now()}
 }
 
 // changeStatus changes the status with the given status type and description.
 func (a *AutoCoder) changeStatus(statusType StatusType, desc string) {
+	a.state.querying = true
 	a.checkpointChan <- Checkpoint{Type: statusType, Desc: desc, time: time.Now()}
 }
 

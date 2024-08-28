@@ -3,7 +3,7 @@ package coders
 import (
 	"fmt"
 
-	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -18,14 +18,21 @@ const (
 
 type Prompt struct {
 	mode  PromptMode
-	input textinput.Model
+	input textarea.Model
 }
 
 func NewPrompt(mode PromptMode) *Prompt {
-	input := textinput.New()
+	input := textarea.New()
 	input.Placeholder = getPromptPlaceholder(mode)
-	input.TextStyle = getPromptStyle(mode)
+	input.CharLimit = -1
+	input.SetWidth(50)
+	input.SetHeight(1)
 	input.Prompt = getPromptIcon(mode)
+
+	// Remove cursor line styling
+	input.FocusedStyle.Text = getPromptStyle(mode)
+	input.FocusedStyle.CursorLine = lipgloss.NewStyle()
+	input.ShowLineNumbers = false
 
 	input.Focus()
 
@@ -42,7 +49,7 @@ func (p *Prompt) GetMode() PromptMode {
 func (p *Prompt) SetMode(mode PromptMode) *Prompt {
 	p.mode = mode
 
-	p.input.TextStyle = getPromptStyle(mode)
+	p.input.FocusedStyle.Text = getPromptStyle(mode)
 	p.input.Prompt = getPromptIcon(mode)
 	p.input.Placeholder = getPromptPlaceholder(mode)
 
@@ -51,6 +58,7 @@ func (p *Prompt) SetMode(mode PromptMode) *Prompt {
 
 func (p *Prompt) SetValue(value string) *Prompt {
 	p.input.SetValue(value)
+	p.input.CursorStart()
 
 	return p
 }
@@ -67,6 +75,12 @@ func (p *Prompt) Blur() *Prompt {
 
 func (p *Prompt) Focus() *Prompt {
 	p.input.Focus()
+
+	return p
+}
+
+func (p *Prompt) SetWidth(width int) *Prompt {
+	p.input.SetWidth(width)
 
 	return p
 }
