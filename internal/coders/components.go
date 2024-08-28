@@ -7,6 +7,9 @@ var (
 )
 
 type Components struct {
+	width  int
+	height int
+
 	prompt   *Prompt
 	renderer *Renderer
 	spinner  *Spinner

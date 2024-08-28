@@ -96,6 +96,10 @@ func (p *Prompt) View() string {
 	return p.input.View()
 }
 
+func (p *Prompt) Height() int {
+	return p.input.Height()
+}
+
 func (p *Prompt) AsString() string {
 	style := getPromptStyle(p.mode)
 

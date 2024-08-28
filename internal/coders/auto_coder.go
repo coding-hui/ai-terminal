@@ -27,9 +27,7 @@ type State struct {
 
 // AutoCoder is a auto generate coders user interface.
 type AutoCoder struct {
-	state  State
-	width  int
-	height int
+	state State
 
 	command      *command
 	gitRepo      *git.Command
@@ -120,9 +118,14 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tea.WindowSizeMsg:
-		a.width = msg.Width
-		a.height = msg.Height
+		components.width = msg.Width
+		components.height = msg.Height
 		components.prompt.SetWidth(msg.Width)
+		if a.state.confirming {
+			components.confirm.SetWidth(msg.Width)
+			components.confirm.SetHeight(msg.Height - components.prompt.Height())
+			components.confirm.GotoBottom()
+		}
 
 	case Checkpoint:
 		if len(a.checkpoints) <= 0 || a.checkpoints[len(a.checkpoints)-1].Desc != msg.Desc {
@@ -267,7 +270,7 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (a *AutoCoder) View() string {
-	if a.width == 0 || a.height == 0 {
+	if components.width == 0 || components.height == 0 {
 		return "Initializing..."
 	}
 

@@ -6,10 +6,9 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
-// WaitFormUserConfirm is a model that displays a confirmation message to the user and waits for their response.
+// WaitFormUserConfirm is a model that displays a confirmation message to the user and waits for their response. It handles user input for confirmation (yes) or cancellation (no). This model uses a viewport to display the message and a channel to receive the user's choice.
 type WaitFormUserConfirm struct {
 	message string         // The message to display to the user.
 	choice  chan bool      // Channel to receive the user's confirmation choice (true for yes, false for no).
@@ -18,7 +17,7 @@ type WaitFormUserConfirm struct {
 
 func NewConfirmModel(message string) *WaitFormUserConfirm {
 	formatMsg := components.renderer.RenderContent(fmt.Sprintf("\n\n %s \n", message))
-	vp := viewport.New(defaultWidth, min(30, lipgloss.Height(formatMsg)))
+	vp := viewport.New(defaultWidth, components.height-components.prompt.Height())
 	vp.SetContent(formatMsg)
 	return &WaitFormUserConfirm{
 		message: message,
@@ -49,4 +48,20 @@ func (m *WaitFormUserConfirm) Update(msg tea.Msg) (*WaitFormUserConfirm, tea.Cmd
 
 func (m *WaitFormUserConfirm) View() string {
 	return m.vp.View()
+}
+
+func (m *WaitFormUserConfirm) SetWidth(width int) {
+	m.vp.Width = width
+}
+
+func (m *WaitFormUserConfirm) SetHeight(height int) {
+	m.vp.Height = height
+}
+
+func (m *WaitFormUserConfirm) SetContent(content string) {
+	m.vp.SetContent(content)
+}
+
+func (m *WaitFormUserConfirm) GotoBottom() {
+	m.vp.GotoBottom()
 }
