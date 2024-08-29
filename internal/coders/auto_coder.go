@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/charmbracelet/bubbles/spinner"
-	"github.com/charmbracelet/bubbles/textarea"
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/coding-hui/ai-terminal/internal/cli/options"
@@ -94,7 +94,7 @@ func (a *AutoCoder) Init() tea.Cmd {
 	return tea.Sequence(
 		tea.ClearScreen,
 		tea.Println(components.renderer.RenderContent(components.renderer.RenderWelcomeMessage(a.cfg.System.GetUsername()))),
-		textarea.Blink,
+		textinput.Blink,
 		a.statusTickCmd(),
 	)
 }
@@ -141,7 +141,7 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		components.confirm, confirmCmd = components.confirm.Update(msg)
 		return a, tea.Sequence(
 			confirmCmd,
-			textarea.Blink,
+			textinput.Blink,
 		)
 
 	case tea.KeyMsg:
@@ -159,7 +159,7 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmds,
 					promptCmd,
 					tea.Println(components.renderer.RenderContent(components.renderer.RenderHelpMessage())),
-					textarea.Blink,
+					textinput.Blink,
 				)
 			}
 
@@ -213,7 +213,7 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmds,
 					promptCmd,
 					tea.ClearScreen,
-					textarea.Blink,
+					textinput.Blink,
 				)
 			}
 
@@ -227,7 +227,7 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmds,
 					promptCmd,
 					tea.ClearScreen,
-					textarea.Blink,
+					textinput.Blink,
 				)
 			}
 
@@ -236,7 +236,7 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				components.confirm, confirmCmd = components.confirm.Update(msg)
 				return a, tea.Sequence(
 					confirmCmd,
-					textarea.Blink,
+					textinput.Blink,
 				)
 			}
 			components.prompt.Focus()
@@ -244,7 +244,7 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(
 				cmds,
 				promptCmd,
-				textarea.Blink,
+				textinput.Blink,
 			)
 		}
 
@@ -255,7 +255,7 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			components.prompt.Focus()
 			return a, tea.Sequence(
 				tea.Println(output),
-				textarea.Blink,
+				textinput.Blink,
 			)
 		} else {
 			return a, a.command.awaitChatCompleted()

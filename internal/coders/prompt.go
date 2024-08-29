@@ -3,7 +3,8 @@ package coders
 import (
 	"fmt"
 
-	"github.com/charmbracelet/bubbles/textarea"
+	"github.com/charmbracelet/bubbles/cursor"
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -18,21 +19,19 @@ const (
 
 type Prompt struct {
 	mode  PromptMode
-	input textarea.Model
+	input textinput.Model
 }
 
 func NewPrompt(mode PromptMode) *Prompt {
-	input := textarea.New()
-	input.Placeholder = getPromptPlaceholder(mode)
+	input := textinput.New()
 	input.CharLimit = -1
-	input.SetWidth(50)
-	input.SetHeight(1)
+	input.Width = 50
+	input.Placeholder = getPromptPlaceholder(mode)
+	input.TextStyle = getPromptStyle(mode)
 	input.Prompt = getPromptIcon(mode)
-
-	// Remove cursor line styling
-	input.FocusedStyle.Text = getPromptStyle(mode)
-	input.FocusedStyle.CursorLine = lipgloss.NewStyle()
-	input.ShowLineNumbers = false
+	input.Cursor.SetMode(cursor.CursorBlink)
+	input.ShowSuggestions = true
+	input.SetSuggestions([]string{"internal/coders/auto_coder.go"})
 
 	input.Focus()
 
@@ -49,7 +48,7 @@ func (p *Prompt) GetMode() PromptMode {
 func (p *Prompt) SetMode(mode PromptMode) *Prompt {
 	p.mode = mode
 
-	p.input.FocusedStyle.Text = getPromptStyle(mode)
+	p.input.TextStyle = getPromptStyle(mode)
 	p.input.Prompt = getPromptIcon(mode)
 	p.input.Placeholder = getPromptPlaceholder(mode)
 
@@ -80,7 +79,7 @@ func (p *Prompt) Focus() *Prompt {
 }
 
 func (p *Prompt) SetWidth(width int) *Prompt {
-	p.input.SetWidth(width)
+	p.input.Width = width
 
 	return p
 }
@@ -97,7 +96,7 @@ func (p *Prompt) View() string {
 }
 
 func (p *Prompt) Height() int {
-	return p.input.Height()
+	return 1
 }
 
 func (p *Prompt) AsString() string {
