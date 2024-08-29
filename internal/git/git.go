@@ -71,6 +71,17 @@ func (c *Command) GitDir() (string, error) {
 	return strings.TrimSpace(string(output)), nil
 }
 
+func (c *Command) ListAllFiles() ([]string, error) {
+	cmd := exec.Command("git", "ls-files")
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	fileNames := strings.Split(strings.TrimSpace(string(output)), "\n")
+	return fileNames, nil
+}
+
 // DiffFiles compares the differences between two sets of data.
 func (c *Command) DiffFiles() (string, error) {
 	output, err := c.diffNames().Output()
