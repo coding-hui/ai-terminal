@@ -99,6 +99,7 @@ func (a *AutoCoder) Init() tea.Cmd {
 	)
 }
 
+//nolint:golint,gocyclo
 func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
 		cmds       []tea.Cmd

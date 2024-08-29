@@ -126,14 +126,6 @@ func (a *AutoCoder) statusTickCmd() tea.Cmd {
 	})
 }
 
-// isQuerying checks if the AutoCoder is currently querying.
-func (a *AutoCoder) isQuerying() bool {
-	if len(a.checkpoints) == 0 {
-		return false
-	}
-	return !a.checkpoints[len(a.checkpoints)-1].Done
-}
-
 func checkpointIcon(checkpointType StatusType) string {
 	switch checkpointType {
 	case StatusLoading:
