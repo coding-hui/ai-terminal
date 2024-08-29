@@ -16,6 +16,14 @@ import (
 
 var supportCommands = map[string]func(context.Context, ...string) tea.Msg{}
 
+func getSupportedCommands() []string {
+	commands := make([]string, 0, len(supportCommands))
+	for cmd := range supportCommands {
+		commands = append(commands, cmd)
+	}
+	return commands
+}
+
 type command struct {
 	coder *AutoCoder
 }

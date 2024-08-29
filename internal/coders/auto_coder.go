@@ -91,6 +91,8 @@ func NewAutoCoder() *AutoCoder {
 }
 
 func (a *AutoCoder) Init() tea.Cmd {
+	components.prompt.SetSuggestions(getSupportedCommands())
+
 	return tea.Sequence(
 		tea.ClearScreen,
 		tea.Println(components.renderer.RenderContent(components.renderer.RenderWelcomeMessage(a.cfg.System.GetUsername()))),

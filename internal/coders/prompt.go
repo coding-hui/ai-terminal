@@ -31,8 +31,6 @@ func NewPrompt(mode PromptMode) *Prompt {
 	input.Prompt = getPromptIcon(mode)
 	input.Cursor.SetMode(cursor.CursorBlink)
 	input.ShowSuggestions = true
-	input.SetSuggestions([]string{"internal/coders/auto_coder.go"})
-
 	input.Focus()
 
 	return &Prompt{
@@ -103,6 +101,10 @@ func (p *Prompt) AsString() string {
 	style := getPromptStyle(p.mode)
 
 	return fmt.Sprintf("%s%s", style.Render(getPromptIcon(p.mode)), style.Render(p.input.Value()))
+}
+
+func (p *Prompt) SetSuggestions(suggestions []string) {
+	p.input.SetSuggestions(suggestions)
 }
 
 func getPromptStyle(mode PromptMode) lipgloss.Style {
