@@ -1,6 +1,25 @@
 # Change Log
 
 
+<a name="v0.1.6"></a>
+## [v0.1.6] - 2024-08-29
+### Bug Fixes
+- fix panic issue in waitForUserConfirm method
+
+### Code Refactoring
+- refactor code quality and remove unused methods
+- simplify edit application process
+- refactor input handling with `textinput` package
+- refactor UI dimensions handling
+- enhance terminal interaction and input handling
+- simplify viewport height calculation
+- refactor codebase for context handling and logging
+- enhance error handling and file content formatting
+
+### Features
+- enhance Git repository file listing functionality
+
+
 <a name="v0.1.5"></a>
 ## [v0.1.5] - 2024-08-24
 ### Code Refactoring
@@ -110,7 +129,8 @@
 - add ask cmd
 
 
-[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.1.5...HEAD
+[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.1.6...HEAD
+[v0.1.6]: https://github.com/coding-hui/ai-terminal/compare/v0.1.5...v0.1.6
 [v0.1.5]: https://github.com/coding-hui/ai-terminal/compare/v0.1.4...v0.1.5
 [v0.1.4]: https://github.com/coding-hui/ai-terminal/compare/v0.1.3-1...v0.1.4
 [v0.1.3-1]: https://github.com/coding-hui/ai-terminal/compare/v0.1.3...v0.1.3-1
