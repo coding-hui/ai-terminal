@@ -221,11 +221,9 @@ func (c *command) coding(ctx context.Context, args ...string) tea.Msg {
 		return c.coder.Errorf("No edits were made")
 	}
 
-	needConfirm := c.coder.WaitForUserConfirm("Whether to confirm the change? (Y/n)")
-
 	c.coder.Infof("Applying %d edits...", len(edits))
 
-	err = editor.ApplyEdits(ctx, edits, needConfirm)
+	err = editor.ApplyEdits(ctx, edits, true)
 	if err != nil {
 		return c.coder.Error(err)
 	}
