@@ -27,7 +27,7 @@ type State struct {
 	confirming bool
 }
 
-// AutoCoder is a auto generate coders user interface.
+// AutoCoder is an interface for auto-generating code.
 type AutoCoder struct {
 	state State
 
