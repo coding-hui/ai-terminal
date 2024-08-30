@@ -271,7 +271,9 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			// 更新建议
 			currentInput := components.prompt.GetValue()
-			components.prompt.SetSuggestions(a.suggester.GetSuggestions(currentInput))
+			suggestions := a.suggester.GetSuggestions(currentInput)
+			components.prompt.SetSuggestions(suggestions)
+			a.currentSuggestions = suggestions
 
 			cmds = append(
 				cmds,
