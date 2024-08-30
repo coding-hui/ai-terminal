@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -40,6 +42,9 @@ type AutoCoder struct {
 
 	cfg       *options.Config
 	llmEngine *llm.Engine
+
+	files              []string
+	currentSuggestions []string
 }
 
 func StartAutCoder() error {
@@ -86,6 +91,16 @@ func NewAutoCoder() *AutoCoder {
 
 	autoCoder.codeBasePath = filepath.Dir(root)
 	autoCoder.command = newCommand(autoCoder)
+
+	// 获取所有文件
+	files, err := autoCoder.gitRepo.ListAllFiles()
+	if err != nil {
+		display.FatalErr(err)
+	}
+	autoCoder.files = files
+
+	// 初始时只设置命令作为建议
+	components.prompt.SetSuggestions(getSupportedCommands())
 
 	return autoCoder
 }
@@ -244,6 +259,11 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			components.prompt.Focus()
 			components.prompt, promptCmd = components.prompt.Update(msg)
+
+			// 更新建议
+			currentInput := components.prompt.GetValue()
+			a.updateSuggestions(currentInput)
+
 			cmds = append(
 				cmds,
 				promptCmd,
@@ -330,4 +350,166 @@ func (a *AutoCoder) reset() {
 	a.history.Reset()
 	a.absFileNames = make(map[string]struct{})
 	a.state.buffer = ""
+}
+
+func (a *AutoCoder) updateSuggestions(input string) {
+	a.currentSuggestions = a.filterSuggestions(input)
+
+	var suggestionsToSet []string
+
+	parts := strings.Fields(input)
+	if len(parts) == 0 {
+		// 如果输入为空，显示所有命令
+		suggestionsToSet = getSupportedCommands()
+	} else if strings.HasPrefix(parts[0], "/") {
+		// 如果输入以 "/" 开头
+		if len(parts) == 1 {
+			// 只有命令部分，设置匹配的命令作为建议
+			suggestionsToSet = a.getMatchingCommands(input)
+		} else {
+			// 命令后面还有内容，设置匹配的文件作为建议
+			fileInput := parts[len(parts)-1]
+			matchingFiles := a.getMatchingFiles(fileInput)
+			prefix := strings.Join(parts[:len(parts)-1], " ") + " "
+			for _, file := range matchingFiles {
+				suggestionsToSet = append(suggestionsToSet, prefix+file)
+			}
+		}
+	} else {
+		// 如果不是以 "/" 开头，设置匹配的文件作为建议
+		fileInput := parts[len(parts)-1]
+		matchingFiles := a.getMatchingFiles(fileInput)
+		suggestionsToSet = matchingFiles
+	}
+
+	// 设置建议
+	components.prompt.SetSuggestions(suggestionsToSet)
+}
+
+func (a *AutoCoder) filterSuggestions(input string) []string {
+	if input == "" {
+		return getSupportedCommands()
+	}
+
+	var filtered []string
+	parts := strings.Fields(input)
+
+	if strings.HasPrefix(parts[0], "/") {
+		cmd := parts[0]
+		filtered = append(filtered, a.getMatchingCommands(cmd)...)
+
+		// 对于命令后的每个参数，都尝试匹配文件
+		for i := 1; i < len(parts); i++ {
+			matchingFiles := a.getMatchingFiles(parts[i])
+			prefix := strings.Join(parts[:i], " ") + " "
+			for _, file := range matchingFiles {
+				filtered = append(filtered, prefix+file)
+			}
+		}
+	} else {
+		filtered = append(filtered, a.getMatchingCommands(input)...)
+		filtered = append(filtered, a.getMatchingFiles(parts[len(parts)-1])...)
+	}
+
+	// 排序和限制数量的逻辑
+	sort.Slice(filtered, func(i, j int) bool {
+		iIsCmd := strings.HasPrefix(filtered[i], "/")
+		jIsCmd := strings.HasPrefix(filtered[j], "/")
+		if iIsCmd && !jIsCmd {
+			return true
+		}
+		if !iIsCmd && jIsCmd {
+			return false
+		}
+		return filtered[i] < filtered[j]
+	})
+
+	maxSuggestions := 10
+	if len(filtered) > maxSuggestions {
+		filtered = filtered[:maxSuggestions]
+	}
+
+	return filtered
+}
+
+// 获取匹配的命令
+func (a *AutoCoder) getMatchingCommands(input string) []string {
+	var matched []string
+	for _, cmd := range getSupportedCommands() {
+		if strings.HasPrefix(cmd, input) {
+			matched = append(matched, cmd)
+		}
+	}
+	return matched
+}
+
+// 获取匹配的文件
+func (a *AutoCoder) getMatchingFiles(input string) []string {
+	var matched []string
+	inputParts := strings.Split(input, "/")
+
+	for _, file := range a.files {
+
+		// 检查是否所有输入部分都匹配文件路径的某个部分
+		allPartsMatch := true
+		for _, inputPart := range inputParts {
+			partMatched := false
+			if strings.Contains(file, inputPart) {
+				partMatched = true
+				break
+			}
+			if !partMatched {
+				allPartsMatch = false
+				break
+			}
+		}
+
+		if allPartsMatch {
+			matched = append(matched, file)
+		}
+	}
+
+	// 对匹配结果进行排序，使更相关的结果排在前面
+	sort.Slice(matched, func(i, j int) bool {
+		iRelevance := getRelevanceScore(input, matched[i])
+		jRelevance := getRelevanceScore(input, matched[j])
+		if iRelevance == jRelevance {
+			return matched[i] < matched[j] // 字母顺序作为次要排序标准，保留大小写
+		}
+		return iRelevance > jRelevance
+	})
+
+	return matched
+}
+
+// 计算匹配相关度分数
+func getRelevanceScore(input, file string) int {
+	score := 0
+
+	// 如果是精确前缀匹配，给予最高分
+	if strings.HasPrefix(file, input) {
+		score += 100
+	}
+
+	// 根据匹配位置给予不同的分数
+	index := strings.Index(file, input)
+	if index != -1 {
+		score += 50 - index // 匹配位置越靠前，分数越高
+	}
+
+	// 计算匹配的字符数
+	matchedChars := 0
+	for _, ch := range input {
+		if strings.ContainsRune(file, ch) {
+			matchedChars++
+		}
+	}
+	score += matchedChars
+
+	return score
+}
+
+// 添加一个新方法来获取当前的建议
+func (a *AutoCoder) GetCurrentSuggestions() []string {
+	return a.currentSuggestions
 }
