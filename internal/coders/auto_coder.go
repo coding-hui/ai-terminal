@@ -211,23 +211,24 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// handle user input
 		case tea.KeyEnter:
 			input := components.prompt.GetValue()
-			if !a.state.querying && !a.state.confirming && input != "" {
-				a.state.buffer = ""
-				a.checkpoints = make([]Checkpoint, 0)
-				a.history.Add(input)
-				inputPrint := components.prompt.AsString()
-				components.prompt.SetValue("")
-				components.prompt.Blur()
-				components.prompt, promptCmd = components.prompt.Update(msg)
-				cmds = append(
-					cmds,
-					promptCmd,
-					tea.Println(inputPrint),
-					a.command.run(input),
-					a.command.awaitChatCompleted(),
-				)
-				components.prompt.Focus()
+			if a.state.querying || a.state.confirming || input == "" {
+				return a, nil
 			}
+			a.state.buffer = ""
+			a.checkpoints = make([]Checkpoint, 0)
+			a.history.Add(input)
+			inputPrint := components.prompt.AsString()
+			components.prompt.SetValue("")
+			components.prompt.Blur()
+			components.prompt, promptCmd = components.prompt.Update(msg)
+			cmds = append(
+				cmds,
+				promptCmd,
+				tea.Println(inputPrint),
+				a.command.run(input),
+				a.command.awaitChatCompleted(),
+			)
+			components.prompt.Focus()
 
 		// clear
 		case tea.KeyCtrlL:

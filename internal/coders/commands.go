@@ -246,7 +246,6 @@ func (c *command) awaitChatCompleted() tea.Cmd {
 	return func() tea.Msg {
 		output := <-c.coder.llmEngine.GetChannel()
 		c.coder.state.buffer += output.GetContent()
-		c.coder.state.querying = !output.IsLast()
 		if output.IsLast() {
 			c.coder.Done()
 		}
