@@ -71,6 +71,15 @@ func (c *Command) Commit(val string) (string, error) {
 	return strings.TrimSpace(string(output)), nil
 }
 
+// RollbackLastCommit rolls back the most recent commit, leaving changes staged.
+func (c *Command) RollbackLastCommit() error {
+	output, err := exec.Command("git", "reset", "--soft", "HEAD~1").CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to rollback last commit: %w, output: %s", err, string(output))
+	}
+	return nil
+}
+
 // GitDir to show the (by default, absolute) path of the git directory of the working tree.
 func (c *Command) GitDir() (string, error) {
 	output, err := c.gitDir().Output()
