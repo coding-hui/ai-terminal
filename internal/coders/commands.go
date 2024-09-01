@@ -220,7 +220,6 @@ func (c *command) coding(ctx context.Context, args ...string) tea.Msg {
 		return c.coder.Error(err)
 	}
 
-	c.coder.Successf("Code editing completed")
 	c.coder.Done()
 
 	return nil

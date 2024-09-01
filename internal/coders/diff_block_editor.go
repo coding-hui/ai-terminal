@@ -244,7 +244,7 @@ func (e *EditBlockCoder) Execute(ctx context.Context, messages []llms.MessageCon
 		return e.coder.Error(err)
 	}
 
-	e.coder.Successf("Code design completed")
+	e.coder.Successf("Code editing completed")
 
 	return nil
 }
