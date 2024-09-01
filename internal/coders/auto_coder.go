@@ -207,6 +207,13 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					)
 				}
 			}
+			if a.state.confirming {
+				components.confirm, confirmCmd = components.confirm.Update(msg)
+				return a, tea.Sequence(
+					confirmCmd,
+					textinput.Blink,
+				)
+			}
 
 		// handle user input
 		case tea.KeyEnter:

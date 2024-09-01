@@ -223,7 +223,7 @@ func (e *EditBlockCoder) Execute(ctx context.Context, messages []llms.MessageCon
 
 	e.partialResponseContent = output.Choices[0].Content
 
-	if ok := e.coder.WaitForUserConfirm("n%s\n\nAre you sure you want to apply these codes? (Y/n)", e.partialResponseContent); !ok {
+	if ok := e.coder.WaitForUserConfirm("%s\n\nAre you sure you want to apply these codes? (Y/n)", e.partialResponseContent); !ok {
 		e.coder.Warningf("Apply code cancelled")
 		return nil
 	}
