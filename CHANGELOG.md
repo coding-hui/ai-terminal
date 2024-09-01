@@ -1,6 +1,27 @@
 # Change Log
 
 
+<a name="v0.1.7"></a>
+## [v0.1.7] - 2024-09-01
+### Code Refactoring
+- refactor success messages in coding modules
+- refactor confirmation handling in coders
+- refactor chat stream and edit application logic
+- refactor code block editing and validation
+- refactor code block editing and error handling
+- refactor diff block editor and enhance test coverage
+- refactor suggestion handling in AutoCoder
+- refactor input handling and state management
+- refactor suggestion handling with Suggester interface
+- refactor test suite for clarity and efficiency
+- refactor and enhance application functionality
+
+### Features
+- enhance AutoCoder suggestion handling
+- enhance suggestion system for AutoCoder
+- enhance command suggestions in prompt
+
+
 <a name="v0.1.6"></a>
 ## [v0.1.6] - 2024-08-29
 ### Bug Fixes
@@ -129,7 +150,8 @@
 - add ask cmd
 
 
-[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.1.6...HEAD
+[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.1.7...HEAD
+[v0.1.7]: https://github.com/coding-hui/ai-terminal/compare/v0.1.6...v0.1.7
 [v0.1.6]: https://github.com/coding-hui/ai-terminal/compare/v0.1.5...v0.1.6
 [v0.1.5]: https://github.com/coding-hui/ai-terminal/compare/v0.1.4...v0.1.5
 [v0.1.4]: https://github.com/coding-hui/ai-terminal/compare/v0.1.3-1...v0.1.4
