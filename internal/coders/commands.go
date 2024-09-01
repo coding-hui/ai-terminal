@@ -257,6 +257,8 @@ func (c *command) commit(ctx context.Context, _ ...string) tea.Msg {
 		return c.coder.Errorf("Failed to execute commit command: %v", err)
 	}
 
+	c.coder.Successf("Code submitted successfully")
+
 	defer c.coder.Done()
 
 	return nil
