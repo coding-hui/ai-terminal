@@ -2,6 +2,7 @@ package coders
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
@@ -96,7 +97,7 @@ func (a *AutoCoder) Errorf(format string, args ...interface{}) error {
 func (a *AutoCoder) WaitForUserConfirm(format string, args ...interface{}) bool {
 	a.state.confirming = true
 
-	components.confirm = NewConfirmModel(fmt.Sprintf(format, args...))
+	components.confirm = NewConfirmModel(fmt.Sprintf(strings.TrimSpace(format), args...))
 
 	program.Send(components.confirm)
 

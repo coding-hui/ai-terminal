@@ -20,7 +20,7 @@ func NewConfirmModel(message string) *WaitFormUserConfirm {
 	formatMsg := lipgloss.NewStyle().
 		Width(defaultWidth). // pad to width.
 		MaxWidth(defaultWidth).
-		Render(fmt.Sprintf("\n\n %s \n", message))
+		Render(fmt.Sprintf("\n\n%s\n\n", message))
 	vp := viewport.New(defaultWidth, components.height-components.prompt.Height())
 	vp.Style = lipgloss.NewStyle().Margin(0, 2)
 	vp.SetContent(formatMsg)
