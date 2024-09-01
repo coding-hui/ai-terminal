@@ -93,6 +93,7 @@ func (r *Renderer) RenderHelpMessage() string {
 	help += "- `/drop`   : Remove all files from the chat\n"
 	help += "- `/coding` : Execute coding tasks on files added to the chat\n"
 	help += "- `/commit` : Commit changes made by coding tasks\n"
+	help += "- `/undo`   : Undo the last commit\n"
 	help += "- `/ask`    : Ask a question about the files added to the chat\n"
 	help += "- `ctrl+h`  : Show this help message\n"
 	help += "- `ctrl+r`  : Clear the terminal and reset the discussion history\n"
