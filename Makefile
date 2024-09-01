@@ -22,7 +22,7 @@ SHELL = /usr/bin/env bash -o pipefail
 include Makefile.def
 
 .PHONY: all
-all: build
+all: mod-tidy build
 
 ##@ General
 
@@ -44,8 +44,12 @@ help: ## Display this help.
 ##@ Development
 
 .PHONY: git-chglog
-chglog: ## Generate git chglog.
+chglog: ## Generate changelog using git-chglog.
 	$(GIT_CHGLOG) -o CHANGELOG.md
+
+.PHONY: mod-tidy
+mod-tidy: ## Run go mod tidy to clean up dependencies.
+	go mod tidy
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.
@@ -70,7 +74,7 @@ lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes
 ##@ Release
 
 .PHONY: goreleaser
-release: ## Release go bin to github
+release: ## Generate a release using goreleaser with auto-snapshot, clean, and draft options.
 	$(GO_RELEASER) release --auto-snapshot --clean --draft
 
 ##@ Build
@@ -80,8 +84,8 @@ build: fmt vet ## Build manager binary.
 	go build $(GO_BUILD_FLAGS) -o bin/ai cmd/cli/main.go
 
 .PHONY: run
-run: fmt vet ## Run a controller from your host.
-	go run ./cmd/main.go
+run: fmt vet ## Run the application with parameters passed via ARGS variable. Usage: make run ARGS="--your-flag your-value"
+	go run ./cmd/cli/main.go $(ARGS)
 
 # If you wish to build the manager image targeting other platforms you can use the --platform flag.
 # (i.e. docker build --platform linux/arm64). However, you must enable docker buildKit for it.
