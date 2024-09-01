@@ -73,7 +73,7 @@ func (c *Command) Commit(val string) (string, error) {
 
 // RollbackLastCommit rolls back the most recent commit, leaving changes staged.
 func (c *Command) RollbackLastCommit() error {
-	output, err := exec.Command("git", "reset", "--soft", "HEAD~1").CombinedOutput()
+	output, err := exec.Command("git", "reset", "--hard", "HEAD~1").CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to rollback last commit: %w, output: %s", err, string(output))
 	}
