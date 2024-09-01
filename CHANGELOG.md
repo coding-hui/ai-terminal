@@ -1,6 +1,18 @@
 # Change Log
 
 
+<a name="v0.1.8"></a>
+## [v0.1.8] - 2024-09-01
+### Bug Fixes
+- MongoDB test container setup issue
+
+### Code Refactoring
+- refactor Docker targets and improve message formatting
+
+### Features
+- enhance version command functionality
+
+
 <a name="v0.1.7"></a>
 ## [v0.1.7] - 2024-09-01
 ### Code Refactoring
@@ -150,7 +162,8 @@
 - add ask cmd
 
 
-[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.1.7...HEAD
+[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.1.8...HEAD
+[v0.1.8]: https://github.com/coding-hui/ai-terminal/compare/v0.1.7...v0.1.8
 [v0.1.7]: https://github.com/coding-hui/ai-terminal/compare/v0.1.6...v0.1.7
 [v0.1.6]: https://github.com/coding-hui/ai-terminal/compare/v0.1.5...v0.1.6
 [v0.1.5]: https://github.com/coding-hui/ai-terminal/compare/v0.1.4...v0.1.5
