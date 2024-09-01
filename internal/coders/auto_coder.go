@@ -44,6 +44,7 @@ type AutoCoder struct {
 	llmEngine *llm.Engine
 
 	files              []string
+	currentSuggestion  int
 	currentSuggestions []string
 	suggester          Suggester
 }
@@ -192,6 +193,20 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// history
 		case tea.KeyUp, tea.KeyDown:
 			if !a.state.querying && !a.state.confirming {
+				if components.prompt.GetValue() != "" {
+					newPos := a.currentSuggestion
+					if msg.Type == tea.KeyUp {
+						newPos = max(0, newPos-1)
+					} else {
+						newPos = min(len(a.currentSuggestions)-1, newPos+1)
+					}
+					temp := a.currentSuggestions[a.currentSuggestion]
+					a.currentSuggestions[a.currentSuggestion] = a.currentSuggestions[newPos]
+					a.currentSuggestions[newPos] = temp
+					components.prompt, promptCmd = components.prompt.Update(msg)
+					components.prompt.SetSuggestions(a.currentSuggestions)
+					cmds = append(cmds, promptCmd)
+				}
 				var input *string
 				if msg.Type == tea.KeyUp {
 					input = a.history.GetPrevious()
