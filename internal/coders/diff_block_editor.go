@@ -413,7 +413,11 @@ func perfectReplace(wholeLines, partLines, replaceLines []string) string {
 
 	for i := 0; i < len(wholeLines)-partLen+1; i++ {
 		if strings.EqualFold(strings.Join(wholeLines[i:i+partLen], ""), part) {
-			res := append(append(wholeLines[:i], replaceLines...), wholeLines[i+partLen:]...)
+			// Create a new slice for the result instead of modifying wholeLines
+			res := make([]string, 0, len(wholeLines)-partLen+len(replaceLines))
+			res = append(res, wholeLines[:i]...)
+			res = append(res, replaceLines...)
+			res = append(res, wholeLines[i+partLen:]...)
 			return strings.Join(res, "")
 		}
 	}
@@ -458,8 +462,14 @@ func replacePartWithMissingLeadingWhitespace(wholeLines []string, partLines []st
 		}
 
 		replaceLines = addLeadingWhitespace(replaceLines, addLeading)
-		wholeLines = append(append(wholeLines[:i], replaceLines...), wholeLines[i+numPartLines:]...)
-		return strings.Join(wholeLines, "")
+
+		// Create a new slice for the result instead of modifying wholeLines
+		result := make([]string, 0, len(wholeLines)-numPartLines+len(replaceLines))
+		result = append(result, wholeLines[:i]...)
+		result = append(result, replaceLines...)
+		result = append(result, wholeLines[i+numPartLines:]...)
+
+		return strings.Join(result, "")
 	}
 
 	return ""

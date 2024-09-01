@@ -188,6 +188,97 @@ func testReplaceMostSimilarChunk(t *testing.T) {
 			},
 			"    new_line1\n    new_line2\n    line3\n",
 		},
+		{
+			"replace_part_with_whole_file",
+			args{
+				`package display
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/charmbracelet/lipgloss"
+)
+
+var style = lipgloss.NewStyle().
+	Bold(true).
+	PaddingTop(1).
+	Foreground(lipgloss.Color("9"))
+
+func Error(err error, msgs ...string) {
+	if err == nil {
+		return
+	}
+
+	errMsg := err.Error()
+	if errMsg == "" {
+		return
+	}
+
+	if len(msgs) > 0 {
+		ErrorMsg(msgs...)
+	}
+	ErrorMsg(err.Error())
+}
+
+func ErrorMsg(msgs ...string) {
+	for _, msg := range msgs {
+		fmt.Println(style.Render(msg))
+	}
+}
+
+func FatalErr(err error, msgs ...string) {
+	Error(err, msgs...)
+	os.Exit(1)
+}
+`,
+				"func Error(err error, msgs ...string) {",
+				`// Error handles and displays an error message along with optional additional messages.
+func Error(err error, msgs ...string) {`,
+			},
+			`package display
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/charmbracelet/lipgloss"
+)
+
+var style = lipgloss.NewStyle().
+	Bold(true).
+	PaddingTop(1).
+	Foreground(lipgloss.Color("9"))
+
+// Error handles and displays an error message along with optional additional messages.
+func Error(err error, msgs ...string) {
+	if err == nil {
+		return
+	}
+
+	errMsg := err.Error()
+	if errMsg == "" {
+		return
+	}
+
+	if len(msgs) > 0 {
+		ErrorMsg(msgs...)
+	}
+	ErrorMsg(err.Error())
+}
+
+func ErrorMsg(msgs ...string) {
+	for _, msg := range msgs {
+		fmt.Println(style.Render(msg))
+	}
+}
+
+func FatalErr(err error, msgs ...string) {
+	Error(err, msgs...)
+	os.Exit(1)
+}
+`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
