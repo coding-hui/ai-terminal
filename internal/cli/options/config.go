@@ -10,7 +10,6 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/coding-hui/common/util/homedir"
-	"github.com/coding-hui/iam/pkg/log"
 
 	"github.com/coding-hui/ai-terminal/internal/system"
 )
@@ -105,7 +104,7 @@ func LoadConfig(cfg string, defaultName string) {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err != nil {
-		log.Debugf("WARNING: viper failed to discover and load the configuration file: %s", err.Error())
+		klog.V(2).Infof("WARNING: viper failed to discover and load the configuration file: %s", err.Error())
 	}
 }
 
@@ -122,7 +121,7 @@ func WriteConfig(model, apiBase, apiToken string, write bool) (*Config, error) {
 
 	if write {
 		defConfFile := system.GetConfigFile()
-		log.Debugf("Writing config file: %s", defConfFile)
+		klog.V(2).Infof("Writing config file: %s", defConfFile)
 		if err := os.MkdirAll(filepath.Dir(defConfFile), 0755); err != nil {
 			klog.Warningf("WARNING: failed to create config dir: %s", err.Error())
 		}

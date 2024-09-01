@@ -3,7 +3,7 @@ package history
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/coding-hui/iam/pkg/cli/genericclioptions"
+	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 )
 
 // NewCmdHistory returns a cobra command for manager history.

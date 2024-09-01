@@ -6,8 +6,9 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
+
+	"github.com/coding-hui/common/util/homedir"
 
 	"github.com/coding-hui/ai-terminal/internal/runner"
 )
@@ -117,12 +118,7 @@ func GetShell() string {
 }
 
 func GetHomeDirectory() string {
-	homeDir, err := homedir.Dir()
-	if err != nil {
-		return ""
-	}
-
-	return homeDir
+	return homedir.HomeDir()
 }
 
 func GetUsername() string {

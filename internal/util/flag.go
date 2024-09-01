@@ -8,18 +8,15 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"net/http"
 	"net/url"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/olekukonko/tablewriter"
-	"github.com/parnurzeal/gorequest"
 	"github.com/spf13/cobra"
+	"k8s.io/klog/v2"
 
 	"github.com/coding-hui/common/errors"
-	"github.com/coding-hui/iam/pkg/log"
 )
 
 const (
@@ -116,16 +113,16 @@ func checkErr(err error, handleErr func(string, int)) {
 }
 
 // StandardErrorMessage translates common errors into a human readable message, or returns
-// false if the error is not one of the recognized types. It may also log extended information to klog.
+// false if the error is not one of the recognized types. It may also klog extended information to klog.
 //
 // This method is generic to the command in use and may be used by non-IAM
 // commands.
 func StandardErrorMessage(err error) (string, bool) {
 	if debugErr, ok := err.(debugError); ok {
-		log.Infof(debugErr.DebugError())
+		klog.Infof(debugErr.DebugError())
 	}
 	if t, ok := err.(*url.Error); ok {
-		log.Infof("Connection error: %s %s: %v", t.Op, t.URL, t.Err)
+		klog.Infof("Connection error: %s %s: %v", t.Op, t.URL, t.Err)
 		if strings.Contains(t.Err.Error(), "connection refused") {
 			host := t.URL
 			if server, err := url.Parse(t.URL); err == nil {
@@ -198,7 +195,7 @@ func IsFilenameSliceEmpty(filenames []string, directory string) bool {
 func GetFlagString(cmd *cobra.Command, flag string) string {
 	s, err := cmd.Flags().GetString(flag)
 	if err != nil {
-		log.Fatalf("error accessing flag %s for command %s: %v", flag, cmd.Name(), err)
+		klog.Fatalf("error accessing flag %s for command %s: %v", flag, cmd.Name(), err)
 	}
 	return s
 }
@@ -207,7 +204,7 @@ func GetFlagString(cmd *cobra.Command, flag string) string {
 func GetFlagStringSlice(cmd *cobra.Command, flag string) []string {
 	s, err := cmd.Flags().GetStringSlice(flag)
 	if err != nil {
-		log.Fatalf("error accessing flag %s for command %s: %v", flag, cmd.Name(), err)
+		klog.Fatalf("error accessing flag %s for command %s: %v", flag, cmd.Name(), err)
 	}
 	return s
 }
@@ -216,7 +213,7 @@ func GetFlagStringSlice(cmd *cobra.Command, flag string) []string {
 func GetFlagStringArray(cmd *cobra.Command, flag string) []string {
 	s, err := cmd.Flags().GetStringArray(flag)
 	if err != nil {
-		log.Fatalf("error accessing flag %s for command %s: %v", flag, cmd.Name(), err)
+		klog.Fatalf("error accessing flag %s for command %s: %v", flag, cmd.Name(), err)
 	}
 	return s
 }
@@ -225,7 +222,7 @@ func GetFlagStringArray(cmd *cobra.Command, flag string) []string {
 func GetFlagBool(cmd *cobra.Command, flag string) bool {
 	b, err := cmd.Flags().GetBool(flag)
 	if err != nil {
-		log.Fatalf("error accessing flag %s for command %s: %v", flag, cmd.Name(), err)
+		klog.Fatalf("error accessing flag %s for command %s: %v", flag, cmd.Name(), err)
 	}
 	return b
 }
@@ -234,7 +231,7 @@ func GetFlagBool(cmd *cobra.Command, flag string) bool {
 func GetFlagInt(cmd *cobra.Command, flag string) int {
 	i, err := cmd.Flags().GetInt(flag)
 	if err != nil {
-		log.Fatalf("error accessing flag %s for command %s: %v", flag, cmd.Name(), err)
+		klog.Fatalf("error accessing flag %s for command %s: %v", flag, cmd.Name(), err)
 	}
 	return i
 }
@@ -243,7 +240,7 @@ func GetFlagInt(cmd *cobra.Command, flag string) int {
 func GetFlagInt32(cmd *cobra.Command, flag string) int32 {
 	i, err := cmd.Flags().GetInt32(flag)
 	if err != nil {
-		log.Fatalf("error accessing flag %s for command %s: %v", flag, cmd.Name(), err)
+		klog.Fatalf("error accessing flag %s for command %s: %v", flag, cmd.Name(), err)
 	}
 	return i
 }
@@ -252,7 +249,7 @@ func GetFlagInt32(cmd *cobra.Command, flag string) int32 {
 func GetFlagInt64(cmd *cobra.Command, flag string) int64 {
 	i, err := cmd.Flags().GetInt64(flag)
 	if err != nil {
-		log.Fatalf("error accessing flag %s for command %s: %v", flag, cmd.Name(), err)
+		klog.Fatalf("error accessing flag %s for command %s: %v", flag, cmd.Name(), err)
 	}
 	return i
 }
@@ -261,7 +258,7 @@ func GetFlagInt64(cmd *cobra.Command, flag string) int64 {
 func GetFlagDuration(cmd *cobra.Command, flag string) time.Duration {
 	d, err := cmd.Flags().GetDuration(flag)
 	if err != nil {
-		log.Fatalf("error accessing flag %s for command %s: %v", flag, cmd.Name(), err)
+		klog.Fatalf("error accessing flag %s for command %s: %v", flag, cmd.Name(), err)
 	}
 	return d
 }
@@ -334,38 +331,4 @@ func Warning(cmdErr io.Writer, newGeneratorName, oldGeneratorName string) {
 		newGeneratorName,
 		oldGeneratorName,
 	)
-}
-
-// CombineRequestErr combines the http response error and error in errs array.
-func CombineRequestErr(resp gorequest.Response, body string, errs []error) error {
-	var e, sep string
-	if len(errs) > 0 {
-		for _, err := range errs {
-			e = sep + err.Error()
-			sep = "\n"
-		}
-		return errors.New(e)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return errors.New(body)
-	}
-
-	return nil
-}
-
-func TableWriterDefaultConfig(table *tablewriter.Table) *tablewriter.Table {
-	table.SetAutoWrapText(false)
-	table.SetAutoFormatHeaders(true)
-	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.SetCenterSeparator("")
-	table.SetColumnSeparator("")
-	table.SetRowSeparator("")
-	table.SetHeaderLine(false)
-	table.SetBorder(false)
-	table.SetTablePadding("  ") // pad with two space
-	table.SetNoWhiteSpace(true)
-
-	return table
 }

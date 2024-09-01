@@ -18,7 +18,6 @@ import (
 	"k8s.io/klog/v2"
 
 	cliflag "github.com/coding-hui/common/cli/flag"
-	"github.com/coding-hui/iam/pkg/cli/genericclioptions"
 
 	"github.com/coding-hui/ai-terminal/internal/cli/ask"
 	"github.com/coding-hui/ai-terminal/internal/cli/coder"
@@ -29,6 +28,7 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/cli/options"
 	"github.com/coding-hui/ai-terminal/internal/cli/review"
 	"github.com/coding-hui/ai-terminal/internal/cli/version"
+	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 	"github.com/coding-hui/ai-terminal/internal/util/templates"
 
 	_ "github.com/coding-hui/ai-terminal/internal/session/mongo"

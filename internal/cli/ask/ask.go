@@ -14,8 +14,6 @@ import (
 	"github.com/spf13/viper"
 	"k8s.io/klog/v2"
 
-	"github.com/coding-hui/iam/pkg/cli/genericclioptions"
-
 	"github.com/coding-hui/ai-terminal/internal/cli/options"
 	"github.com/coding-hui/ai-terminal/internal/llm"
 	"github.com/coding-hui/ai-terminal/internal/runner"
@@ -23,6 +21,7 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/ui"
 	"github.com/coding-hui/ai-terminal/internal/util"
 	"github.com/coding-hui/ai-terminal/internal/util/display"
+	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 	"github.com/coding-hui/ai-terminal/internal/util/templates"
 )
 
