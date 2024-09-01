@@ -233,7 +233,15 @@ func (c *command) coding(ctx context.Context, args ...string) tea.Msg {
 	return nil
 }
 
-func (c *command) undo(_ context.Context, _ ...string) tea.Msg {
+func (c *command) undo(ctx context.Context, _ ...string) tea.Msg {
+	c.coder.Loading(components.spinner.randMsg)
+	modifiedFiles, err := c.editor.GetModifiedFiles(ctx)
+	if err != nil {
+		return c.coder.Error(err)
+	}
+	if len(modifiedFiles) == 0 {
+		return c.coder.Error("There are no file modifications")
+	}
 	if err := c.coder.gitRepo.RollbackLastCommit(); err != nil {
 		return c.coder.Errorf("Failed to rollback last commit: %v", err)
 	}
