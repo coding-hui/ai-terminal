@@ -31,6 +31,8 @@ To install AI-Terminal, follow these steps:
 make build
 ```
 
+This command will generate the binary file at `./bin/ai` for Unix-based systems or `./bin/ai.exe` for Windows.
+
 ### Usage
 
 Here are some examples of how to use AI-Terminal, grouped by functionality:
