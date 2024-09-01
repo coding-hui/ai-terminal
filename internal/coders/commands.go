@@ -89,47 +89,43 @@ func (c *command) addFiles(_ context.Context, files ...string) tea.Msg {
 		return c.coder.Error("Please provide at least one file")
 	}
 
-	var (
-		err          error
-		matchedFiles = []string{}
-	)
+	var matchedFiles = make([]string, 0, len(files))
 
-	for _, file := range files {
-		filePath := filepath.Join(c.coder.codeBasePath, file)
-		if filepath.IsAbs(file) {
-			filePath, err = filepath.Abs(file)
-			if err != nil {
-				return c.coder.Error(err)
-			}
-		}
-
-		fileExists, err := fileutil.FileExists(filePath)
+	for _, pattern := range files {
+		matches, err := filepath.Glob(filepath.Join(c.coder.codeBasePath, pattern))
 		if err != nil {
-			if !errors.Is(err, fs.ErrNotExist) {
-				return c.coder.Error(err)
-			}
+			return c.coder.Error(err)
 		}
 
-		if fileExists {
-			matchedFiles = append(matchedFiles, file)
-		} else {
-			return c.coder.Errorf("File [%s] does not exist", filePath)
+		for _, filePath := range matches {
+			fileExists, err := fileutil.FileExists(filePath)
+			if err != nil {
+				if !errors.Is(err, fs.ErrNotExist) {
+					return c.coder.Error(err)
+				}
+			}
+
+			if fileExists {
+				matchedFiles = append(matchedFiles, filePath)
+			} else {
+				return c.coder.Errorf("File [%s] does not exist", filePath)
+			}
 		}
 	}
 
-	for _, f := range matchedFiles {
-		absPath, err := absFilePath(c.coder.codeBasePath, f)
+	for _, filePath := range matchedFiles {
+		absPath, err := absFilePath(c.coder.codeBasePath, filePath)
 		if err != nil {
 			return c.coder.Error(err)
 		}
 
 		if _, ok := c.coder.absFileNames[absPath]; ok {
-			return c.coder.Errorf("File [%s] already exists", f)
+			return c.coder.Errorf("File [%s] already exists", filePath)
 		}
 
 		c.coder.absFileNames[absPath] = struct{}{}
 
-		c.coder.Successf("Added file [%s] to chat context", f)
+		c.coder.Successf("Added file [%s] to chat context", filePath)
 	}
 
 	defer c.coder.Done()
@@ -162,19 +158,25 @@ func (c *command) removeFiles(_ context.Context, files ...string) tea.Msg {
 	}
 
 	deleteCount := 0
-	for _, file := range files {
-		abs, err := absFilePath(c.coder.codeBasePath, file)
+	for _, pattern := range files {
+		matches, err := filepath.Glob(filepath.Join(c.coder.codeBasePath, pattern))
 		if err != nil {
 			return c.coder.Error(err)
 		}
-		if _, ok := c.coder.absFileNames[abs]; !ok {
-			c.coder.Infof("File [%s] does not exist", file)
-		} else {
-			deleteCount++
-			delete(c.coder.absFileNames, abs)
-			c.coder.Successf("Deleted file [%s]", file)
+
+		for _, filePath := range matches {
+			abs, err := absFilePath(c.coder.codeBasePath, filePath)
+			if err != nil {
+				return c.coder.Error(err)
+			}
+			if _, ok := c.coder.absFileNames[abs]; ok {
+				deleteCount++
+				delete(c.coder.absFileNames, abs)
+				c.coder.Successf("Deleted file [%s]", filePath)
+			}
 		}
 	}
+
 	c.coder.Infof("Deleted %d files", deleteCount)
 
 	defer c.coder.Done()
