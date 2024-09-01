@@ -12,6 +12,7 @@ var style = lipgloss.NewStyle().
 	PaddingTop(1).
 	Foreground(lipgloss.Color("9"))
 
+// Error handles and displays an error message along with optional additional messages.
 func Error(err error, msgs ...string) {
 	if err == nil {
 		return
@@ -28,12 +29,14 @@ func Error(err error, msgs ...string) {
 	ErrorMsg(err.Error())
 }
 
+// ErrorMsg displays one or more error messages.
 func ErrorMsg(msgs ...string) {
 	for _, msg := range msgs {
 		fmt.Println(style.Render(msg))
 	}
 }
 
+// FatalErr handles and displays an error message along with optional additional messages, then exits the program.
 func FatalErr(err error, msgs ...string) {
 	Error(err, msgs...)
 	os.Exit(1)
