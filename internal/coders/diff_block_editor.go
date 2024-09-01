@@ -20,6 +20,9 @@ const (
 	HEAD    = "<<<<<<< SEARCH"
 	DIVIDER = "======="
 	UPDATED = ">>>>>>> REPLACE"
+
+	similarityThreshold = 0.8
+	similarityScale     = 0.1
 )
 
 var (
@@ -72,38 +75,52 @@ func (e *EditBlockCoder) GetEdits(_ context.Context) ([]PartialCodeBlock, error)
 }
 
 func (e *EditBlockCoder) ApplyEdits(ctx context.Context, edits []PartialCodeBlock, needConfirm bool) error {
-	var failed = []PartialCodeBlock{}
+	var failed []PartialCodeBlock
 
 	for _, block := range edits {
-		absPath, err := absFilePath(e.coder.codeBasePath, block.Path)
-		if err != nil {
-			return err
+		if err := e.applyEdit(ctx, block, needConfirm); err != nil {
+			failed = append(failed, block)
+			e.coder.Warningf("Failed to apply edit to %s: %v", block.Path, err)
 		}
+	}
 
-		fileExists, err := fileutil.FileExists(absPath)
-		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			return err
-		}
+	if len(failed) > 0 {
+		return e.handleFailedEdits(failed)
+	}
 
-		if !fileExists {
-			if ok := e.coder.WaitForUserConfirm("Whether to create the %s file? (Y/n)", block.Path); ok {
-				if err := fileutil.WriteFile(absPath, []byte("")); err != nil {
-					return err
-				}
-				e.coder.Successf("Created %s file", block.Path)
-			} else {
-				e.coder.Warningf("Apply %s edit cancelled, file cannot be found", block.Path)
-				continue
+	return nil
+}
+
+func (e *EditBlockCoder) applyEdit(ctx context.Context, block PartialCodeBlock, needConfirm bool) error {
+	absPath, err := absFilePath(e.coder.codeBasePath, block.Path)
+	if err != nil {
+		return err
+	}
+
+	fileExists, err := fileutil.FileExists(absPath)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+
+	if !fileExists {
+		if ok := e.coder.WaitForUserConfirm("Whether to create the %s file? (Y/n)", block.Path); ok {
+			if err := fileutil.WriteFile(absPath, []byte("")); err != nil {
+				return err
 			}
+			e.coder.Successf("Created %s file", block.Path)
+		} else {
+			e.coder.Warningf("Apply %s edit cancelled, file cannot be found", block.Path)
+			return nil
 		}
+	}
 
-		rawFileContent, err := os.ReadFile(absPath)
-		if err != nil {
-			return err
-		}
+	rawFileContent, err := os.ReadFile(absPath)
+	if err != nil {
+		return err
+	}
 
-		fileExt := strings.TrimLeft(filepath.Ext(absPath), ".")
-		confirmMsg := fmt.Sprintf(`
+	fileExt := strings.TrimLeft(filepath.Ext(absPath), ".")
+	confirmMsg := fmt.Sprintf(`
 %s
 %s%s
 <<<<<<< SEARCH
@@ -114,37 +131,37 @@ func (e *EditBlockCoder) ApplyEdits(ctx context.Context, edits []PartialCodeBloc
 %s
 
 Are you sure you want to apply these edits? (Y/n)`,
-			block.Path,
-			e.fence[0],
-			fileExt,
-			block.OriginalText,
-			block.UpdatedText,
-			e.fence[1],
-		)
+		block.Path,
+		e.fence[0],
+		fileExt,
+		block.OriginalText,
+		block.UpdatedText,
+		e.fence[1],
+	)
 
-		if needConfirm {
-			if ok := e.coder.WaitForUserConfirm(confirmMsg); !ok {
-				e.coder.Warningf("Apply %s edit cancelled", block.Path)
-				return nil
-			}
+	if needConfirm {
+		if ok := e.coder.WaitForUserConfirm(confirmMsg); !ok {
+			e.coder.Warningf("Apply %s edit cancelled", block.Path)
+			return nil
 		}
-
-		newFileContent := doReplace(absPath, string(rawFileContent), block.OriginalText, block.UpdatedText, e.fence)
-		if len(newFileContent) == 0 {
-			failed = append(failed, block)
-			e.coder.Warningf("Code block is empty and cannot be updated to file %s", block.Path)
-			continue
-		}
-
-		err = fileutil.WriteFile(absPath, []byte(newFileContent))
-		if err != nil {
-			failed = append(failed, block)
-			continue
-		}
-
-		e.coder.Successf("Applied edit to file block %s", block.Path)
 	}
 
+	newFileContent := doReplace(absPath, string(rawFileContent), block.OriginalText, block.UpdatedText, e.fence)
+	if len(newFileContent) == 0 {
+		e.coder.Warningf("Code block is empty and cannot be updated to file %s", block.Path)
+		return fmt.Errorf("code block is empty")
+	}
+
+	err = fileutil.WriteFile(absPath, []byte(newFileContent))
+	if err != nil {
+		return err
+	}
+
+	e.coder.Successf("Applied edit to file block %s", block.Path)
+	return nil
+}
+
+func (e *EditBlockCoder) handleFailedEdits(failed []PartialCodeBlock) error {
 	blocks := "block"
 	if len(failed) > 1 {
 		blocks = "blocks"
@@ -213,53 +230,57 @@ func (e *EditBlockCoder) Execute(ctx context.Context, messages []llms.MessageCon
 
 func findOriginalUpdateBlocks(content string, fence []string) ([]PartialCodeBlock, error) {
 	edits := findAllCodeBlocks(content, fence)
-	result := []PartialCodeBlock{}
+	result := make([]PartialCodeBlock, 0, len(edits))
 
 	for _, edit := range edits {
-		heads := []string{}
-		updates := []string{}
-		inHead := false
-		inUpdated := false
-
-		for _, line := range strings.Split(edit.code, "\n") {
-			if strings.TrimSpace(line) == HEAD {
-				inHead = true
-				continue
-			}
-
-			if strings.TrimSpace(line) == DIVIDER {
-				inHead = false
-				inUpdated = true
-				continue
-			}
-
-			if strings.TrimSpace(line) == UPDATED {
-				inHead = false
-				inUpdated = false
-				continue
-			}
-
-			if inHead {
-				heads = append(heads, line)
-			}
-
-			if inUpdated {
-				updates = append(updates, line)
-			}
+		block, err := parseEditBlock(edit)
+		if err != nil {
+			return nil, err
 		}
-
-		result = append(result, PartialCodeBlock{
-			edit.path,
-			strings.Join(heads, "\n"),
-			strings.Join(updates, "\n"),
-		})
-	}
-
-	if len(result) != len(edits) {
-		return nil, fmt.Errorf("parsing code blocks failed, expecting %d, but only %d were found", len(edits), len(result))
+		result = append(result, block)
 	}
 
 	return result, nil
+}
+
+func parseEditBlock(edit pathAndCode) (PartialCodeBlock, error) {
+	heads := []string{}
+	updates := []string{}
+	inHead := false
+	inUpdated := false
+
+	for _, line := range strings.Split(edit.code, "\n") {
+		if strings.TrimSpace(line) == HEAD {
+			inHead = true
+			continue
+		}
+
+		if strings.TrimSpace(line) == DIVIDER {
+			inHead = false
+			inUpdated = true
+			continue
+		}
+
+		if strings.TrimSpace(line) == UPDATED {
+			inHead = false
+			inUpdated = false
+			continue
+		}
+
+		if inHead {
+			heads = append(heads, line)
+		}
+
+		if inUpdated {
+			updates = append(updates, line)
+		}
+	}
+
+	return PartialCodeBlock{
+		edit.path,
+		strings.Join(heads, "\n"),
+		strings.Join(updates, "\n"),
+	}, nil
 }
 
 func findAllCodeBlocks(content string, fence []string) []pathAndCode {
@@ -532,22 +553,22 @@ func matchButForLeadingWhitespace(wholeLines []string, partLines []string) strin
 
 func replaceClosestEditDistance(wholeLines []string, part string, partLines []string, replaceLines []string) string {
 	var (
-		similarityThresh      = 0.8
-		scale                 = 0.1
 		maxSimilarity         = 0.0
 		mostSimilarChunkStart = -1
 		mostSimilarChunkEnd   = -1
 
-		minLen = int(math.Floor(float64(len(partLines)) * (1 - scale)))
-		maxLen = int(math.Ceil(float64(len(partLines)) * (1 + scale)))
+		minLen = int(math.Floor(float64(len(partLines)) * (1 - similarityScale)))
+		maxLen = int(math.Ceil(float64(len(partLines)) * (1 + similarityScale)))
 	)
 
 	for length := minLen; length <= maxLen; length++ {
 		for i := 0; i <= len(wholeLines)-length; i++ {
 			chunk := strings.Join(wholeLines[i:i+length], "")
 
+			// Calculate similarity using Levenshtein distance
 			similarity := 1.0 - float64(ld(chunk, part, false))/float64(max(len(part), len(chunk)))
 
+			// Update most similar chunk if necessary
 			if similarity > maxSimilarity {
 				maxSimilarity = similarity
 				mostSimilarChunkStart = i
@@ -556,7 +577,7 @@ func replaceClosestEditDistance(wholeLines []string, part string, partLines []st
 		}
 	}
 
-	if maxSimilarity < similarityThresh {
+	if maxSimilarity < similarityThreshold {
 		return ""
 	}
 
