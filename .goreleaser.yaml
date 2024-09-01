@@ -91,13 +91,13 @@ release:
   # Default: extracted from the origin remote URL or empty if its private hosted.
   github:
     owner: coding-hui
-    name: https://github.com/coding-hui/ai-terminal.git
+    name: ai-terminal
 
   # IDs of the archives to use.
   # Empty means all IDs.
   #
   # Default: [].
-  ids: []
+  ids: [ ]
 
   # If set to true, will not auto-publish the release.
   # Note: all GitHub releases start as drafts while artifacts are uploaded.
@@ -191,7 +191,7 @@ release:
   # If another file with the same name exists, the last one found will be used.
   #
   # Templates: allowed.
-  extra_files: []
+  extra_files: [ ]
 
   # Upload metadata.json and artifacts.json to the release as well.
   include_meta: true
