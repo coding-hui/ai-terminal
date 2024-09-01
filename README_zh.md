@@ -29,6 +29,12 @@ make build
 
 此命令将在 `./bin/ai` 路径下生成二进制文件，如果是Windows系统，则路径为 `./bin/ai.exe`。
 
+3. 初始化AI模型配置：
+
+```sh
+ai configure
+```
+
 ### 使用
 
 以下是一些使用AI-终端的示例，按功能分组：

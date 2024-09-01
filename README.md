@@ -33,6 +33,12 @@ make build
 
 This command will generate the binary file at `./bin/ai` for Unix-based systems or `./bin/ai.exe` for Windows.
 
+3. Initialize the AI model configuration:
+
+```sh
+ai configure
+```
+
 ### Usage
 
 Here are some examples of how to use AI-Terminal, grouped by functionality:
