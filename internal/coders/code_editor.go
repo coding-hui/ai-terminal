@@ -35,6 +35,10 @@ type Coder interface {
 	FormatMessages(values map[string]any) ([]llms.MessageContent, error)
 	// GetEdits retrieves the list of edits made to the code.
 	GetEdits(ctx context.Context) ([]PartialCodeBlock, error)
+	// GetModifiedFiles retrieves the list of files that have been modified.
+	GetModifiedFiles(ctx context.Context) ([]string, error)
+	// UpdateCodeFences updates the code fence for the given code.
+	UpdateCodeFences(ctx context.Context, code string) (string, string)
 	// ApplyEdits applies the given list of edits to the code.
 	ApplyEdits(ctx context.Context, edits []PartialCodeBlock, needConfirm bool) error
 	// Execute runs the code editor with the specified input messages.

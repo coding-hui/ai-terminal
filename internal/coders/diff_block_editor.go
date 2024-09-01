@@ -74,6 +74,27 @@ func (e *EditBlockCoder) GetEdits(_ context.Context) ([]PartialCodeBlock, error)
 	return edits, nil
 }
 
+func (e *EditBlockCoder) GetModifiedFiles(ctx context.Context) ([]string, error) {
+	edits, err := e.GetEdits(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	files := make([]string, 0, len(edits))
+	for _, edit := range edits {
+		files = append(files, edit.Path)
+	}
+
+	return files, nil
+}
+
+func (e *EditBlockCoder) UpdateCodeFences(_ context.Context, code string) (string, string) {
+	e.fence = make([]string, 2)
+	e.fence[0], e.fence[1] = chooseBestFence(code)
+
+	return e.fence[0], e.fence[1]
+}
+
 func (e *EditBlockCoder) ApplyEdits(ctx context.Context, edits []PartialCodeBlock, needConfirm bool) error {
 	var failed []PartialCodeBlock
 

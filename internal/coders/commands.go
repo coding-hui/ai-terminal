@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -25,11 +26,13 @@ func getSupportedCommands() []string {
 }
 
 type command struct {
-	coder *AutoCoder
+	coder  *AutoCoder
+	editor *EditBlockCoder
 }
 
 func newCommand(coder *AutoCoder) *command {
-	cmds := &command{coder: coder}
+	editor := NewEditBlockCoder(coder, fences[0])
+	cmds := &command{coder: coder, editor: editor}
 	cmds.registryCmds()
 	return cmds
 }
@@ -41,6 +44,7 @@ func (c *command) registryCmds() {
 	supportCommands["/ask"] = c.askFiles
 	supportCommands["/drop"] = c.dropFiles
 	supportCommands["/coding"] = c.coding
+	supportCommands["/commit"] = c.commit
 }
 
 func (c *command) isCommand(input string) bool {
@@ -200,13 +204,12 @@ func (c *command) coding(ctx context.Context, args ...string) tea.Msg {
 		return c.coder.Error(err)
 	}
 
-	openFence, closeFence := chooseBestFence(addedFiles)
+	openFence, closeFence := c.editor.UpdateCodeFences(ctx, addedFiles)
+
 	c.coder.Infof("Selected coder block fences %s %s", openFence, closeFence)
 
-	editor := NewEditBlockCoder(c.coder, []string{openFence, closeFence})
-
 	userInput := strings.Join(args, " ")
-	messages, err := editor.FormatMessages(map[string]any{
+	messages, err := c.editor.FormatMessages(map[string]any{
 		userQuestionKey: userInput,
 		addedFilesKey:   addedFiles,
 		openFenceKey:    openFence,
@@ -217,12 +220,41 @@ func (c *command) coding(ctx context.Context, args ...string) tea.Msg {
 		return c.coder.Error(err)
 	}
 
-	err = editor.Execute(ctx, messages)
+	err = c.editor.Execute(ctx, messages)
 	if err != nil {
 		return c.coder.Error(err)
 	}
 
 	c.coder.Done()
+
+	return nil
+}
+
+func (c *command) commit(ctx context.Context, _ ...string) tea.Msg {
+	// Get the list of files that were modified by the coding command
+	modifiedFiles, err := c.editor.GetModifiedFiles(ctx)
+	if err != nil {
+		return c.coder.Error(err)
+	}
+
+	// Add the modified files to the Git staging area
+	if err := c.coder.gitRepo.AddFiles(modifiedFiles); err != nil {
+		return c.coder.Errorf("Failed to add files to Git: %v", err)
+	}
+
+	// Execute the commit command
+	//ioStreams := genericclioptions.IOStreams{
+	//	In:     os.Stdin,
+	//	Out:    os.Stdout,
+	//	ErrOut: os.Stderr,
+	//}
+	//commitCmd := commit.NewCmdCommit(ioStreams)
+	//if err := commitCmd.Execute(); err != nil {
+	//	return c.coder.Errorf("Failed to execute commit command: %v", err)
+	//}
+	if _, err := exec.Command("ai commit --add", modifiedFiles...).CombinedOutput(); err != nil {
+		return c.coder.Errorf("Failed to execute commit command: %v", err)
+	}
 
 	return nil
 }
