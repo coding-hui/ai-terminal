@@ -47,6 +47,7 @@ func (c *command) registryCmds() {
 	supportCommands["/drop"] = c.dropFiles
 	supportCommands["/coding"] = c.coding
 	supportCommands["/commit"] = c.commit
+	supportCommands["/undo"] = c.undo
 }
 
 func (c *command) isCommand(input string) bool {
@@ -228,6 +229,16 @@ func (c *command) coding(ctx context.Context, args ...string) tea.Msg {
 	}
 
 	c.coder.Done()
+
+	return nil
+}
+
+func (c *command) undo(_ context.Context, _ ...string) tea.Msg {
+	if err := c.coder.gitRepo.RollbackLastCommit(); err != nil {
+		return c.coder.Errorf("Failed to rollback last commit: %v", err)
+	}
+	c.coder.Successf("Successfully rolled back the last commit")
+	defer c.coder.Done()
 
 	return nil
 }
