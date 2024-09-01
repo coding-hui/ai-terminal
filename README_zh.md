@@ -18,7 +18,10 @@ AI-终端是一个先进的AI驱动的CLI，通过AI驱动的自动化和优化�
 
 ### 安装
 
-构建并安装Go二进制文件：
+要安装AI-终端，请按照以下步骤操作：
+
+1. 确保您已安装Go版本v1.22.0或更高版本。
+2. 构建并安装Go二进制文件：
 
 ```sh
 make build
@@ -26,32 +29,56 @@ make build
 
 ### 使用
 
-使用示例：
+以下是一些使用AI-终端的示例，按功能分组：
 
-1. **启动聊天：**
-   ```sh
-   ai ask "管理Docker容器的最佳方式是什么？"
-   ```
+#### 聊天
 
-2. **生成提交消息：**
-   ```sh
-   ai commit --diff-unified 3 --lang zh
-   ```
+- **启动聊天：**
+  ```sh
+  ai ask "管理Docker容器的最佳方式是什么？"
+  ```
 
-3. **自动生成代码：**
-   ```sh
-   ai coder
-   ```
+- **交互式对话：**
+  ```sh
+  ai ask --interactive
+  ```
 
-4. **审查代码更改：**
-   ```sh
-   ai review --exclude-list "*.md,*.txt"
-   ```
+- **使用提示文件：**
+  ```sh
+  ai ask --file /path/to/prompt_file.txt
+  ```
+
+- **管道输入：**
+  ```sh
+  cat some_script.go | ai ask generate unit tests
+  ```
+
+#### 代码生成
+
+- **自动生成代码：**
+  ```sh
+  ai coder
+  ```
+  这个命令启动自动编码功能，允许你根据提示交互式地生成代码。
+
+#### 代码审查
+
+- **审查代码更改：**
+  ```sh
+  ai review --exclude-list "*.md,*.txt"
+  ```
+
+#### 提交消息
+
+- **生成提交消息：**
+  ```sh
+  ai commit --diff-unified 3 --lang zh
+  ```
 
 ## 贡献
 
-贡献指南将很快提供。更多信息，请运行 `make help`。
+我们欢迎贡献！请参阅我们的[贡献指南](CONTRIBUTING_zh.md)以获取更多详细信息。
 
 ## 许可证
 
-版权所有 2024 coding-hui。根据MIT许可证授权。
+版权所有 2024 coding-hui。根据[MIT许可证](LICENSE)授权。

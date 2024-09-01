@@ -22,7 +22,10 @@ For the Chinese version of this README, please see [README_zh.md](README_zh.md).
 
 ### Installation
 
-Build and install the Go binary:
+To install AI-Terminal, follow these steps:
+
+1. Ensure you have Go version v1.22.0 or higher installed.
+2. Build and install the Go binary:
 
 ```sh
 make build
@@ -30,31 +33,55 @@ make build
 
 ### Usage
 
-Usage Examples:
+Here are some examples of how to use AI-Terminal, grouped by functionality:
 
-1. **Initiate a Chat:**
-   ```sh
-   ai ask "What is the best way to manage Docker containers?"
-   ```
+#### Chat
 
-2. **Generate a Commit Message:**
-   ```sh
-   ai commit --diff-unified 3 --lang en
-   ```
+- **Initiate a Chat:**
+  ```sh
+  ai ask "What is the best way to manage Docker containers?"
+  ```
 
-3. **Auto-generate Code:**
-   ```sh
-   ai coder
-   ```
+- **Interactive Dialogue:**
+  ```sh
+  ai ask --interactive
+  ```
 
-4. **Review Code Changes:**
-   ```sh
-   ai review --exclude-list "*.md,*.txt"
-   ```
+- **Use a Prompt File:**
+  ```sh
+  ai ask --file /path/to/prompt_file.txt
+  ```
+
+- **Pipe Input:**
+  ```sh
+  cat some_script.go | ai ask generate unit tests
+  ```
+
+#### Code Generation
+
+- **Auto-generate Code:**
+  ```sh
+  ai coder
+  ```
+  This command starts the auto-coding feature, which allows you to interactively generate code based on prompts.
+
+#### Code Review
+
+- **Review Code Changes:**
+  ```sh
+  ai review --exclude-list "*.md,*.txt"
+  ```
+
+#### Commit Messages
+
+- **Generate a Commit Message:**
+  ```sh
+  ai commit --diff-unified 3 --lang en
+  ```
 
 ## Contributing
 
-Contribution guidelines will be provided soon. For more information, run `make help`.
+We welcome contributions! Please see our [Contribution Guidelines](CONTRIBUTING.md) for more details.
 
 ### Changelog
 
@@ -62,5 +89,5 @@ Check out the [CHANGELOG.md](CHANGELOG.md) for detailed updates and changes to t
 
 ### License
 
-Copyright 2024 coding-hui. Licensed under the MIT License.
+Copyright 2024 coding-hui. Licensed under the [MIT License](LICENSE).
 
