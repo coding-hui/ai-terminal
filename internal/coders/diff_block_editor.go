@@ -91,7 +91,7 @@ func (e *EditBlockCoder) ApplyEdits(ctx context.Context, edits []PartialCodeBloc
 	return nil
 }
 
-func (e *EditBlockCoder) applyEdit(ctx context.Context, block PartialCodeBlock, needConfirm bool) error {
+func (e *EditBlockCoder) applyEdit(_ context.Context, block PartialCodeBlock, needConfirm bool) error {
 	absPath, err := absFilePath(e.coder.codeBasePath, block.Path)
 	if err != nil {
 		return err
@@ -274,6 +274,10 @@ func parseEditBlock(edit pathAndCode) (PartialCodeBlock, error) {
 		if inUpdated {
 			updates = append(updates, line)
 		}
+	}
+
+	if len(updates) == 0 && len(heads) == 0 {
+		return PartialCodeBlock{}, fmt.Errorf("no code block found in %s", edit.path)
 	}
 
 	return PartialCodeBlock{
