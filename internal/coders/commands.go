@@ -6,13 +6,15 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/coding-hui/common/util/fileutil"
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
+
+	"github.com/coding-hui/ai-terminal/internal/cli/commit"
+	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 )
 
 var supportCommands = map[string]func(context.Context, ...string) tea.Msg{}
@@ -242,19 +244,20 @@ func (c *command) commit(ctx context.Context, _ ...string) tea.Msg {
 		return c.coder.Errorf("Failed to add files to Git: %v", err)
 	}
 
+	c.coder.Loading("Committing code changes")
+
 	// Execute the commit command
-	//ioStreams := genericclioptions.IOStreams{
-	//	In:     os.Stdin,
-	//	Out:    os.Stdout,
-	//	ErrOut: os.Stderr,
-	//}
-	//commitCmd := commit.NewCmdCommit(ioStreams)
-	//if err := commitCmd.Execute(); err != nil {
-	//	return c.coder.Errorf("Failed to execute commit command: %v", err)
-	//}
-	if _, err := exec.Command("ai commit --add", modifiedFiles...).CombinedOutput(); err != nil {
+	ioStreams := genericclioptions.IOStreams{
+		In:     os.Stdin,
+		Out:    os.Stdout,
+		ErrOut: os.Stderr,
+	}
+	commitCmd := commit.NewOptions(true, modifiedFiles, ioStreams)
+	if err := commitCmd.AutoCommit(nil, nil); err != nil {
 		return c.coder.Errorf("Failed to execute commit command: %v", err)
 	}
+
+	defer c.coder.Done()
 
 	return nil
 }

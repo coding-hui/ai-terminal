@@ -32,22 +32,28 @@ type Options struct {
 	noConfirm      bool
 	commitLang     string
 	userPrompt     string
-	filesToAdd     []string
 
 	genericclioptions.IOStreams
+
+	FilesToAdd []string
+}
+
+func NewOptions(noConfirm bool, modifyFiles []string, ioStreams genericclioptions.IOStreams) *Options {
+	return &Options{
+		noConfirm:  noConfirm,
+		IOStreams:  ioStreams,
+		FilesToAdd: modifyFiles,
+	}
 }
 
 // NewCmdCommit returns a cobra command for commit msg.
 func NewCmdCommit(ioStreams genericclioptions.IOStreams) *cobra.Command {
-	ops := &Options{
-		noConfirm: false,
-		IOStreams: ioStreams,
-	}
+	ops := NewOptions(false, []string{}, ioStreams)
 
 	commitCmd := &cobra.Command{
 		Use:   "commit",
 		Short: "Auto generate commit message",
-		RunE:  ops.autoCommit,
+		RunE:  ops.AutoCommit,
 	}
 
 	commitCmd.Flags().StringVarP(&ops.commitMsgFile, "file", "f", "", "File to store the generated commit message")
@@ -59,12 +65,12 @@ func NewCmdCommit(ioStreams genericclioptions.IOStreams) *cobra.Command {
 	commitCmd.Flags().BoolVar(&ops.commitAmend, "amend", false, "Amend the most recent commit")
 	commitCmd.Flags().BoolVar(&ops.noConfirm, "no-confirm", false, "Skip the confirmation prompt before committing")
 	commitCmd.Flags().StringVar(&ops.commitLang, "lang", "en", "Language for summarizing the commit message (e.g., 'zh-cn')")
-	commitCmd.Flags().StringSliceVar(&ops.filesToAdd, "add", []string{}, "Files to add to the commit (e.g., 'file1.txt file2.txt')")
+	commitCmd.Flags().StringSliceVar(&ops.FilesToAdd, "add", []string{}, "Files to add to the commit (e.g., 'file1.txt file2.txt')")
 
 	return commitCmd
 }
 
-func (o *Options) autoCommit(_ *cobra.Command, args []string) error {
+func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 	if !runner.IsCommandAvailable("git") {
 		return errors.New("git command not found on your system's PATH. Please install Git and try again")
 	}
@@ -86,8 +92,8 @@ func (o *Options) autoCommit(_ *cobra.Command, args []string) error {
 	)
 
 	// Add files specified by the user
-	if len(o.filesToAdd) > 0 {
-		err := g.AddFiles(o.filesToAdd)
+	if len(o.FilesToAdd) > 0 {
+		err := g.AddFiles(o.FilesToAdd)
 		if err != nil {
 			return err
 		}
