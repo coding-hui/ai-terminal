@@ -52,6 +52,16 @@ func New(opts ...Option) *Command {
 	return cmd
 }
 
+func (c *Command) AddFiles(files []string) error {
+	for _, file := range files {
+		output, err := exec.Command("git", "add", file).CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("failed to add file %s: %w, output: %s", file, err, string(output))
+		}
+	}
+	return nil
+}
+
 func (c *Command) Commit(val string) (string, error) {
 	output, err := c.commit(val).Output()
 	if err != nil {

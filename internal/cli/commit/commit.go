@@ -32,6 +32,7 @@ type Options struct {
 	noConfirm      bool
 	commitLang     string
 	userPrompt     string
+	filesToAdd     []string
 
 	genericclioptions.IOStreams
 }
@@ -49,16 +50,16 @@ func NewCmdCommit(ioStreams genericclioptions.IOStreams) *cobra.Command {
 		RunE:  ops.autoCommit,
 	}
 
-	commitCmd.Flags().StringVarP(&ops.commitMsgFile, "file", "f", "", "commit message file")
-	commitCmd.Flags().BoolVar(&ops.preview, "preview", false, "preview commit message")
-	commitCmd.Flags().IntVar(&ops.diffUnified, "diff-unified", 3, "generate diffs with <n> lines of context, default is 3")
-	commitCmd.Flags().StringSliceVar(&ops.excludeList, "exclude-list", []string{}, "exclude file from git diff command")
-	commitCmd.Flags().StringVar(&ops.templateFile, "template-file", "", "git commit message file")
-	commitCmd.Flags().StringVar(&ops.templateString, "template-string", "", "git commit message string")
-	commitCmd.Flags().BoolVar(&ops.commitAmend, "amend", false, "replace the tip of the current branch by creating a new commit.")
-	commitCmd.Flags().BoolVar(&ops.noConfirm, "no-confirm", false, "skip confirmation prompt")
-	commitCmd.Flags().StringVar(&ops.commitLang, "lang", "en", "summarizing language uses English by default. "+
-		"support en, zh-cn, zh-tw, ja, pt, pt-br.")
+	commitCmd.Flags().StringVarP(&ops.commitMsgFile, "file", "f", "", "File to store the generated commit message")
+	commitCmd.Flags().BoolVar(&ops.preview, "preview", false, "Preview the commit message before committing")
+	commitCmd.Flags().IntVar(&ops.diffUnified, "diff-unified", 3, "Number of lines of context to show in diffs (e.g., 3)")
+	commitCmd.Flags().StringSliceVar(&ops.excludeList, "exclude-list", []string{}, "List of files to exclude from the diff (e.g., '*.lock')")
+	commitCmd.Flags().StringVar(&ops.templateFile, "template-file", "", "File containing the template for the commit message")
+	commitCmd.Flags().StringVar(&ops.templateString, "template-string", "", "Inline template string for the commit message")
+	commitCmd.Flags().BoolVar(&ops.commitAmend, "amend", false, "Amend the most recent commit")
+	commitCmd.Flags().BoolVar(&ops.noConfirm, "no-confirm", false, "Skip the confirmation prompt before committing")
+	commitCmd.Flags().StringVar(&ops.commitLang, "lang", "en", "Language for summarizing the commit message (e.g., 'zh-cn')")
+	commitCmd.Flags().StringSliceVar(&ops.filesToAdd, "add", []string{}, "Files to add to the commit (e.g., 'file1.txt file2.txt')")
 
 	return commitCmd
 }
@@ -83,6 +84,15 @@ func (o *Options) autoCommit(_ *cobra.Command, args []string) error {
 		git.WithExcludeList(o.excludeList),
 		git.WithEnableAmend(o.commitAmend),
 	)
+
+	// Add files specified by the user
+	if len(o.filesToAdd) > 0 {
+		err := g.AddFiles(o.filesToAdd)
+		if err != nil {
+			return err
+		}
+	}
+
 	diff, err := g.DiffFiles()
 	if err != nil {
 		return err
