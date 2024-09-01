@@ -358,7 +358,7 @@ func (a *AutoCoder) View() string {
 			case StatusWarning:
 				doneMsg += icon + components.renderer.RenderWarning(s.Desc) + "\n"
 			default:
-				doneMsg += icon + s.Desc + "\n"
+				doneMsg += icon + components.renderer.RenderTrace(s.Desc) + "\n"
 			}
 		}
 		if !done {

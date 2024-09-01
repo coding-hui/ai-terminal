@@ -24,6 +24,7 @@ type Renderer struct {
 	warningRenderer lipgloss.Style
 	errorRenderer   lipgloss.Style
 	helpRenderer    lipgloss.Style
+	traceRenderer   lipgloss.Style
 }
 
 func NewRenderer(options ...glamour.TermRendererOption) *Renderer {
@@ -36,6 +37,7 @@ func NewRenderer(options ...glamour.TermRendererOption) *Renderer {
 	warningRenderer := lipgloss.NewStyle().Foreground(lipgloss.Color(warningColor))
 	errorRenderer := lipgloss.NewStyle().Foreground(lipgloss.Color(errorColor))
 	helpRenderer := lipgloss.NewStyle().Foreground(lipgloss.Color(helpColor)).Italic(true)
+	traceRenderer := lipgloss.NewStyle().Foreground(lipgloss.Color(helpColor)).Bold(true)
 
 	return &Renderer{
 		contentRenderer: contentRenderer,
@@ -43,6 +45,7 @@ func NewRenderer(options ...glamour.TermRendererOption) *Renderer {
 		warningRenderer: warningRenderer,
 		errorRenderer:   errorRenderer,
 		helpRenderer:    helpRenderer,
+		traceRenderer:   traceRenderer,
 	}
 }
 
@@ -69,6 +72,10 @@ func (r *Renderer) RenderError(in string) string {
 
 func (r *Renderer) RenderHelp(in string) string {
 	return r.helpRenderer.Render(in)
+}
+
+func (r *Renderer) RenderTrace(in string) string {
+	return r.traceRenderer.Render(in)
 }
 
 func (r *Renderer) RenderWelcomeMessage(username string) string {

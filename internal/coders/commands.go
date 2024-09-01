@@ -143,7 +143,7 @@ func (c *command) listFiles(_ context.Context, _ ...string) tea.Msg {
 		if err != nil {
 			return c.coder.Error(err)
 		}
-		c.coder.Infof("%d. %s", no, relPath)
+		c.coder.Tracef("%d. %s", no, relPath)
 		no++
 	}
 

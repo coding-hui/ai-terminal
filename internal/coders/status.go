@@ -15,9 +15,10 @@ const (
 	StatusSuccess
 	StatusWarning
 	StatusError
+	StatusTrace
 
-	StatusLoadingIcon = " ✅ "
-	StatusInfoIcon    = " ✅ "
+	StatusLoadingIcon = " ⏳ "
+	StatusInfoIcon    = " ℹ️ "
 	StatusSuccessIcon = " ✅ "
 	StatusErrorIcon   = " ❌ "
 	StatusWarningIcon = " ⚠️ "
@@ -93,6 +94,16 @@ func (a *AutoCoder) Errorf(format string, args ...interface{}) error {
 	return err
 }
 
+// Trace sets the status to trace with the given description.
+func (a *AutoCoder) Trace(desc string) {
+	a.changeStatus(StatusTrace, desc)
+}
+
+// Tracef sets the status to trace with the formatted description.
+func (a *AutoCoder) Tracef(format string, args ...interface{}) {
+	a.changeStatus(StatusTrace, fmt.Sprintf(format, args...))
+}
+
 // WaitForUserConfirm waits for user confirmation with the formatted message and returns the user's choice.
 func (a *AutoCoder) WaitForUserConfirm(format string, args ...interface{}) bool {
 	a.state.confirming = true
@@ -137,7 +148,9 @@ func checkpointIcon(checkpointType StatusType) string {
 		return StatusWarningIcon
 	case StatusError:
 		return StatusErrorIcon
-	default:
+	case StatusInfo:
 		return StatusInfoIcon
+	default:
+		return " "
 	}
 }
