@@ -58,7 +58,7 @@ Contribution guidelines will be provided soon. For more information, run `make h
 
 ### Changelog
 
-#Check out the [CHANGELOG.md](CHANGELOG.md) for detailed updates and changes to the project.
+Check out the [CHANGELOG.md](CHANGELOG.md) for detailed updates and changes to the project.
 
 ### License
 
