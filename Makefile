@@ -80,7 +80,7 @@ release: ## Generate a release using goreleaser with auto-snapshot, clean, and d
 ##@ Build
 
 .PHONY: build
-build: fmt vet ## Build manager binary.
+build: fmt vet ## Build the AI CLI command
 	go build $(GO_BUILD_FLAGS) -o bin/ai cmd/cli/main.go
 
 .PHONY: run
