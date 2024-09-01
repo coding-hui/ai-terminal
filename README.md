@@ -56,7 +56,11 @@ Usage Examples:
 
 Contribution guidelines will be provided soon. For more information, run `make help`.
 
-## License
+### Changelog
+
+#Check out the [CHANGELOG.md](CHANGELOG.md) for detailed updates and changes to the project.
+
+### License
 
 Copyright 2024 coding-hui. Licensed under the MIT License.
 
