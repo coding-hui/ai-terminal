@@ -612,7 +612,7 @@ func findSimilarLines(rawSearch, rawContent string) string {
 	}
 
 	if bestMatch[0] == searchLines[0] && bestMatch[len(bestMatch)-1] == searchLines[len(searchLines)-1] {
-		return strings.Join(bestMatch, "\n")
+		return strings.Join(bestMatch, "")
 	}
 
 	N := 5

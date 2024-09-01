@@ -11,6 +11,14 @@ func TestEditBlockCoder(t *testing.T) {
 	t.Run("splitRawBlocks", testSplitRawBlocks)
 	t.Run("findFilename", testFindFilename)
 	t.Run("replaceMostSimilarChunk", testReplaceMostSimilarChunk)
+	t.Run("findOriginalUpdateBlocks", testFindOriginalUpdateBlocks)
+	t.Run("parseEditBlock", testParseEditBlock)
+	t.Run("findAllCodeBlocks", testFindAllCodeBlocks)
+	t.Run("stripQuotedWrapping", testStripQuotedWrapping)
+	t.Run("doReplace", testDoReplace)
+	t.Run("perfectOrWhitespace", testPerfectOrWhitespace)
+	t.Run("findSimilarLines", testFindSimilarLines)
+	t.Run("ld", testLd)
 }
 
 func testSplitRawBlocks(t *testing.T) {
@@ -19,7 +27,7 @@ above each method declaration.
 
 Here are the *SEARCH/REPLACE* blocks:
 
-<code>go
+` + "```go" + `
 internal/coders/code_editor.go
 <<<<<<< SEARCH
 type Coder interface {
@@ -60,12 +68,12 @@ type Coder interface {
 	Execute(ctx context.Context, messages []llms.MessageContent) error
 }
 >>>>>>> REPLACE
-</code>
+` + "```" + `
 `
 
 	splitRe := regexp.MustCompile("(?m)^((?:" + separators + ")[ ]*\n)")
 	s := splitRe.Split(content, -1)
-	assert.Equal(t, len(s), 4)
+	assert.Equal(t, 4, len(s))
 }
 
 func testFindFilename(t *testing.T) {
@@ -85,9 +93,9 @@ func testFindFilename(t *testing.T) {
 
 Here are the *SEARCH/REPLACE* blocks:
 
-<code>go
+` + "```go" + `
 internal/coders/code_editor.go`,
-				[]string{"<code>", "</code>"},
+				[]string{"```go", "```"},
 			},
 			want: "internal/coders/code_editor.go",
 		},
@@ -98,10 +106,10 @@ internal/coders/code_editor.go`,
 
 Here are the *SEARCH/REPLACE* blocks:
 
-<code>go
+` + "```go" + `
 internal/coders/code_editor.go
 `,
-				[]string{"<code>", "</code>"},
+				[]string{"```go", "```"},
 			},
 			want: "internal/coders/code_editor.go",
 		},
@@ -285,4 +293,134 @@ func FatalErr(err error, msgs ...string) {
 			assert.Equalf(t, tt.want, replaceMostSimilarChunk(tt.args.whole, tt.args.part, tt.args.replace), "replaceMostSimilarChunk(%v, %v, %v)", tt.args.whole, tt.args.part, tt.args.replace)
 		})
 	}
+}
+
+func testFindOriginalUpdateBlocks(t *testing.T) {
+	content := `
+` + "```go" + `
+file1.go
+<<<<<<< SEARCH
+old content 1
+=======
+new content 1
+>>>>>>> REPLACE
+` + "```" + `
+
+` + "```go" + `
+file2.go
+<<<<<<< SEARCH
+old content 2
+=======
+new content 2
+>>>>>>> REPLACE
+` + "```" + `
+`
+	fence := []string{"```go", "```"}
+
+	blocks, err := findOriginalUpdateBlocks(content, fence)
+	assert.NoError(t, err)
+	assert.Len(t, blocks, 2)
+	assert.Equal(t, "file1.go", blocks[0].Path)
+	assert.Equal(t, "old content 1", blocks[0].OriginalText)
+	assert.Equal(t, "new content 1", blocks[0].UpdatedText)
+	assert.Equal(t, "file2.go", blocks[1].Path)
+	assert.Equal(t, "old content 2", blocks[1].OriginalText)
+	assert.Equal(t, "new content 2", blocks[1].UpdatedText)
+}
+
+func testParseEditBlock(t *testing.T) {
+	edit := pathAndCode{
+		path: "test.go",
+		code: `<<<<<<< SEARCH
+old content
+=======
+new content
+>>>>>>> REPLACE`,
+	}
+
+	block, err := parseEditBlock(edit)
+	assert.NoError(t, err)
+	assert.Equal(t, "test.go", block.Path)
+	assert.Equal(t, "old content", block.OriginalText)
+	assert.Equal(t, "new content", block.UpdatedText)
+}
+
+func testFindAllCodeBlocks(t *testing.T) {
+	content := `
+` + "```go" + `
+file1.go
+<<<<<<< SEARCH
+old content 1
+=======
+new content 1
+>>>>>>> REPLACE
+` + "```" + `
+
+` + "```go" + `
+file2.go
+<<<<<<< SEARCH
+old content 2
+=======
+new content 2
+>>>>>>> REPLACE
+` + "```" + `
+`
+	fence := []string{"```go", "```"}
+
+	blocks := findAllCodeBlocks(content, fence)
+	assert.Len(t, blocks, 2)
+	assert.Equal(t, "file1.go", blocks[0].path)
+	assert.Contains(t, blocks[0].code, "old content 1")
+	assert.Contains(t, blocks[0].code, "new content 1")
+	assert.Equal(t, "file2.go", blocks[1].path)
+	assert.Contains(t, blocks[1].code, "old content 2")
+	assert.Contains(t, blocks[1].code, "new content 2")
+}
+
+func testStripQuotedWrapping(t *testing.T) {
+	res := "```go\nfunc test() {}\n```"
+	fname := "test.go"
+	fence := []string{"```go", "```"}
+
+	stripped := stripQuotedWrapping(res, fname, fence)
+	assert.Equal(t, "func test() {}\n", stripped)
+}
+
+func testDoReplace(t *testing.T) {
+	fileName := "test.go"
+	content := "func oldFunction() {}\n"
+	beforeText := "func oldFunction() {}"
+	afterText := "func newFunction() {}"
+	fence := []string{"```go", "```"}
+
+	result := doReplace(fileName, content, beforeText, afterText, fence)
+	assert.Equal(t, "func newFunction() {}\n", result)
+}
+
+func testPerfectOrWhitespace(t *testing.T) {
+	wholeLines := []string{"    line1", "    line2", "    line3"}
+	partLines := []string{"line1", "line2"}
+	replaceLines := []string{"newline1", "newline2"}
+
+	result := perfectOrWhitespace(wholeLines, partLines, replaceLines)
+	assert.Equal(t, "    newline1    newline2    line3", result)
+}
+
+func testFindSimilarLines(t *testing.T) {
+	rawSearch := "This is a test line\nAnother test line"
+	rawContent := "This is a test line\nAnother test line\nYet another line"
+
+	result := findSimilarLines(rawSearch, rawContent)
+	assert.Equal(t, "This is a test line\nAnother test line\n", result)
+}
+
+func testLd(t *testing.T) {
+	s1 := "kitten"
+	s2 := "sitting"
+
+	distance := ld(s1, s2, false)
+	assert.Equal(t, 3, distance)
+
+	distance = ld(s1, s2, true)
+	assert.Equal(t, 3, distance)
 }
