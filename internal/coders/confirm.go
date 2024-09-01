@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 // WaitFormUserConfirm is a model that displays a confirmation message to the user and waits for their response. It handles user input for confirmation (yes) or cancellation (no). This model uses a viewport to display the message and a channel to receive the user's choice.
@@ -16,8 +17,12 @@ type WaitFormUserConfirm struct {
 }
 
 func NewConfirmModel(message string) *WaitFormUserConfirm {
-	formatMsg := components.renderer.RenderContent(fmt.Sprintf("\n\n %s \n", message))
+	formatMsg := lipgloss.NewStyle().
+		Width(defaultWidth). // pad to width.
+		MaxWidth(defaultWidth).
+		Render(fmt.Sprintf("\n\n %s \n", message))
 	vp := viewport.New(defaultWidth, components.height-components.prompt.Height())
+	vp.Style = lipgloss.NewStyle().Margin(0, 2)
 	vp.SetContent(formatMsg)
 	return &WaitFormUserConfirm{
 		message: message,
