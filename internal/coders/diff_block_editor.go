@@ -216,12 +216,33 @@ The SEARCH section must exactly match an existing block of lines including all w
 func (e *EditBlockCoder) Execute(ctx context.Context, messages []llms.MessageContent) error {
 	e.coder.Loading("Please wait while we design the code")
 
-	output, err := e.coder.llmEngine.Completion(ctx, messages)
+	output, err := e.coder.llmEngine.ChatStream(ctx, messages)
 	if err != nil {
 		return e.coder.Error(err)
 	}
 
 	e.partialResponseContent = output.Choices[0].Content
+
+	if ok := e.coder.WaitForUserConfirm("n%s\n\nAre you sure you want to apply these codes? (Y/n)", e.partialResponseContent); !ok {
+		e.coder.Warningf("Apply code cancelled")
+		return nil
+	}
+
+	edits, err := e.GetEdits(ctx)
+	if err != nil {
+		return e.coder.Error(err)
+	}
+
+	if len(edits) <= 0 {
+		return e.coder.Errorf("No edits were made")
+	}
+
+	e.coder.Infof("Applying %d edits...", len(edits))
+
+	err = e.ApplyEdits(ctx, edits, false)
+	if err != nil {
+		return e.coder.Error(err)
+	}
 
 	e.coder.Successf("Code design completed")
 

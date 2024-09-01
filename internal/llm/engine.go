@@ -256,7 +256,7 @@ func (e *Engine) Completion(ctx context.Context, messages []llms.MessageContent,
 	return rsp, nil
 }
 
-func (e *Engine) ChatStream(ctx context.Context, messages []llms.MessageContent, options ...llms.CallOption) error {
+func (e *Engine) ChatStream(ctx context.Context, messages []llms.MessageContent, options ...llms.CallOption) (*llms.ContentResponse, error) {
 	e.running = true
 
 	streamingFunc := func(ctx context.Context, chunk []byte) error {
@@ -279,7 +279,7 @@ func (e *Engine) ChatStream(ctx context.Context, messages []llms.MessageContent,
 	rsp, err := e.Model.GenerateContent(ctx, messages, ops...)
 	if err != nil {
 		e.running = false
-		return err
+		return nil, err
 	}
 
 	executable := false
@@ -298,7 +298,7 @@ func (e *Engine) ChatStream(ctx context.Context, messages []llms.MessageContent,
 	}
 	e.running = false
 
-	return nil
+	return rsp, nil
 }
 
 func (e *Engine) appendUserMessage(content string) {

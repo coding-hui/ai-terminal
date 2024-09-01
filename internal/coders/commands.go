@@ -75,7 +75,7 @@ func (c *command) askFiles(_ context.Context, args ...string) tea.Msg {
 		return c.coder.Errorf("Failed to prepare ask completion messages: %v", err)
 	}
 
-	err = c.coder.llmEngine.ChatStream(context.Background(), messages)
+	_, err = c.coder.llmEngine.ChatStream(context.Background(), messages)
 	if err != nil {
 		return c.coder.Errorf("Failed to chat stream: %v", err)
 	}
@@ -216,22 +216,6 @@ func (c *command) coding(ctx context.Context, args ...string) tea.Msg {
 	}
 
 	err = editor.Execute(ctx, messages)
-	if err != nil {
-		return c.coder.Error(err)
-	}
-
-	edits, err := editor.GetEdits(ctx)
-	if err != nil {
-		return c.coder.Error(err)
-	}
-
-	if len(edits) <= 0 {
-		return c.coder.Errorf("No edits were made")
-	}
-
-	c.coder.Infof("Applying %d edits...", len(edits))
-
-	err = editor.ApplyEdits(ctx, edits, true)
 	if err != nil {
 		return c.coder.Error(err)
 	}
