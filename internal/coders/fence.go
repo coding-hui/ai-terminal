@@ -35,7 +35,5 @@ func chooseBestFence(rawContent string) (open string, close string) {
 	}
 
 	// Unable to find a fencing strategy!
-	open, close = fences[0][0], fences[0][1]
-
-	return
+	return defaultBestFence()
 }
