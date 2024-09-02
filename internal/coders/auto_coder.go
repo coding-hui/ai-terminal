@@ -70,7 +70,7 @@ func StartAutCoder() error {
 
 func NewAutoCoder() *AutoCoder {
 	var err error
-	g := git.New()
+	gitRepo := git.New()
 	cfg := options.NewConfig()
 
 	autoCoder := &AutoCoder{
@@ -78,7 +78,7 @@ func NewAutoCoder() *AutoCoder {
 			error:  nil,
 			buffer: "",
 		},
-		gitRepo:        g,
+		gitRepo:        gitRepo,
 		cfg:            cfg,
 		checkpoints:    []Checkpoint{},
 		history:        ui.NewHistory(),
@@ -91,9 +91,9 @@ func NewAutoCoder() *AutoCoder {
 		display.FatalErr(err)
 	}
 
-	root, err := g.GitDir()
+	root, err := gitRepo.GitDir()
 	if err != nil {
-		display.FatalErr(err)
+		display.FatalErr(err, "Not a git repository (or any of the parent directories): .git") // 添加友好的错误提示
 	}
 
 	autoCoder.codeBasePath = filepath.Dir(root)
