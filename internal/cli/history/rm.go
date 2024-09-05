@@ -9,8 +9,8 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/cli/options"
 	"github.com/coding-hui/ai-terminal/internal/llm"
 	"github.com/coding-hui/ai-terminal/internal/session"
+	"github.com/coding-hui/ai-terminal/internal/ui/display"
 	"github.com/coding-hui/ai-terminal/internal/util"
-	"github.com/coding-hui/ai-terminal/internal/util/display"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 )
 

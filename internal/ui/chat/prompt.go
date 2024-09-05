@@ -1,4 +1,4 @@
-package ui
+package chat
 
 import (
 	"fmt"
@@ -6,6 +6,8 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
+	"github.com/coding-hui/ai-terminal/internal/ui"
 )
 
 const (
@@ -22,17 +24,17 @@ const (
 )
 
 type Prompt struct {
-	mode  PromptMode
+	mode  ui.PromptMode
 	input textinput.Model
 }
 
-func NewPrompt(mode PromptMode) *Prompt {
+func NewPrompt(mode ui.PromptMode) *Prompt {
 	input := textinput.New()
 	input.Placeholder = getPromptPlaceholder(mode)
 	input.TextStyle = getPromptStyle(mode)
 	input.Prompt = getPromptIcon(mode)
 
-	if mode == TokenConfigPromptMode {
+	if mode == ui.TokenConfigPromptMode {
 		input.EchoMode = textinput.EchoPassword
 	}
 
@@ -44,11 +46,11 @@ func NewPrompt(mode PromptMode) *Prompt {
 	}
 }
 
-func (p *Prompt) GetMode() PromptMode {
+func (p *Prompt) GetMode() ui.PromptMode {
 	return p.mode
 }
 
-func (p *Prompt) SetMode(mode PromptMode) *Prompt {
+func (p *Prompt) SetMode(mode ui.PromptMode) *Prompt {
 	p.mode = mode
 
 	p.input.TextStyle = getPromptStyle(mode)
@@ -97,43 +99,43 @@ func (p *Prompt) AsString() string {
 	return fmt.Sprintf("%s%s", style.Render(getPromptIcon(p.mode)), style.Render(p.input.Value()))
 }
 
-func getPromptStyle(mode PromptMode) lipgloss.Style {
+func getPromptStyle(mode ui.PromptMode) lipgloss.Style {
 	switch mode {
-	case ExecPromptMode:
+	case ui.ExecPromptMode:
 		return lipgloss.NewStyle().Foreground(lipgloss.Color(execColor))
-	case ChatPromptMode:
+	case ui.ChatPromptMode:
 		return lipgloss.NewStyle().Foreground(lipgloss.Color(chatColor))
 	default:
 		return lipgloss.NewStyle().Foreground(lipgloss.Color(configColor))
 	}
 }
 
-func getPromptIcon(mode PromptMode) string {
+func getPromptIcon(mode ui.PromptMode) string {
 	style := getPromptStyle(mode)
 
 	switch mode {
-	case ExecPromptMode:
+	case ui.ExecPromptMode:
 		return style.Render(execIcon)
-	case ChatPromptMode:
+	case ui.ChatPromptMode:
 		return style.Render(chatIcon)
-	case ModelConfigPromptMode:
+	case ui.ModelConfigPromptMode:
 		return style.Render(botIcon)
-	case ApiBaseConfigPromptMode:
+	case ui.ApiBaseConfigPromptMode:
 		return style.Render(apiBaseIcon)
 	default:
 		return style.Render(configIcon)
 	}
 }
 
-func getPromptPlaceholder(mode PromptMode) string {
+func getPromptPlaceholder(mode ui.PromptMode) string {
 	switch mode {
-	case ExecPromptMode:
+	case ui.ExecPromptMode:
 		return execPlaceholder
-	case TokenConfigPromptMode:
+	case ui.TokenConfigPromptMode:
 		return tokenConfigPlaceholder
-	case ModelConfigPromptMode:
+	case ui.ModelConfigPromptMode:
 		return modelConfigPlaceholder
-	case ApiBaseConfigPromptMode:
+	case ui.ApiBaseConfigPromptMode:
 		return apiBaseConfigPlaceholder
 	default:
 		return chatPlaceholder

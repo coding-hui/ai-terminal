@@ -3,7 +3,7 @@ package coder
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/coding-hui/ai-terminal/internal/coders"
+	"github.com/coding-hui/ai-terminal/internal/ui/coders"
 )
 
 type Options struct {

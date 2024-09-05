@@ -23,7 +23,6 @@ func NewComponents() *Components {
 		renderer: NewRenderer(
 			glamour.WithEmoji(),
 			glamour.WithAutoStyle(),
-			glamour.WithPreservedNewLines(),
 			glamour.WithWordWrap(defaultWidth),
 		),
 	}

@@ -19,8 +19,9 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/runner"
 	"github.com/coding-hui/ai-terminal/internal/system"
 	"github.com/coding-hui/ai-terminal/internal/ui"
+	"github.com/coding-hui/ai-terminal/internal/ui/chat"
+	"github.com/coding-hui/ai-terminal/internal/ui/display"
 	"github.com/coding-hui/ai-terminal/internal/util"
-	"github.com/coding-hui/ai-terminal/internal/util/display"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 	"github.com/coding-hui/ai-terminal/internal/util/templates"
 )
@@ -124,7 +125,7 @@ func (o *Options) Run(args []string) error {
 		return nil
 	}
 
-	if _, err := tea.NewProgram(ui.NewUi(input)).Run(); err != nil {
+	if _, err := tea.NewProgram(chat.NewUi(input)).Run(); err != nil {
 		return err
 	}
 

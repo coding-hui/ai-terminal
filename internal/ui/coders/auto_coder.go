@@ -15,7 +15,7 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/git"
 	"github.com/coding-hui/ai-terminal/internal/llm"
 	"github.com/coding-hui/ai-terminal/internal/ui"
-	"github.com/coding-hui/ai-terminal/internal/util/display"
+	"github.com/coding-hui/ai-terminal/internal/ui/display"
 )
 
 var program *tea.Program
