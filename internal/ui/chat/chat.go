@@ -496,7 +496,7 @@ func (u *Ui) startCli(config *options.Config) tea.Cmd {
 	u.state.command = ""
 
 	if u.state.promptMode == ui.ExecPromptMode {
-		return tea.Sequence(
+		return tea.Batch(
 			u.components.spinner.Tick,
 			func() tea.Msg {
 				output, err := u.engine.ExecCompletion(u.state.args)
@@ -509,7 +509,7 @@ func (u *Ui) startCli(config *options.Config) tea.Cmd {
 			},
 		)
 	} else {
-		return tea.Sequence(
+		return tea.Batch(
 			u.components.spinner.Tick,
 			u.startChatStream(u.state.args),
 			u.awaitChatStream(),
