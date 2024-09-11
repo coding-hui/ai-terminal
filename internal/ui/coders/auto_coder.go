@@ -88,12 +88,12 @@ func NewAutoCoder() *AutoCoder {
 
 	autoCoder.llmEngine, err = llm.NewLLMEngine(llm.ChatEngineMode, cfg)
 	if err != nil {
-		display.FatalErr(err)
+		display.Fatal(err)
 	}
 
 	root, err := gitRepo.GitDir()
 	if err != nil {
-		display.FatalErr(err, "Not a git repository (or any of the parent directories): .git") // 添加友好的错误提示
+		display.Fatalf("Not a git repository (or any of the parent directories): .git. %v", err)
 	}
 
 	autoCoder.codeBasePath = filepath.Dir(root)
@@ -102,7 +102,7 @@ func NewAutoCoder() *AutoCoder {
 	// 获取所有文件
 	files, err := autoCoder.gitRepo.ListAllFiles()
 	if err != nil {
-		display.FatalErr(err)
+		display.Fatal(err)
 	}
 	autoCoder.files = files
 

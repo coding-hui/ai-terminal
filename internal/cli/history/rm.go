@@ -2,7 +2,6 @@ package history
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/spf13/cobra"
 
@@ -48,19 +47,19 @@ func (r *rm) Run(args []string) error {
 
 	exists, err := chatHistory.Exists(context.Background(), chatID)
 	if err != nil {
-		display.FatalErr(err, fmt.Sprintf("Failed to check existence of chat session history %s.", chatID))
+		display.Fatalf("Failed to check existence of chat session history %s: %v", chatID, err)
 	}
 	if !exists {
-		display.ErrorMsg("Chat session history does not exist.")
+		display.Error("Chat session history does not exist.")
 		return nil
 	}
 
 	err = chatHistory.Clear(context.Background(), chatID)
 	if err != nil {
-		display.FatalErr(err, fmt.Sprintf("Failed to remove chat history %s", chatID))
+		display.Fatalf("Failed to remove chat history %s: %v", chatID, err)
 	}
 
-	display.Success(fmt.Sprintf("Removed chat history %s", chatID))
+	display.Successf("Removed chat history %s", chatID)
 
 	return nil
 }

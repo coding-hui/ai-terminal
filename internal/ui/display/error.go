@@ -12,32 +12,24 @@ var style = lipgloss.NewStyle().
 	PaddingTop(1).
 	Foreground(lipgloss.Color("9"))
 
-// Error handles and displays an error message along with optional additional messages.
-func Error(err error, msgs ...string) {
-	if err == nil {
-		return
-	}
-
-	errMsg := err.Error()
-	if errMsg == "" {
-		return
-	}
-
-	if len(msgs) > 0 {
-		ErrorMsg(msgs...)
-	}
-	ErrorMsg(err.Error())
+// Error handles and displays an error message. It formats the error message using the provided arguments.
+func Error(args interface{}) {
+	Errorf("%s", args)
 }
 
-// ErrorMsg displays one or more error messages using a predefined style for enhanced visibility.
-func ErrorMsg(msgs ...string) {
-	for _, msg := range msgs {
-		fmt.Println(style.Render(msg))
-	}
+// Errorf formats and displays an error message using the provided format string and arguments.
+func Errorf(format string, args ...interface{}) {
+	fmt.Println(style.Render(fmt.Sprintf(format, args...)))
 }
 
-// FatalErr handles and displays an error message along with optional additional messages, then exits the program with a status code of 1.
-func FatalErr(err error, msgs ...string) {
-	Error(err, msgs...)
+// Fatal handles and displays a fatal error message. It then exits the program with a status code of 1.
+func Fatal(args interface{}) {
+	Error(args)
+	os.Exit(1)
+}
+
+// Fatalf formats and displays a fatal error message using the provided format string and arguments. It then exits the program with a status code of 1.
+func Fatalf(format string, args ...interface{}) {
+	Errorf(format, args...)
 	os.Exit(1)
 }

@@ -44,7 +44,7 @@ func NewCmdConfigure(ioStreams genericclioptions.IOStreams) *cobra.Command {
 				return
 			}
 
-			display.Success(fmt.Sprintf("Configuration is saved successfully. The default llm model is %s.", cfg.Ai.Model))
+			display.Successf("Configuration is saved successfully. The default llm model is %s.", cfg.Ai.Model)
 		},
 	}
 

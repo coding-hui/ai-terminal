@@ -79,7 +79,7 @@ func NewCmdASK(ioStreams genericclioptions.IOStreams) *cobra.Command {
 			if o.tempPromptFile != "" {
 				err := os.Remove(o.tempPromptFile)
 				if err != nil {
-					display.FatalErr(err, "Error removing temporary file")
+					display.Fatalf("Error removing temporary file: %v", err)
 				}
 			}
 			return nil
@@ -115,11 +115,11 @@ func (o *Options) Run(args []string) error {
 		cfg := options.NewConfig()
 		engine, err := llm.NewLLMEngine(llm.ChatEngineMode, cfg)
 		if err != nil {
-			display.FatalErr(err, "Failed to initialize engine")
+			display.Fatalf("Failed to initialize engine: %v", err)
 		}
 		out, err := engine.ExecCompletion(strings.Join(o.prompts, "\n") + "\n" + o.pipe)
 		if err != nil {
-			display.FatalErr(err, "Error executing completion")
+			display.Fatalf("Error executing completion: %v", err)
 		}
 		fmt.Println(out.Explanation)
 		return nil
@@ -140,7 +140,7 @@ func (o *Options) preparePrompts(args []string) error {
 	if o.promptFile != "" {
 		bytes, err := os.ReadFile(o.promptFile)
 		if err != nil {
-			display.FatalErr(err, "Error reading prompt file")
+			display.Fatalf("Error reading prompt file: %v", err)
 		}
 		o.prompts = append(o.prompts, string(bytes))
 	}
@@ -156,14 +156,14 @@ func (o *Options) preparePrompts(args []string) error {
 func (o *Options) getEditorPrompt() string {
 	tempFile, err := os.CreateTemp(os.TempDir(), "ai_prompt_*.txt")
 	if err != nil {
-		display.FatalErr(err, "Failed to create temporary file")
+		display.Fatalf("Failed to create temporary file: %v", err)
 	}
 
 	filename := tempFile.Name()
 	o.tempPromptFile = filename
 	err = os.WriteFile(filename, []byte(promptInstructions), 0644)
 	if err != nil {
-		display.FatalErr(err, "Failed to write instructions to temporary file")
+		display.Fatalf("Failed to write instructions to temporary file: %v", err)
 	}
 
 	editor := system.Analyse().GetEditor()
@@ -173,13 +173,13 @@ func (o *Options) getEditorPrompt() string {
 	editorCmd.Stderr = os.Stderr
 	err = editorCmd.Start()
 	if err != nil {
-		display.FatalErr(err, "Error opening editor")
+		display.Fatalf("Error opening editor: %v", err)
 	}
 	_ = editorCmd.Wait()
 
 	bytes, err := os.ReadFile(filename)
 	if err != nil {
-		display.FatalErr(err, "Error reading temporary file")
+		display.Fatalf("Error reading temporary file: %v", err)
 	}
 
 	prompt := string(bytes)
