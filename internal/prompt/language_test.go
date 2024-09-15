@@ -7,11 +7,11 @@ func TestGetLanguage(t *testing.T) {
 		langCode string
 		expected string
 	}{
-		{"en", DefaultLanguage},
+		{"en", "English"},
 		{"zh-tw", "Traditional Chinese"},
 		{"zh-cn", "Simplified Chinese"},
 		{"ja", "Japanese"},
-		{"fr", DefaultLanguage},
+		{"fr", "English"},
 	}
 
 	for _, tc := range testCases {
