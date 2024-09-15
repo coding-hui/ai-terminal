@@ -1,6 +1,22 @@
 # Change Log
 
 
+<a name="v0.1.9-1"></a>
+## [v0.1.9-1] - 2024-09-15
+### Bug Fixes
+- ask cmd issue
+
+### Code Refactoring
+- refactor language handling and template specifications
+- refactor ui display func
+- rename ui package
+- improve Git Repository Handling and Error Messages
+
+### Features
+- expand supported languages for commit message summarization
+- implement interactive AI configuration command
+
+
 <a name="v0.1.9"></a>
 ## [v0.1.9] - 2024-09-01
 ### Bug Fixes
@@ -183,7 +199,8 @@
 - add ask cmd
 
 
-[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.1.9...HEAD
+[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.1.9-1...HEAD
+[v0.1.9-1]: https://github.com/coding-hui/ai-terminal/compare/v0.1.9...v0.1.9-1
 [v0.1.9]: https://github.com/coding-hui/ai-terminal/compare/v0.1.8...v0.1.9
 [v0.1.8]: https://github.com/coding-hui/ai-terminal/compare/v0.1.7...v0.1.8
 [v0.1.7]: https://github.com/coding-hui/ai-terminal/compare/v0.1.6...v0.1.7
