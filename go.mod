@@ -6,7 +6,7 @@ require (
 	github.com/AlekSi/pointer v1.2.0
 	github.com/MakeNowJust/heredoc/v2 v2.0.1
 	github.com/charmbracelet/bubbles v0.19.0
-	github.com/charmbracelet/bubbletea v1.1.0
+	github.com/charmbracelet/bubbletea v1.1.1
 	github.com/charmbracelet/glamour v0.8.0
 	github.com/charmbracelet/lipgloss v0.13.0
 	github.com/coding-hui/common v0.8.7
@@ -39,7 +39,7 @@ require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
-	github.com/charmbracelet/x/ansi v0.2.3 // indirect
+	github.com/charmbracelet/x/ansi v0.3.1 // indirect
 	github.com/charmbracelet/x/term v0.2.0 // indirect
 	github.com/containerd/containerd v1.7.20 // indirect
 	github.com/containerd/log v0.1.0 // indirect
@@ -134,9 +134,9 @@ require (
 	golang.org/x/exp v0.0.0-20240823005443-9b4947da3948 // indirect
 	golang.org/x/net v0.28.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.24.0 // indirect
+	golang.org/x/sys v0.25.0 // indirect
 	golang.org/x/term v0.23.0 // indirect
-	golang.org/x/text v0.17.0 // indirect
+	golang.org/x/text v0.18.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240513163218-0867130af1f8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240509183442-62759503f434 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
