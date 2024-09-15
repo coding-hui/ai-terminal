@@ -18,6 +18,7 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/prompt"
 	"github.com/coding-hui/ai-terminal/internal/runner"
 	"github.com/coding-hui/ai-terminal/internal/ui"
+	"github.com/coding-hui/ai-terminal/internal/ui/display"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 )
 
@@ -95,13 +96,13 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 	if len(o.FilesToAdd) > 0 {
 		err := g.AddFiles(o.FilesToAdd)
 		if err != nil {
-			return err
+			display.Fatal(err)
 		}
 	}
 
 	diff, err := g.DiffFiles()
 	if err != nil {
-		return err
+		display.Fatal(err)
 	}
 
 	vars := map[string]any{
@@ -112,42 +113,42 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 
 	err = o.codeReview(llmEngine, vars)
 	if err != nil {
-		return err
+		display.Fatal(err)
 	}
 
 	err = o.summarizeTitle(llmEngine, vars)
 	if err != nil {
-		return err
+		display.Fatal(err)
 	}
 
 	err = o.summarizePrefix(llmEngine, vars)
 	if err != nil {
-		return err
+		display.Fatal(err)
 	}
 
 	commitMessage, err := o.generateCommitMsg(llmEngine, vars)
 	if err != nil {
-		return err
+		display.Fatal(err)
 	}
 
 	if o.commitMsgFile == "" {
 		out, err := g.GitDir()
 		if err != nil {
-			return err
+			display.Fatal(err)
 		}
 		o.commitMsgFile = path.Join(strings.TrimSpace(out), "COMMIT_EDITMSG")
 	}
 	color.Cyan("Write the commit message to " + o.commitMsgFile + " file")
 	err = os.WriteFile(o.commitMsgFile, []byte(commitMessage), 0o600)
 	if err != nil {
-		return err
+		display.Fatal(err)
 	}
 
 	if o.preview && !o.noConfirm {
 		input := confirmation.New("Commit preview summary?", confirmation.Yes)
 		ready, err := input.RunPrompt()
 		if err != nil {
-			return err
+			display.Fatal(err)
 		}
 		if !ready {
 			return nil
@@ -158,14 +159,14 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 		input := confirmation.New("Do you want to change the commit message?", confirmation.No)
 		change, err := input.RunPrompt()
 		if err != nil {
-			return err
+			display.Fatal(err)
 		}
 
 		if change {
 			m := ui.InitialTextareaPrompt(commitMessage)
 			p := tea.NewProgram(m)
 			if _, err := p.Run(); err != nil {
-				return err
+				display.Fatal(err)
 			}
 			p.Wait()
 			commitMessage = m.Textarea.Value()
@@ -176,7 +177,7 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 	color.Cyan("Git record changes to the repository")
 	output, err := g.Commit(commitMessage)
 	if err != nil {
-		return err
+		display.Fatal(err)
 	}
 	color.Yellow(output)
 
