@@ -107,6 +107,7 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 	vars := map[string]any{
 		prompt.FileDiffsKey:         diff,
 		prompt.UserAdditionalPrompt: o.userPrompt,
+		prompt.OutputLanguageKey:    prompt.GetLanguage(o.commitLang),
 	}
 
 	err = o.codeReview(llmEngine, vars)
@@ -263,7 +264,7 @@ func (o *Options) generateCommitMsg(engine *llm.Engine, vars map[string]any) (co
 		}
 	}
 
-	if prompt.GetLanguage(o.commitLang) != prompt.DefaultLanguage {
+	if o.commitLang != prompt.DefaultLanguage {
 		color.Cyan("We are trying to translate a git commit message to " + o.commitLang + " language")
 		translationPrompt, err := prompt.GetPromptStringByTemplateName(prompt.TranslationTemplate, map[string]any{
 			prompt.OutputLanguageKey: prompt.GetLanguage(o.commitLang),
