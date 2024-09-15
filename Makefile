@@ -75,7 +75,7 @@ lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes
 
 .PHONY: goreleaser
 release: ## Generate a release using goreleaser with auto-snapshot, clean, and draft options.
-	$(GO_RELEASER) release --auto-snapshot --clean --draft
+	$(GO_RELEASER) release --auto-snapshot --clean
 
 ##@ Build
 
