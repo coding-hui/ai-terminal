@@ -54,7 +54,7 @@ type Suggester interface {
 	GetSuggestions(input string) []string
 }
 
-func StartAutCoder() error {
+func StartAutoCoder() error {
 	coder := NewAutoCoder()
 	program = tea.NewProgram(
 		coder,

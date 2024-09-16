@@ -21,5 +21,5 @@ func NewCmdCoder() *cobra.Command {
 }
 
 func (o *Options) run(cmd *cobra.Command, args []string) error {
-	return coders.StartAutCoder()
+	return coders.StartAutoCoder()
 }
