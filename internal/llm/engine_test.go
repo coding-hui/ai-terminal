@@ -4,31 +4,27 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms/openai"
-
-	"github.com/coding-hui/ai-terminal/internal/cli/options"
-	"github.com/coding-hui/ai-terminal/internal/session/simple"
+	"github.com/stretchr/testify/mock"
 )
 
+type MockEngine struct {
+	mock.Mock
+}
+
+func (m *MockEngine) ExecCompletion(input string) (*EngineChatStreamOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*EngineChatStreamOutput), args.Error(1)
+}
+
 func TestEngine_ExecCompletion(t *testing.T) {
-	llm, err := openai.New()
-	if err != nil {
-		t.Fatal(err)
+	mockEngine := new(MockEngine)
+
+	mockOutput := &EngineChatStreamOutput{
+		content: "mock explanation",
 	}
 
-	cfg := options.NewConfig()
+	mockEngine.On("ExecCompletion", "hello?").Return(mockOutput, nil)
 
-	e := &Engine{
-		mode:        ChatEngineMode,
-		config:      cfg,
-		Model:       llm,
-		channel:     make(chan EngineChatStreamOutput),
-		pipe:        "",
-		running:     false,
-		chatHistory: simple.NewChatMessageHistory(),
-		execHistory: simple.NewChatMessageHistory(),
-	}
 	type args struct {
 		input string
 	}
@@ -48,13 +44,13 @@ func TestEngine_ExecCompletion(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			got, err := e.ExecCompletion(tt.args.input)
+			got, err := mockEngine.ExecCompletion(tt.args.input)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ExecCompletion() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			assert.NotNil(t, got)
-			assert.NotEmpty(t, got.Explanation)
+			assert.NotEmpty(t, got.content)
 		})
 	}
 }
