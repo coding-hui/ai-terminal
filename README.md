@@ -1,12 +1,14 @@
-# AI-Terminal
+Language : [us](./README.md) | [🇨🇳](./README_zh.md) | [ja](./README_ja.md)
+
+<h1 align="center">AI-Terminal</h1>
+
+<div align="center">
 
 AI-Terminal is an advanced AI-powered CLI that enhances terminal workflows through AI-driven automation and
 optimization. It efficiently manages tasks such as file management, data processing, and system diagnostics.
 
+</div>
 
-For the Chinese version of this README, please see [中文版](README_zh.md) 🇨🇳.
-
-For the Japanese version of this README, please see [日本語版](README_ja.md) 🇯🇵.
 
 ## Key Features
 
