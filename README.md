@@ -4,7 +4,9 @@ AI-Terminal is an advanced AI-powered CLI that enhances terminal workflows throu
 optimization. It efficiently manages tasks such as file management, data processing, and system diagnostics.
 
 
-For the Chinese version of this README, please see [README_zh.md](README_zh.md).
+For the Chinese version of this README, please see [中文版](README_zh.md) 🇨🇳.
+
+For the Japanese version of this README, please see [日本語版](README_ja.md) 🇯🇵.
 
 ## Key Features
 
