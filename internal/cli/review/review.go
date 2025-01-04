@@ -7,9 +7,9 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
-	"github.com/coding-hui/ai-terminal/internal/cli/options"
 	"github.com/coding-hui/ai-terminal/internal/git"
 	"github.com/coding-hui/ai-terminal/internal/llm"
+	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/prompt"
 	"github.com/coding-hui/ai-terminal/internal/runner"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"

@@ -11,9 +11,9 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/coding-hui/ai-terminal/internal/cli/options"
 	"github.com/coding-hui/ai-terminal/internal/git"
 	"github.com/coding-hui/ai-terminal/internal/llm"
+	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/ui"
 	"github.com/coding-hui/ai-terminal/internal/ui/display"
 )

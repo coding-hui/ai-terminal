@@ -10,7 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
-	"github.com/coding-hui/ai-terminal/internal/cli/options"
+	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/session"
 	"github.com/coding-hui/ai-terminal/internal/util/mongodb"
 )

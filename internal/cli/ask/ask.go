@@ -14,8 +14,8 @@ import (
 	"github.com/spf13/viper"
 	"k8s.io/klog/v2"
 
-	"github.com/coding-hui/ai-terminal/internal/cli/options"
 	"github.com/coding-hui/ai-terminal/internal/llm"
+	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/runner"
 	"github.com/coding-hui/ai-terminal/internal/system"
 	"github.com/coding-hui/ai-terminal/internal/ui"

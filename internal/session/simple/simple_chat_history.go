@@ -12,7 +12,7 @@ import (
 	"github.com/coding-hui/common/util/fileutil"
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
 
-	"github.com/coding-hui/ai-terminal/internal/cli/options"
+	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/session"
 )
 

@@ -26,9 +26,9 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/cli/configure"
 	"github.com/coding-hui/ai-terminal/internal/cli/history"
 	"github.com/coding-hui/ai-terminal/internal/cli/hook"
-	"github.com/coding-hui/ai-terminal/internal/cli/options"
 	"github.com/coding-hui/ai-terminal/internal/cli/review"
 	"github.com/coding-hui/ai-terminal/internal/cli/version"
+	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 	"github.com/coding-hui/ai-terminal/internal/util/templates"
 

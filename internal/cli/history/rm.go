@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/coding-hui/ai-terminal/internal/cli/options"
 	"github.com/coding-hui/ai-terminal/internal/llm"
+	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/session"
 	"github.com/coding-hui/ai-terminal/internal/ui/display"
 	"github.com/coding-hui/ai-terminal/internal/util"

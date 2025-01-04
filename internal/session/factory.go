@@ -6,7 +6,7 @@ import (
 
 	"k8s.io/klog/v2"
 
-	"github.com/coding-hui/ai-terminal/internal/cli/options"
+	"github.com/coding-hui/ai-terminal/internal/options"
 )
 
 var (
