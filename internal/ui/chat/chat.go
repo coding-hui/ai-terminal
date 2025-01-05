@@ -112,13 +112,13 @@ func (c *Chat) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		c.state = requestState
 		cmds = append(cmds, c.startCompletionCmd(msg.Content), c.awaitChatCompletedCmd())
 	case llm.StreamCompletionOutput:
-		if msg.IsLast() {
-			c.state = doneState
-			return c, c.quit
-		}
 		if msg.GetContent() != "" {
 			c.appendToOutput(msg.GetContent())
 			c.state = responseState
+		}
+		if msg.IsLast() {
+			c.state = doneState
+			return c, c.quit
 		}
 		cmds = append(cmds, c.awaitChatCompletedCmd())
 	case errbook.AiError:

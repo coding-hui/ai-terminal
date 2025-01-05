@@ -200,7 +200,7 @@ func (e *Engine) CreateCompletion(input string) (*EngineExecOutput, error) {
 
 	rsp, err := e.Model.GenerateContent(ctx, messages, e.callOptions()...)
 	if err != nil {
-		return nil, err
+		return nil, errbook.Wrap("Failed to create completion.", err)
 	}
 
 	content := rsp.Choices[0].Content
@@ -227,9 +227,11 @@ func (e *Engine) CreateStreamCompletion(input string) tea.Msg {
 	e.appendUserMessage(input)
 
 	streamingFunc := func(ctx context.Context, chunk []byte) error {
-		e.channel <- StreamCompletionOutput{
-			content: string(chunk),
-			last:    false,
+		if !e.config.Quiet {
+			e.channel <- StreamCompletionOutput{
+				content: string(chunk),
+				last:    false,
+			}
 		}
 		return nil
 	}
@@ -238,7 +240,7 @@ func (e *Engine) CreateStreamCompletion(input string) tea.Msg {
 	rsp, err := e.Model.GenerateContent(ctx, messages, e.callOptions(streamingFunc)...)
 	if err != nil {
 		e.running = false
-		return err
+		return errbook.Wrap("Failed to create stream completion.", err)
 	}
 
 	executable := false
@@ -250,15 +252,21 @@ func (e *Engine) CreateStreamCompletion(input string) tea.Msg {
 		}
 	}
 
-	e.channel <- StreamCompletionOutput{
-		content:    "",
-		last:       true,
-		executable: executable,
+	if !e.config.Quiet {
+		e.channel <- StreamCompletionOutput{
+			content:    "",
+			last:       true,
+			executable: executable,
+		}
 	}
 	e.running = false
 	e.appendAssistantMessage(output)
 
-	return nil
+	return &StreamCompletionOutput{
+		content:    output,
+		last:       true,
+		executable: executable,
+	}
 }
 
 func (e *Engine) ChatStream(ctx context.Context, messages []llms.MessageContent, options ...llms.CallOption) (*llms.ContentResponse, error) {
@@ -276,7 +284,7 @@ func (e *Engine) ChatStream(ctx context.Context, messages []llms.MessageContent,
 	rsp, err := e.Model.GenerateContent(ctx, messages, opts...)
 	if err != nil {
 		e.running = false
-		return nil, err
+		return nil, errbook.Wrap("Failed to create stream completion.", err)
 	}
 
 	executable := false
