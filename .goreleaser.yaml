@@ -26,6 +26,7 @@ builds:
       - darwin
     goarch:
       - amd64
+      - arm64
     # List of combinations of GOOS + GOARCH + GOARM to ignore.
     ignore:
       - goos: windows
