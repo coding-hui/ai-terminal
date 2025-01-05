@@ -8,18 +8,6 @@
 
 version: 2
 
-variables:
-  main: ""
-  aur_project_name: ""
-
-  homepage: "https://github.com/coding-hui/ai-terminal"
-  brew_owner: coding-hui
-  description: "AI driven development in your terminal"
-  github_url: "https://github.com/coding-hui/ai-terminal"
-  maintainer: "Coding Hui <wecoding@yeah.net>"
-  brew_commit_author_name: "Coding Hui"
-  brew_commit_author_email: "wecoding@yeah.net"
-
 before:
   hooks:
     # You may remove this if you don't use go modules.
@@ -115,14 +103,14 @@ report_sizes: true
 
 brews:
   - repository:
-      owner: "{{ .Var.brew_owner }}"
+      owner: coding-hui
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     commit_author:
-      name: "{{ .Var.brew_commit_author_name }}"
-      email: "{{ .Var.brew_commit_author_email }}"
-    homepage: "{{ .Var.homepage }}"
-    description: "{{ .Var.description }}"
+      name: "Coding Hui"
+      email: wecoding@yeah.net
+    homepage: https://github.com/coding-hui/ai-terminal
+    description: "AI driven development in your terminal"
     extra_install: |-
       bash_completion.install "completions/{{ .ProjectName }}.bash" => "{{ .ProjectName }}"
       zsh_completion.install "completions/{{ .ProjectName }}.zsh" => "_{{ .ProjectName }}"
