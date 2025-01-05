@@ -23,7 +23,8 @@ import (
 )
 
 const (
-	noExec = "[noexec]"
+	noExec        = "[noexec]"
+	defaultChatID = "temp_session"
 )
 
 type Engine struct {
@@ -107,6 +108,10 @@ func NewLLMEngine(mode EngineMode, cfg *options.Config) (*Engine, error) {
 	}
 
 	chatHistory, _ := session.GetHistoryStore(*cfg, ChatEngineMode.String())
+	charID := defaultChatID
+	if cfg.ChatID != "" {
+		charID = cfg.ChatID
+	}
 
 	return &Engine{
 		mode:        mode,
@@ -115,7 +120,7 @@ func NewLLMEngine(mode EngineMode, cfg *options.Config) (*Engine, error) {
 		channel:     make(chan StreamCompletionOutput),
 		pipe:        "",
 		running:     false,
-		chatID:      cfg.ChatID,
+		chatID:      charID,
 		chatHistory: chatHistory,
 	}, nil
 }
