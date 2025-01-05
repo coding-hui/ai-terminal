@@ -12,6 +12,14 @@ before:
   hooks:
     # You may remove this if you don't use go modules.
     - go mod tidy
+    - rm -rf completions
+    - mkdir completions
+    - rm -rf manpages
+    - mkdir manpages
+    - sh -c 'go run cmd/cli/main.go completion "bash" >./completions/{{ .ProjectName }}.bash'
+    - sh -c 'go run cmd/cli/main.go completion "zsh" >./completions/{{ .ProjectName }}.zsh'
+    - sh -c 'go run cmd/cli/main.go completion "fish" >./completions/{{ .ProjectName }}.fish'
+    - sh -c 'go run cmd/cli/main.go manpage | gzip -c >./manpages/{{ .ProjectName }}.1.gz'
 
 builds:
   - id: ai-cli
@@ -52,7 +60,13 @@ archives:
       {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
+    wrap_in_directory: true
     # use zip for windows archives
+    files:
+      - README*
+      - LICENSE*
+      - manpages/*
+      - completions/*
     format_overrides:
       - goos: windows
         format: zip
