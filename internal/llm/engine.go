@@ -192,13 +192,9 @@ func (e *Engine) CreateCompletion(input string) (*EngineExecOutput, error) {
 	e.appendUserMessage(input)
 
 	messages := e.prepareCompletionMessages()
-	rsp, err := e.Model.GenerateContent(ctx, messages,
-		llms.WithModel(e.config.Model),
-		llms.WithMaxTokens(e.config.MaxTokens),
-		llms.WithTemperature(e.config.Temperature),
-		llms.WithTopP(e.config.TopP),
-		llms.WithMultiContent(false),
-	)
+
+	fmt.Println(messages)
+	rsp, err := e.Model.GenerateContent(ctx, messages, e.callOptions()...)
 	if err != nil {
 		return nil, err
 	}
@@ -331,6 +327,24 @@ func (e *Engine) ChatStream(ctx context.Context, messages []llms.MessageContent,
 	e.running = false
 
 	return rsp, nil
+}
+
+func (e *Engine) callOptions(streamingFunc ...func(ctx context.Context, chunk []byte) error) []llms.CallOption {
+	var opts []llms.CallOption
+	if e.config.MaxTokens > 0 {
+		opts = append(opts, llms.WithMaxTokens(e.config.MaxTokens))
+	}
+	if len(streamingFunc) > 0 && streamingFunc[0] != nil {
+		opts = append(opts, llms.WithStreamingFunc(streamingFunc[0]))
+	}
+	opts = append(opts, llms.WithModel(e.config.Model))
+	opts = append(opts, llms.WithMaxLength(e.config.MaxInputChars))
+	opts = append(opts, llms.WithTemperature(e.config.Temperature))
+	opts = append(opts, llms.WithTopP(e.config.TopP))
+	opts = append(opts, llms.WithTopK(e.config.TopK))
+	opts = append(opts, llms.WithMultiContent(false))
+
+	return opts
 }
 
 func (e *Engine) appendUserMessage(content string) {
