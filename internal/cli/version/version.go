@@ -77,7 +77,7 @@ The version information includes the following fields:
 	}
 
 	cmd.Flags().BoolVar(&o.Short, "short", o.Short, "If true, print just the version number.")
-	cmd.Flags().StringVarP(&o.Output, "output", "", o.Output, "One of 'yaml' or 'json'.")
+	cmd.Flags().StringVarP(&o.Output, "output", "o", o.Output, "One of 'yaml' or 'json'.")
 	cmd.Flags().StringVarP(&o.Template, "template", "t", o.Template, "Template string to format the version output.")
 
 	return cmd
