@@ -81,7 +81,7 @@ release: ## Generate a release using goreleaser with auto-snapshot, clean, and d
 
 .PHONY: build
 build: fmt vet ## Build the AI CLI command
-	go build $(GO_BUILD_FLAGS) -o bin/ai cmd/cli/main.go
+	go build $(GO_BUILD_FLAGS) -trimpath -o bin/ai cmd/cli/main.go
 
 .PHONY: run
 run: fmt vet ## Run the application with parameters passed via ARGS variable. Usage: make run ARGS="--your-flag your-value"

@@ -29,3 +29,6 @@ go.work
 logs
 *.log
 dist/
+
+completions/*
+manpages/*

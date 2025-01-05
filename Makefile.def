@@ -7,7 +7,9 @@ GIT_TREE_STATE:="dirty"
 ifeq (, $(shell git status --porcelain 2>/dev/null))
 	GIT_TREE_STATE="clean"
 endif
+ifeq ($(origin GIT_COMMIT), undefined)
 GIT_COMMIT:=$(shell git rev-parse HEAD)
+endif
 
 GitSHA=`git rev-parse HEAD`
 
