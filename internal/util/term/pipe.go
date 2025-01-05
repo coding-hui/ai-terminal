@@ -1,4 +1,4 @@
-package util
+package term
 
 import (
 	"bufio"
@@ -45,4 +45,12 @@ func ReadPipeInput() string {
 	}
 
 	return pipe
+}
+
+func increaseIndent(s string) string {
+	lines := strings.Split(s, "\n")
+	for i := 0; i < len(lines); i++ {
+		lines[i] = "\t" + lines[i]
+	}
+	return strings.Join(lines, "\n")
 }

@@ -5,7 +5,6 @@ import (
 
 	"github.com/AlekSi/pointer"
 	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 )
 
 const (
@@ -36,23 +35,18 @@ func NewDatastoreFlags(dsType string) *DataStoreFlags {
 func (d *DataStoreFlags) AddFlags(flags *pflag.FlagSet) {
 	if d.Type != nil {
 		flags.StringVar(d.Type, FlagDatastoreType, *d.Type, "Datastore provider type")
-		_ = viper.BindPFlag(FlagDatastoreType, flags.Lookup(FlagDatastoreType))
 	}
 	if d.Url != nil {
 		flags.StringVar(d.Url, FlagDatastoreUrl, *d.Url, "Datastore connection url")
-		_ = viper.BindPFlag(FlagDatastoreUrl, flags.Lookup(FlagDatastoreUrl))
 	}
 	if d.Path != nil {
 		flags.StringVar(d.Path, FlagDatastorePath, *d.Path, "Datastore save path")
-		_ = viper.BindPFlag(FlagDatastorePath, flags.Lookup(FlagDatastorePath))
 	}
 	if d.Username != nil {
 		flags.StringVar(d.Username, FlagDatastoreUsername, *d.Username, "Datastore username")
-		_ = viper.BindPFlag(FlagDatastoreUsername, flags.Lookup(FlagDatastoreUsername))
 	}
 	if d.Password != nil {
 		flags.StringVar(d.Password, FlagDatastorePassword, *d.Password, "Datastore password")
-		_ = viper.BindPFlag(FlagDatastorePassword, flags.Lookup(FlagDatastorePassword))
 	}
 }
 

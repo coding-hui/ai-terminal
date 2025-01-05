@@ -8,6 +8,10 @@ package term
 
 import (
 	"io"
+	"os"
+	"sync"
+
+	"github.com/mattn/go-isatty"
 )
 
 // TTY helps invoke a function and preserve the state of the terminal, even if the process is
@@ -25,3 +29,11 @@ type TTY struct {
 	// is not a file descriptor.
 	TryDev bool
 }
+
+var IsInputTTY = sync.OnceValue(func() bool {
+	return isatty.IsTerminal(os.Stdin.Fd())
+})
+
+var IsOutputTTY = sync.OnceValue(func() bool {
+	return isatty.IsTerminal(os.Stdout.Fd())
+})

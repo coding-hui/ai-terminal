@@ -59,3 +59,7 @@ func (m RunMode) String() string {
 		return "repl"
 	}
 }
+
+type CacheDetailsMsg struct {
+	WriteID, Title, ReadID, Model string
+}

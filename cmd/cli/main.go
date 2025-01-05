@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/coding-hui/ai-terminal/internal/cli"
+	"github.com/coding-hui/ai-terminal/internal/errbook"
 )
 
 func main() {
@@ -17,6 +18,7 @@ func main() {
 
 	command := cli.NewDefaultAICommand()
 	if err := command.Execute(); err != nil {
+		errbook.HandleError(err)
 		os.Exit(1)
 	}
 }

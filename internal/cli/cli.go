@@ -9,11 +9,11 @@ import (
 	"flag"
 	"io"
 	"os"
+	"slices"
 	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog/v2"
 
@@ -28,6 +28,7 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/cli/hook"
 	"github.com/coding-hui/ai-terminal/internal/cli/review"
 	"github.com/coding-hui/ai-terminal/internal/cli/version"
+	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 	"github.com/coding-hui/ai-terminal/internal/util/templates"
@@ -44,15 +45,32 @@ func NewDefaultAICommand() *cobra.Command {
 }
 
 // NewAICommand returns new initialized instance of 'ai' root command.
-func NewAICommand(in io.Reader, out, err io.Writer) *cobra.Command {
+func NewAICommand(in io.Reader, out, errOut io.Writer) *cobra.Command {
 	klog.InitFlags(nil)
 	klog.LogToStderr(false)
+
+	cfg, err := options.EnsureConfig()
+	if err != nil {
+		errbook.HandleError(errbook.Wrap("Could not load your configuration file.", err))
+		// if user is editing the settings, only print out the error, but do
+		// not exit.
+		if !slices.Contains(os.Args, "--settings") {
+			os.Exit(1)
+		}
+	}
 
 	// Parent command to which all subcommands are added.
 	cmds := &cobra.Command{
 		Use:   "ai",
 		Short: "AI driven development in your terminal.",
-		Run:   runHelp,
+		Long: templates.LongDesc(`
+      AI driven development in your terminal.
+
+      Find more information at:
+            https://github.com/coding-hui/ai-terminal`),
+		SilenceUsage:  true,
+		SilenceErrors: true,
+		Run:           runHelp,
 		// Hook before and after Run initialize and write profiles to disk,
 		// respectively.
 		PersistentPreRunE: func(*cobra.Command, []string) error {
@@ -72,35 +90,30 @@ func NewAICommand(in io.Reader, out, err io.Writer) *cobra.Command {
 
 	addProfilingFlags(flags)
 
-	aiConfigFlags := options.NewConfigFlags(true)
-	aiConfigFlags.AddFlags(flags)
+	options.AddBasicFlags(flags, &cfg)
 
-	_ = viper.BindPFlags(cmds.PersistentFlags())
-	cobra.OnInitialize(func() {
-		options.LoadConfig(viper.GetString(options.FlagAIConfig), "ai")
-	})
 	cmds.PersistentFlags().AddGoFlagSet(flag.CommandLine)
 
 	// From this point and forward we get warnings on flags that contain "_" separators
 	cmds.SetGlobalNormalizationFunc(cliflag.WarnWordSepNormalizeFunc)
 
-	ioStreams := genericclioptions.IOStreams{In: in, Out: out, ErrOut: err}
+	ioStreams := genericclioptions.IOStreams{In: in, Out: out, ErrOut: errOut}
 
 	groups := templates.CommandGroups{
 		templates.CommandGroup{
 			Message: "AI Commands:",
 			Commands: []*cobra.Command{
 				coder.NewCmdCoder(),
-				ask.NewCmdASK(ioStreams),
+				ask.NewCmdASK(ioStreams, &cfg),
 				history.NewCmdHistory(ioStreams),
-				commit.NewCmdCommit(ioStreams),
+				commit.NewCmdCommit(ioStreams, &cfg),
 				review.NewCmdCommit(ioStreams),
 			},
 		},
 		templates.CommandGroup{
 			Message: "Settings Commands:",
 			Commands: []*cobra.Command{
-				configure.NewCmdConfigure(ioStreams),
+				configure.NewCmdConfigure(ioStreams, &cfg),
 				completion.NewCmdCompletion(),
 				hook.NewCmdHook(),
 			},

@@ -1,0 +1,298 @@
+# {{ index .Help "model" }}
+default-model: deepseek-chat
+# {{ index .Help "api" }}
+default-api: deepseek
+# {{ index .Help "format-text" }}
+format-text:
+  markdown: '{{ index .Config.FormatText "markdown" }}'
+  json: '{{ index .Config.FormatText "json" }}'
+# {{ index .Help "roles" }}
+roles:
+  "default": []
+  # Example, a role called `shell`:
+  # shell:
+  #   - you are a shell expert
+  #   - you do not explain anything
+  #   - you simply output one liners to solve the problems you're asked
+  #   - you do not provide any explanation whatsoever, ONLY the command
+# {{ index .Help "format" }}
+format: false
+# {{ index .Help "role" }}
+role: "default"
+# {{ index .Help "raw" }}
+raw: false
+# {{ index .Help "quiet" }}
+quiet: false
+# {{ index .Help "temp" }}
+temp: 0.01
+# {{ index .Help "topp" }}
+topp: 0.01
+# {{ index .Help "topk" }}
+topk: 50
+# {{ index .Help "no-limit" }}
+no-limit: false
+# {{ index .Help "word-wrap" }}
+word-wrap: 80
+# {{ index .Help "prompt-args" }}
+include-prompt-args: false
+# {{ index .Help "prompt" }}
+include-prompt: 0
+# {{ index .Help "max-retries" }}
+max-retries: 5
+# {{ index .Help "fanciness" }}
+fanciness: 10
+# {{ index .Help "loading-text" }}
+loading-text: Generating
+# {{ index .Help "theme" }}
+theme: charm
+# {{ index .Help "max-input-chars" }}
+max-input-chars: 12250
+# {{ index .Help "max-tokens" }}
+max-tokens: 2048
+# {{ index .Help "datastore" }}
+datastore:
+  # datastore type: file、mongo or db
+  type: file
+  url: ""
+# {{ index .Help "apis" }}
+apis:
+  openai:
+    base-url: https://api.openai.com/v1
+    api-key:
+    api-key-env: OPENAI_API_KEY
+    # api-key-cmd: rbw get -f OPENAI_API_KEY chat.openai.com
+    models: # https://platform.openai.com/docs/models
+      gpt-4o-mini:
+        aliases: ["4o-mini"]
+        max-input-chars: 392000
+        fallback: gpt-4o
+      gpt-4o:
+        aliases: ["4o"]
+        max-input-chars: 392000
+        fallback: gpt-4
+      gpt-4:
+        aliases: ["4"]
+        max-input-chars: 24500
+        fallback: gpt-3.5-turbo
+      gpt-4-1106-preview:
+        aliases: ["128k"]
+        max-input-chars: 392000
+        fallback: gpt-4
+      gpt-4-32k:
+        aliases: ["32k"]
+        max-input-chars: 98000
+        fallback: gpt-4
+      gpt-3.5-turbo:
+        aliases: ["35t"]
+        max-input-chars: 12250
+        fallback: gpt-3.5
+      gpt-3.5-turbo-1106:
+        aliases: ["35t-1106"]
+        max-input-chars: 12250
+        fallback: gpt-3.5-turbo
+      gpt-3.5-turbo-16k:
+        aliases: ["35t16k"]
+        max-input-chars: 44500
+        fallback: gpt-3.5
+      gpt-3.5:
+        aliases: ["35"]
+        max-input-chars: 12250
+        fallback:
+  copilot:
+    base-url: https://api.githubcopilot.com
+    models:
+      gpt-4o:
+        max-input-chars: 392000
+  anthropic:
+    base-url: https://api.anthropic.com/v1
+    api-key:
+    api-key-env: ANTHROPIC_API_KEY
+    models: # https://docs.anthropic.com/en/docs/about-claude/models
+      claude-3-5-sonnet-latest:
+        aliases: ["claude3.5-sonnet", "claude-3-5-sonnet", "sonnet-3.5"]
+        max-input-chars: 680000
+      claude-3-5-sonnet-20241022:
+        max-input-chars: 680000
+      claude-3-5-sonnet-20240620:
+        max-input-chars: 680000
+      claude-3-opus-20240229:
+        aliases: ["claude3-opus", "opus"]
+        max-input-chars: 680000
+  cohere:
+    base-url: https://api.cohere.com/v1
+    models:
+      command-r-plus:
+        max-input-chars: 128000
+      command-r:
+        max-input-chars: 128000
+  google:
+    models:
+      gemini-1.5-pro-latest:
+        aliases: ["gemini"]
+        max-input-chars: 392000
+      gemini-1.5-flash-latest:
+        aliases: ["flash"]
+        max-input-chars: 392000
+  ollama:
+    base-url: http://localhost:11434/api
+    models: # https://ollama.com/library
+      "llama3.2:3b":
+        aliases: ["llama3.2"]
+        max-input-chars: 650000
+      "llama3.2:1b":
+        aliases: ["llama3.2_1b"]
+        max-input-chars: 650000
+      "llama3:70b":
+        aliases: ["llama3"]
+        max-input-chars: 650000
+  perplexity:
+    base-url: https://api.perplexity.ai
+    api-key:
+    api-key-env: PERPLEXITY_API_KEY
+    models: # https://docs.perplexity.ai/docs/model-cards
+      llama-3-sonar-small-32k-chat:
+        aliases: ["llama3-ss"]
+        max-input-chars: 32768
+      llama-3-sonar-small-32k-online:
+        aliases: ["llam3-sso"]
+        max-input-chars: 28000
+      llama-3-sonar-large-32k-chat:
+        aliases: ["llam3-sl"]
+        max-input-chars: 32768
+      llama-3-sonar-large-32k-online:
+        aliases: ["llam3-slo"]
+        max-input-chars: 28000
+      llama-3-8b-instruct:
+        aliases: ["llam3-8bi"]
+        max-input-chars: 8192
+      llama-3-70b-instruct:
+        aliases: ["llam3-70bi"]
+        max-input-chars: 8192
+  groq:
+    base-url: https://api.groq.com/openai/v1
+    api-key:
+    api-key-env: GROQ_API_KEY
+    models: # https://console.groq.com/docs/models
+      gemma-7b-it:
+        aliases: ["gemma"]
+        max-input-chars: 24500
+      gemma2-9b-it:
+        aliases: ["gemma2"]
+        max-input-chars: 24500
+      llama3-groq-70b-8192-tool-use-preview:
+        aliases: ["llama3-tool"]
+        max-input-chars: 24500
+      llama3-groq-8b-8192-tool-use-preview:
+        aliases: ["llama3-8b-tool"]
+        max-input-chars: 24500
+      llama-3.1-70b-versatile:
+        aliases: ["llama3.1", "llama3.1-70b", "llama3.1-versatile"]
+        max-input-chars: 392000
+      llama-3.1-8b-instant:
+        aliases: ["llama3.1-8b", "llama3.1-instant"]
+        max-input-chars: 392000
+      llama-guard-3-8b:
+        aliases: ["llama-guard"]
+        max-input-chars: 24500
+      llama3-70b-8192:
+        aliases: ["llama3", "llama3-70b"]
+        max-input-chars: 24500
+        fallback: llama3-8b-8192
+      llama3-8b-8192:
+        aliases: ["llama3-8b"]
+        max-input-chars: 24500
+      mixtral-8x7b-32768:
+        aliases: ["mixtral"]
+        max-input-chars: 98000
+  cerebras:
+    base-url: https://api.cerebras.ai/v1
+    api-key:
+    api-key-env: CEREBRAS_API_KEY
+    models: # https://inference-docs.cerebras.ai/introduction
+      llama3.1-8b:
+        aliases: ["llama3.1-8b-cerebras"]
+        max-input-chars: 24500
+      llama3.1-70b:
+        aliases: ["llama3.1-cerebras", "llama3.1-70b-cerebras"]
+        max-input-chars: 24500
+  sambanova:
+    base-url: https://api.sambanova.ai/v1
+    api-key:
+    api-key-env: SAMBANOVA_API_KEY
+    models: # https://community.sambanova.ai/t/supported-models/193
+      Meta-Llama-3.1-8B-Instruct:
+        aliases: ["llama3.1-8b-sambanova-4k", "llama3.1-instruct-8b-sambanova-4k"]
+        max-input-chars: 12250
+      Meta-Llama-3.1-70B-Instruct:
+        aliases: ["llama3.1-70b-sambanova-4k", "llama3.1-instruct-70b-sambanova-4k"]
+        max-input-chars: 12250
+      Meta-Llama-3.1-405B-Instruct:
+        aliases: ["llama3.1-405b-sambanova-4k", "llama3.1-instruct-405b-sambanova-4k"]
+        max-input-chars: 12250
+      Meta-Llama-3.1-8B-Instruct-8k:
+        aliases: ["llama3.1-8b-sambanova", "llama3.1-instruct-8b-sambanova", "llama3.1-8b-sambanova-8k", "llama3.1-instruct-8b-sambanova-8k"]
+        max-input-chars: 24500
+      Meta-Llama-3.1-70B-Instruct-8k:
+        aliases: ["llama3.1-70b-sambanova", "llama3.1-instruct-70b-sambanova", "llama3.1-70b-sambanova-8k", "llama3.1-instruct-70b-sambanova-8k"]
+        max-input-chars: 24500
+      Meta-Llama-3.1-405B-Instruct-8k:
+        aliases: ["llama3.1-405b-sambanova", "llama3.1-instruct-405b-sambanova", "llama3.1-405b-sambanova-8k", "llama3.1-instruct-405b-sambanova-8k"]
+        max-input-chars: 24500
+  localai:
+    # LocalAI setup instructions: https://github.com/go-skynet/LocalAI#example-use-gpt4all-j-model
+    base-url: http://localhost:8080
+    models:
+      ggml-gpt4all-j:
+        aliases: ["local", "4all"]
+        max-input-chars: 12250
+        fallback:
+  azure:
+    # Set to 'azure-ad' to use Active Directory
+    # Azure OpenAI setup: https://learn.microsoft.com/en-us/azure/cognitive-services/openai/how-to/create-resource
+    base-url: https://YOUR_RESOURCE_NAME.openai.azure.com
+    api-key:
+    api-key-env: AZURE_OPENAI_KEY
+    models:
+      gpt-4:
+        aliases: ["az4"]
+        max-input-chars: 24500
+        fallback: gpt-35-turbo
+      gpt-35-turbo:
+        aliases: ["az35t"]
+        max-input-chars: 12250
+        fallback: gpt-35
+      gpt-35:
+        aliases: ["az35"]
+        max-input-chars: 12250
+        fallback:
+  runpod:
+    # https://docs.runpod.io/serverless/workers/vllm/openai-compatibility
+    base-url: https://api.runpod.ai/v2/${YOUR_ENDPOINT}/openai/v1
+    api-key:
+    api-key-env: RUNPOD_API_KEY
+    models:
+      openchat/openchat-3.5-1210:
+        aliases: ["openchat"]
+        max-input-chars: 8192
+  mistral:
+    base-url: https://api.mistral.ai/v1
+    api-key:
+    api-key-env: MISTRAL_API_KEY
+    models: # https://docs.mistral.ai/getting-started/models/
+      mistral-large-latest:
+        aliases: ["mistral-large"]
+        max-input-chars: 384000
+      open-mistral-nemo:
+        aliases: ["mistral-nemo"]
+        max-input-chars: 384000
+  deepseek:
+    base-url: https://api.deepseek.com/
+    api-key:
+    api-key-env: DEEPSEEK_API_KEY
+    models: # https://platform.deepseek.com/api-docs/api/list-models/
+      deepseek-chat:
+        aliases: ["ds-chat"]
+        max-input-chars: 384000
+      deepseek-code:
+        aliases: ["ds-code"]
+        max-input-chars: 384000

@@ -4,16 +4,22 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"os/exec"
 	"strings"
 
+	"github.com/caarlos0/go-shellwords"
+	tea "github.com/charmbracelet/bubbletea"
 	"k8s.io/klog/v2"
 
 	"github.com/coding-hui/common/util/slices"
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms/openai"
 
+	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/session"
+	"github.com/coding-hui/ai-terminal/internal/ui/display"
 )
 
 const (
@@ -23,27 +29,74 @@ const (
 type Engine struct {
 	mode    EngineMode
 	config  *options.Config
-	channel chan EngineChatStreamOutput
+	channel chan StreamCompletionOutput
 	pipe    string
 	running bool
 	chatID  string
 
-	execHistory, chatHistory session.History
+	chatHistory session.History
 
 	Model *openai.Model
 }
 
-func NewLLMEngine(mode EngineMode, config *options.Config) (*Engine, error) {
+func NewLLMEngine(mode EngineMode, cfg *options.Config) (*Engine, error) {
+	var api options.API
+	mod, ok := cfg.Models[cfg.Model]
+	if !ok {
+		if cfg.API == "" {
+			return nil, errbook.Wrap(
+				fmt.Sprintf(
+					"Model %s is not in the settings file.",
+					display.StderrStyles().InlineCode.Render(cfg.Model),
+				),
+				errbook.NewUserErrorf(
+					"Please specify an API endpoint with %s or configure the model in the settings: %s",
+					display.StderrStyles().InlineCode.Render("--api"),
+					display.StderrStyles().InlineCode.Render("ai -s"),
+				),
+			)
+		}
+		mod.Name = cfg.Model
+		mod.API = cfg.API
+		mod.MaxChars = cfg.MaxInputChars
+	}
+	if cfg.API != "" {
+		mod.API = cfg.API
+	}
+	for _, a := range cfg.APIs {
+		if mod.API == a.Name {
+			api = a
+			break
+		}
+	}
+	if api.Name == "" {
+		eps := make([]string, 0)
+		for _, a := range cfg.APIs {
+			eps = append(eps, display.StderrStyles().InlineCode.Render(a.Name))
+		}
+		return nil, errbook.Wrap(
+			fmt.Sprintf(
+				"The API endpoint %s is not configured.",
+				display.StderrStyles().InlineCode.Render(cfg.API),
+			),
+			errbook.NewUserErrorf(
+				"Your configured API endpoints are: %s",
+				eps,
+			),
+		)
+	}
+
+	key, err := ensureApiKey(api)
+	if err != nil {
+		return nil, err
+	}
+
 	var opts []openai.Option
-	if config.Ai.Model != "" {
-		opts = append(opts, openai.WithModel(config.Ai.Model))
-	}
-	if config.Ai.ApiBase != "" {
-		opts = append(opts, openai.WithBaseURL(config.Ai.ApiBase))
-	}
-	if config.Ai.Token != "" {
-		opts = append(opts, openai.WithToken(config.Ai.Token))
-	}
+	opts = append(opts,
+		openai.WithModel(mod.Name),
+		openai.WithBaseURL(api.BaseURL),
+		openai.WithToken(key),
+	)
 	llm, err := openai.New(opts...)
 	if err != nil {
 		return nil, err
@@ -53,26 +106,17 @@ func NewLLMEngine(mode EngineMode, config *options.Config) (*Engine, error) {
 		llm.CallbacksHandler = LogHandler{}
 	}
 
-	var execHistory, chatHistory session.History
-	chatHistory, err = session.GetHistoryStore(*config, ChatEngineMode.String())
-	if err != nil {
-		return nil, err
-	}
-	execHistory, err = session.GetHistoryStore(*config, ExecEngineMode.String())
-	if err != nil {
-		return nil, err
-	}
+	chatHistory, _ := session.GetHistoryStore(*cfg, ChatEngineMode.String())
 
 	return &Engine{
 		mode:        mode,
-		config:      config,
+		config:      cfg,
 		Model:       llm,
-		channel:     make(chan EngineChatStreamOutput),
+		channel:     make(chan StreamCompletionOutput),
 		pipe:        "",
 		running:     false,
-		chatID:      config.ChatID,
+		chatID:      cfg.ChatID,
 		chatHistory: chatHistory,
-		execHistory: execHistory,
 	}, nil
 }
 
@@ -88,12 +132,12 @@ func (e *Engine) SetPipe(pipe string) {
 	e.pipe = pipe
 }
 
-func (e *Engine) GetChannel() chan EngineChatStreamOutput {
+func (e *Engine) GetChannel() chan StreamCompletionOutput {
 	return e.channel
 }
 
 func (e *Engine) Interrupt() {
-	e.channel <- EngineChatStreamOutput{
+	e.channel <- StreamCompletionOutput{
 		content:    "[Interrupt]",
 		last:       true,
 		interrupt:  true,
@@ -104,25 +148,14 @@ func (e *Engine) Interrupt() {
 }
 
 func (e *Engine) Clear() {
-	if e.mode == ExecEngineMode {
-		err := e.execHistory.Clear(context.Background(), e.chatID)
-		if err != nil {
-			klog.Fatal("failed to clean exec history.", err)
-		}
-	} else {
-		err := e.chatHistory.Clear(context.Background(), e.chatID)
-		if err != nil {
-			klog.Fatal("failed to clean chat history.", err)
-		}
+	err := e.chatHistory.Clear(context.Background(), e.chatID)
+	if err != nil {
+		klog.Fatal("failed to clean chat history.", err)
 	}
 }
 
 func (e *Engine) Reset() {
-	err := e.execHistory.Clear(context.Background(), e.chatID)
-	if err != nil {
-		klog.Fatal("failed to clean exec history.", err)
-	}
-	err = e.chatHistory.Clear(context.Background(), e.chatID)
+	err := e.chatHistory.Clear(context.Background(), e.chatID)
 	if err != nil {
 		klog.Fatal("failed to clean chat history.", err)
 	}
@@ -138,9 +171,9 @@ func (e *Engine) SummaryMessages(messages []llms.ChatMessage) (string, error) {
 	})
 
 	rsp, err := e.Model.GenerateContent(ctx, messageParts,
-		llms.WithModel(e.config.Ai.Model),
-		llms.WithTemperature(e.config.Ai.Temperature),
-		llms.WithTopP(e.config.Ai.TopP),
+		llms.WithModel(e.config.Model),
+		llms.WithTemperature(e.config.Temperature),
+		llms.WithTopP(e.config.TopP),
 		llms.WithMaxTokens(256),
 		llms.WithMultiContent(false),
 	)
@@ -151,7 +184,7 @@ func (e *Engine) SummaryMessages(messages []llms.ChatMessage) (string, error) {
 	return rsp.Choices[0].Content, nil
 }
 
-func (e *Engine) ExecCompletion(input string) (*EngineExecOutput, error) {
+func (e *Engine) CreateCompletion(input string) (*EngineExecOutput, error) {
 	ctx := context.Background()
 
 	e.running = true
@@ -160,10 +193,10 @@ func (e *Engine) ExecCompletion(input string) (*EngineExecOutput, error) {
 
 	messages := e.prepareCompletionMessages()
 	rsp, err := e.Model.GenerateContent(ctx, messages,
-		llms.WithModel(e.config.Ai.Model),
-		llms.WithMaxTokens(e.config.Ai.MaxTokens),
-		llms.WithTemperature(e.config.Ai.Temperature),
-		llms.WithTopP(e.config.Ai.TopP),
+		llms.WithModel(e.config.Model),
+		llms.WithMaxTokens(e.config.MaxTokens),
+		llms.WithTemperature(e.config.Temperature),
+		llms.WithTopP(e.config.TopP),
 		llms.WithMultiContent(false),
 	)
 	if err != nil {
@@ -186,7 +219,7 @@ func (e *Engine) ExecCompletion(input string) (*EngineExecOutput, error) {
 	return &output, nil
 }
 
-func (e *Engine) ChatStreamCompletion(input string) error {
+func (e *Engine) CreateStreamCompletion(input string) tea.Msg {
 	ctx := context.Background()
 
 	e.running = true
@@ -194,7 +227,7 @@ func (e *Engine) ChatStreamCompletion(input string) error {
 	e.appendUserMessage(input)
 
 	streamingFunc := func(ctx context.Context, chunk []byte) error {
-		e.channel <- EngineChatStreamOutput{
+		e.channel <- StreamCompletionOutput{
 			content: string(chunk),
 			last:    false,
 		}
@@ -202,12 +235,11 @@ func (e *Engine) ChatStreamCompletion(input string) error {
 	}
 
 	messages := e.prepareCompletionMessages()
-	klog.V(2).InfoS("prepareCompletionMessages", "input", input, "messages", messages)
 	rsp, err := e.Model.GenerateContent(ctx, messages,
-		llms.WithModel(e.config.Ai.Model),
-		llms.WithMaxTokens(e.config.Ai.MaxTokens),
-		llms.WithTemperature(e.config.Ai.Temperature),
-		llms.WithTopP(e.config.Ai.TopP),
+		llms.WithModel(e.config.Model),
+		llms.WithMaxTokens(e.config.MaxTokens),
+		llms.WithTemperature(e.config.Temperature),
+		llms.WithTopP(e.config.TopP),
 		llms.WithStreamingFunc(streamingFunc),
 		llms.WithMultiContent(false),
 	)
@@ -225,7 +257,7 @@ func (e *Engine) ChatStreamCompletion(input string) error {
 		}
 	}
 
-	e.channel <- EngineChatStreamOutput{
+	e.channel <- StreamCompletionOutput{
 		content:    "",
 		last:       true,
 		executable: executable,
@@ -240,10 +272,10 @@ func (e *Engine) Completion(ctx context.Context, messages []llms.MessageContent,
 	e.running = true
 
 	ops := []llms.CallOption{
-		llms.WithModel(e.config.Ai.Model),
-		llms.WithMaxTokens(e.config.Ai.MaxTokens),
-		llms.WithTemperature(e.config.Ai.Temperature),
-		llms.WithTopP(e.config.Ai.TopP),
+		llms.WithModel(e.config.Model),
+		llms.WithMaxTokens(e.config.MaxTokens),
+		llms.WithTemperature(e.config.Temperature),
+		llms.WithTopP(e.config.TopP),
 		llms.WithMultiContent(false),
 	}
 	ops = append(ops, options...)
@@ -260,7 +292,7 @@ func (e *Engine) ChatStream(ctx context.Context, messages []llms.MessageContent,
 	e.running = true
 
 	streamingFunc := func(ctx context.Context, chunk []byte) error {
-		e.channel <- EngineChatStreamOutput{
+		e.channel <- StreamCompletionOutput{
 			content: string(chunk),
 			last:    false,
 		}
@@ -268,10 +300,10 @@ func (e *Engine) ChatStream(ctx context.Context, messages []llms.MessageContent,
 	}
 
 	ops := []llms.CallOption{
-		llms.WithModel(e.config.Ai.Model),
-		llms.WithMaxTokens(e.config.Ai.MaxTokens),
-		llms.WithTemperature(e.config.Ai.Temperature),
-		llms.WithTopP(e.config.Ai.TopP),
+		llms.WithModel(e.config.Model),
+		llms.WithMaxTokens(e.config.MaxTokens),
+		llms.WithTemperature(e.config.Temperature),
+		llms.WithTopP(e.config.TopP),
 		llms.WithStreamingFunc(streamingFunc),
 		llms.WithMultiContent(false),
 	}
@@ -291,7 +323,7 @@ func (e *Engine) ChatStream(ctx context.Context, messages []llms.MessageContent,
 		}
 	}
 
-	e.channel <- EngineChatStreamOutput{
+	e.channel <- StreamCompletionOutput{
 		content:    "",
 		last:       true,
 		executable: executable,
@@ -306,11 +338,7 @@ func (e *Engine) appendUserMessage(content string) {
 		klog.V(2).Info("user input content is empty")
 		return
 	}
-	if e.mode == ExecEngineMode {
-		if err := e.execHistory.AddUserMessage(context.Background(), e.chatID, content); err != nil {
-			klog.Fatal("failed to add user exec input message to history", err)
-		}
-	} else {
+	if e.chatHistory != nil {
 		if err := e.chatHistory.AddUserMessage(context.Background(), e.chatID, content); err != nil {
 			klog.Fatal("failed to add user chat input message to history", err)
 		}
@@ -318,11 +346,7 @@ func (e *Engine) appendUserMessage(content string) {
 }
 
 func (e *Engine) appendAssistantMessage(content string) {
-	if e.mode == ExecEngineMode {
-		if err := e.execHistory.AddAIMessage(context.Background(), e.chatID, content); err != nil {
-			klog.Fatal("failed to add assistant exec output message to history", err)
-		}
-	} else {
+	if e.chatHistory != nil {
 		if err := e.chatHistory.AddAIMessage(context.Background(), e.chatID, content); err != nil {
 			klog.Fatal("failed to add assistant chat output message to history", err)
 		}
@@ -349,13 +373,7 @@ func (e *Engine) prepareCompletionMessages() []llms.MessageContent {
 		)
 	}
 
-	if e.mode == ExecEngineMode {
-		history, err := e.execHistory.Messages(context.Background(), e.chatID)
-		if err != nil {
-			klog.Fatal("failed to get exec history messages", err)
-		}
-		messages = append(messages, slices.Map(history, convert)...)
-	} else {
+	if e.chatHistory != nil {
 		history, err := e.chatHistory.Messages(context.Background(), e.chatID)
 		if err != nil {
 			klog.Fatal("failed to get chat history messages", err)
@@ -401,9 +419,42 @@ func (e *Engine) prepareSystemPromptExecPart() string {
 
 func (e *Engine) prepareSystemPromptChatPart() string {
 	if e.config.Ai.OutputFormat == options.RawOutputFormat {
-		return `You are a powerful terminal assistant. Your primary language is Chinese and you are good at answering users' questions.`
+		return `You are a powerful terminal assistant. Your primary language is English and you are good at answering users' questions.`
 	}
-	return `You are a powerful terminal assistant. Your primary language is Chinese and you are good at answering users' questions in markdown format.`
+	return `You are a powerful terminal assistant. Your primary language is English and you are good at answering users' questions in markdown format.`
+}
+
+func ensureApiKey(api options.API) (string, error) {
+	key := api.APIKey
+	if key == "" && api.APIKeyEnv != "" && api.APIKeyCmd == "" {
+		key = os.Getenv(api.APIKeyEnv)
+	}
+	if key == "" && api.APIKeyCmd != "" {
+		args, err := shellwords.Parse(api.APIKeyCmd)
+		if err != nil {
+			return "", errbook.Wrap("Failed to parse api-key-cmd", err)
+		}
+		out, err := exec.Command(args[0], args[1:]...).CombinedOutput() //nolint:gosec
+		if err != nil {
+			return "", errbook.Wrap("Cannot exec api-key-cmd", err)
+		}
+		key = strings.TrimSpace(string(out))
+	}
+	if key != "" {
+		return key, nil
+	}
+	return "", errbook.Wrap(
+		fmt.Sprintf(
+			"%[1]s required; set the environment variable %[1]s or update %[2]s through %[3]s.",
+			display.StderrStyles().InlineCode.Render(api.APIKeyEnv),
+			display.StderrStyles().InlineCode.Render("config.yaml"),
+			display.StderrStyles().InlineCode.Render("config settings"),
+		),
+		errbook.NewUserErrorf(
+			"You can grab one at %s.",
+			display.StderrStyles().Link.Render(api.BaseURL),
+		),
+	)
 }
 
 func convert(msg llms.ChatMessage) llms.MessageContent {

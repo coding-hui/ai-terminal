@@ -11,19 +11,19 @@ type MockEngine struct {
 	mock.Mock
 }
 
-func (m *MockEngine) ExecCompletion(input string) (*EngineChatStreamOutput, error) {
+func (m *MockEngine) ExecCompletion(input string) (*StreamCompletionOutput, error) {
 	args := m.Called(input)
-	return args.Get(0).(*EngineChatStreamOutput), args.Error(1)
+	return args.Get(0).(*StreamCompletionOutput), args.Error(1)
 }
 
 func TestEngine_ExecCompletion(t *testing.T) {
 	mockEngine := new(MockEngine)
 
-	mockOutput := &EngineChatStreamOutput{
+	mockOutput := &StreamCompletionOutput{
 		content: "mock explanation",
 	}
 
-	mockEngine.On("ExecCompletion", "hello?").Return(mockOutput, nil)
+	mockEngine.On("CreateCompletion", "hello?").Return(mockOutput, nil)
 
 	type args struct {
 		input string
@@ -46,7 +46,7 @@ func TestEngine_ExecCompletion(t *testing.T) {
 
 			got, err := mockEngine.ExecCompletion(tt.args.input)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("ExecCompletion() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("CreateCompletion() errbook = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			assert.NotNil(t, got)

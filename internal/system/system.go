@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/spf13/viper"
+	"github.com/adrg/xdg"
 
 	"github.com/coding-hui/common/util/homedir"
 
@@ -151,9 +151,6 @@ func GetEditor() string {
 }
 
 func GetConfigFile() string {
-	defConfFile := viper.GetString("config")
-	if defConfFile == "" {
-		defConfFile = filepath.Join(GetHomeDirectory(), ".config", "wecoding", strings.ToLower(DefaultApplicationName))
-	}
-	return defConfFile
+	sp, _ := xdg.ConfigFile(filepath.Join("ai-terminal", "config.yml"))
+	return sp
 }

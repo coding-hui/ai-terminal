@@ -1,7 +1,6 @@
 package commit
 
 import (
-	"errors"
 	"html"
 	"os"
 	"path"
@@ -12,13 +11,13 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
+	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/git"
 	"github.com/coding-hui/ai-terminal/internal/llm"
 	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/prompt"
 	"github.com/coding-hui/ai-terminal/internal/runner"
 	"github.com/coding-hui/ai-terminal/internal/ui"
-	"github.com/coding-hui/ai-terminal/internal/ui/display"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 )
 
@@ -34,22 +33,24 @@ type Options struct {
 	commitLang     string
 	userPrompt     string
 
+	cfg *options.Config
 	genericclioptions.IOStreams
 
 	FilesToAdd []string
 }
 
-func NewOptions(noConfirm bool, modifyFiles []string, ioStreams genericclioptions.IOStreams) *Options {
+func NewOptions(noConfirm bool, modifyFiles []string, ioStreams genericclioptions.IOStreams, cfg *options.Config) *Options {
 	return &Options{
 		noConfirm:  noConfirm,
 		IOStreams:  ioStreams,
 		FilesToAdd: modifyFiles,
+		cfg:        cfg,
 	}
 }
 
 // NewCmdCommit returns a cobra command for commit msg.
-func NewCmdCommit(ioStreams genericclioptions.IOStreams) *cobra.Command {
-	ops := NewOptions(false, []string{}, ioStreams)
+func NewCmdCommit(ioStreams genericclioptions.IOStreams, cfg *options.Config) *cobra.Command {
+	ops := NewOptions(false, []string{}, ioStreams, cfg)
 
 	commitCmd := &cobra.Command{
 		Use:   "commit",
@@ -73,7 +74,7 @@ func NewCmdCommit(ioStreams genericclioptions.IOStreams) *cobra.Command {
 
 func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 	if !runner.IsCommandAvailable("git") {
-		return errors.New("git command not found on your system's PATH. Please install Git and try again")
+		return errbook.New("git command not found on your system's PATH. Please install Git and try again")
 	}
 
 	o.userPrompt = ""
@@ -81,7 +82,7 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 		o.userPrompt = strings.TrimSpace(strings.Join(args, " "))
 	}
 
-	llmEngine, err := llm.NewLLMEngine(llm.ChatEngineMode, options.NewConfig())
+	llmEngine, err := llm.NewLLMEngine(llm.ChatEngineMode, o.cfg)
 	if err != nil {
 		return err
 	}
@@ -96,13 +97,13 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 	if len(o.FilesToAdd) > 0 {
 		err := g.AddFiles(o.FilesToAdd)
 		if err != nil {
-			display.Fatal(err)
+			return errbook.Wrap("Could not add files.", err)
 		}
 	}
 
 	diff, err := g.DiffFiles()
 	if err != nil {
-		display.Fatal(err)
+		return errbook.Wrap("Could not get diff files.", err)
 	}
 
 	vars := map[string]any{
@@ -113,42 +114,42 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 
 	err = o.codeReview(llmEngine, vars)
 	if err != nil {
-		display.Fatal(err)
+		return errbook.Wrap("Could not generate code review.", err)
 	}
 
 	err = o.summarizeTitle(llmEngine, vars)
 	if err != nil {
-		display.Fatal(err)
+		return errbook.Wrap("Could not generate summarize title.", err)
 	}
 
 	err = o.summarizePrefix(llmEngine, vars)
 	if err != nil {
-		display.Fatal(err)
+		return errbook.Wrap("Could not generate summarize prefix.", err)
 	}
 
 	commitMessage, err := o.generateCommitMsg(llmEngine, vars)
 	if err != nil {
-		display.Fatal(err)
+		return errbook.Wrap("Could not generate commit message.", err)
 	}
 
 	if o.commitMsgFile == "" {
 		out, err := g.GitDir()
 		if err != nil {
-			display.Fatal(err)
+			return errbook.Wrap("Could not get git dir.", err)
 		}
 		o.commitMsgFile = path.Join(strings.TrimSpace(out), "COMMIT_EDITMSG")
 	}
 	color.Cyan("Write the commit message to " + o.commitMsgFile + " file")
 	err = os.WriteFile(o.commitMsgFile, []byte(commitMessage), 0o600)
 	if err != nil {
-		display.Fatal(err)
+		return errbook.Wrap("Could not write commit message to file: "+o.commitMsgFile, err)
 	}
 
 	if o.preview && !o.noConfirm {
 		input := confirmation.New("Commit preview summary?", confirmation.Yes)
 		ready, err := input.RunPrompt()
 		if err != nil {
-			display.Fatal(err)
+			return errbook.Wrap("Could not run prompt.", err)
 		}
 		if !ready {
 			return nil
@@ -159,14 +160,14 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 		input := confirmation.New("Do you want to change the commit message?", confirmation.No)
 		change, err := input.RunPrompt()
 		if err != nil {
-			display.Fatal(err)
+			return errbook.Wrap("Could not run prompt.", err)
 		}
 
 		if change {
 			m := ui.InitialTextareaPrompt(commitMessage)
 			p := tea.NewProgram(m)
 			if _, err := p.Run(); err != nil {
-				display.Fatal(err)
+				return errbook.Wrap("Could not start Bubble Tea program.", err)
 			}
 			p.Wait()
 			commitMessage = m.Textarea.Value()
@@ -177,7 +178,7 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 	color.Cyan("Git record changes to the repository")
 	output, err := g.Commit(commitMessage)
 	if err != nil {
-		display.Fatal(err)
+		return errbook.Wrap("Could not commit changes to the repository.", err)
 	}
 	color.Yellow(output)
 
@@ -193,7 +194,7 @@ func (o *Options) codeReview(engine *llm.Engine, vars map[string]any) error {
 		return err
 	}
 
-	resp, err := engine.ExecCompletion(strings.TrimSpace(p))
+	resp, err := engine.CreateCompletion(strings.TrimSpace(p))
 	if err != nil {
 		return err
 	}
@@ -212,7 +213,7 @@ func (o *Options) summarizeTitle(engine *llm.Engine, vars map[string]any) error 
 		return err
 	}
 
-	resp, err := engine.ExecCompletion(strings.TrimSpace(p))
+	resp, err := engine.CreateCompletion(strings.TrimSpace(p))
 	if err != nil {
 		return err
 	}
@@ -233,7 +234,7 @@ func (o *Options) summarizePrefix(engine *llm.Engine, vars map[string]any) error
 		return err
 	}
 
-	resp, err := engine.ExecCompletion(strings.TrimSpace(p))
+	resp, err := engine.CreateCompletion(strings.TrimSpace(p))
 	if err != nil {
 		return err
 	}
@@ -275,7 +276,7 @@ func (o *Options) generateCommitMsg(engine *llm.Engine, vars map[string]any) (co
 			return "", err
 		}
 
-		resp, err := engine.ExecCompletion(strings.TrimSpace(translationPrompt))
+		resp, err := engine.CreateCompletion(strings.TrimSpace(translationPrompt))
 		if err != nil {
 			return "", err
 		}

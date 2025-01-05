@@ -11,19 +11,17 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"k8s.io/klog/v2"
 
-	"github.com/coding-hui/ai-terminal/internal/llm"
+	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/runner"
 	"github.com/coding-hui/ai-terminal/internal/system"
 	"github.com/coding-hui/ai-terminal/internal/ui"
 	"github.com/coding-hui/ai-terminal/internal/ui/chat"
 	"github.com/coding-hui/ai-terminal/internal/ui/display"
-	"github.com/coding-hui/ai-terminal/internal/util"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 	"github.com/coding-hui/ai-terminal/internal/util/templates"
+	"github.com/coding-hui/ai-terminal/internal/util/term"
 )
 
 const (
@@ -32,31 +30,35 @@ const (
 
 var askExample = templates.Examples(`
 		# You can ask any question, enforcing 💬 ask prompt mode:
-		  	ai ask generate me a go application example using fiber
-		  You can also pipe input that will be taken into account in your request:
-			cat some_script.go | ai ask generate unit tests
+		ai ask generate me a go application example using fiber
+
+		# You can also pipe input that will be taken into account in your request:
+		cat some_script.go | ai ask generate unit tests
+
+		# Write new sections for a readme": 
+		cat README.md | ai ask "write a new section to this README documenting a pdf sharing feature"
 `)
 
 // Options is a struct to support ask command.
 type Options struct {
-	interactive    bool
-	prompts        []string
-	promptFile     string
-	tempPromptFile string
-	pipe           string
 	genericclioptions.IOStreams
+	pipe           string
+	prompts        []string
+	tempPromptFile string
+	cfg            *options.Config
 }
 
 // NewOptions returns initialized Options.
-func NewOptions(ioStreams genericclioptions.IOStreams) *Options {
+func NewOptions(ioStreams genericclioptions.IOStreams, cfg *options.Config) *Options {
 	return &Options{
 		IOStreams: ioStreams,
+		cfg:       cfg,
 	}
 }
 
 // NewCmdASK returns a cobra command for ask any question.
-func NewCmdASK(ioStreams genericclioptions.IOStreams) *cobra.Command {
-	o := NewOptions(ioStreams)
+func NewCmdASK(ioStreams genericclioptions.IOStreams, cfg *options.Config) *cobra.Command {
+	o := NewOptions(ioStreams, cfg)
 	cmd := &cobra.Command{
 		Use:     "ask",
 		Short:   "CLI mode is made to be integrated in your command lines workflow.",
@@ -66,28 +68,24 @@ func NewCmdASK(ioStreams genericclioptions.IOStreams) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if len(o.prompts) == 0 && o.pipe == "" {
-				o.interactive = true
-			}
 			return nil
 		},
-		Run: func(cmd *cobra.Command, args []string) {
-			util.CheckErr(o.Validate())
-			util.CheckErr(o.Run(args))
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return o.Run(args)
 		},
 		PostRunE: func(c *cobra.Command, args []string) error {
 			if o.tempPromptFile != "" {
 				err := os.Remove(o.tempPromptFile)
 				if err != nil {
-					display.Fatalf("Error removing temporary file: %v", err)
+					return errbook.Wrap("Failed to remove temporary file: "+o.tempPromptFile, err)
 				}
 			}
 			return nil
 		},
 	}
 
-	cmd.Flags().BoolVarP(&o.interactive, "interactive", "i", o.interactive, "Interactive dialogue model.")
-	cmd.Flags().StringVarP(&o.promptFile, "file", "f", o.promptFile, "File containing prompt.")
+	cmd.Flags().BoolVarP(&o.cfg.Interactive, "interactive", "i", o.cfg.Interactive, "Interactive dialogue model.")
+	cmd.Flags().StringVarP(&o.cfg.PromptFile, "file", "f", o.cfg.PromptFile, "File containing prompt.")
 
 	return cmd
 }
@@ -98,35 +96,36 @@ func (o *Options) Validate() error {
 }
 
 // Run executes ask command.
-func (o *Options) Run(args []string) error {
+func (o *Options) Run(_ []string) error {
 	runMode := ui.CliMode
-	if o.interactive {
+	if o.cfg.Interactive {
 		runMode = ui.ReplMode
 	}
-
 	input, err := ui.NewInput(runMode, ui.ChatPromptMode, o.pipe, o.prompts)
 	if err != nil {
 		return err
 	}
 
-	klog.V(2).InfoS("start ask cli mode.", "args", args, "runMode", runMode, "pipe", input.GetPipe())
-
-	if viper.GetString(options.FlagOutputFormat) == string(options.RawOutputFormat) {
-		cfg := options.NewConfig()
-		engine, err := llm.NewLLMEngine(llm.ChatEngineMode, cfg)
-		if err != nil {
-			display.Fatalf("Failed to initialize engine: %v", err)
-		}
-		out, err := engine.ExecCompletion(strings.Join(o.prompts, "\n") + "\n" + o.pipe)
-		if err != nil {
-			display.Fatalf("Error executing completion: %v", err)
-		}
-		fmt.Println(out.Explanation)
-		return nil
+	chatModel, err := chat.NewChat(input, display.StderrRenderer(), o.cfg)
+	if err != nil {
+		return errbook.Wrap("Couldn't create Bubble Tea chat model.", err)
 	}
 
-	if _, err := tea.NewProgram(chat.NewUi(input)).Run(); err != nil {
-		return err
+	if _, err := tea.NewProgram(chatModel).Run(); err != nil {
+		return errbook.Wrap("Couldn't start Bubble Tea program.", err)
+	}
+
+	if chatModel.Error != nil {
+		return *chatModel.Error
+	}
+
+	if term.IsOutputTTY() {
+		switch {
+		case chatModel.GlamOutput != "":
+			fmt.Print(chatModel.GlamOutput)
+		case chatModel.Output != "":
+			fmt.Print(chatModel.Output)
+		}
 	}
 
 	return nil
@@ -137,49 +136,51 @@ func (o *Options) preparePrompts(args []string) error {
 		o.prompts = append(o.prompts, strings.Join(args, " "))
 	}
 
-	if o.promptFile != "" {
-		bytes, err := os.ReadFile(o.promptFile)
+	if o.cfg.PromptFile != "" {
+		bytes, err := os.ReadFile(o.cfg.PromptFile)
 		if err != nil {
-			display.Fatalf("Error reading prompt file: %v", err)
+			return errbook.Wrap("Couldn't reading prompt file.", err)
 		}
 		o.prompts = append(o.prompts, string(bytes))
 	}
 
-	o.pipe = util.ReadPipeInput()
-	if len(o.prompts) == 0 && o.pipe == "" && !o.interactive {
-		o.prompts = append(o.prompts, o.getEditorPrompt())
+	o.pipe = term.ReadPipeInput()
+	if len(o.prompts) == 0 && len(o.pipe) == 0 && !o.cfg.Interactive {
+		prompt, err := o.getEditorPrompt()
+		if err != nil {
+			return err
+		}
+		o.prompts = append(o.prompts, prompt)
 	}
 
 	return nil
 }
 
-func (o *Options) getEditorPrompt() string {
+func (o *Options) getEditorPrompt() (string, error) {
 	tempFile, err := os.CreateTemp(os.TempDir(), "ai_prompt_*.txt")
 	if err != nil {
-		display.Fatalf("Failed to create temporary file: %v", err)
+		return "", errbook.Wrap("Failed to create temporary file.", err)
 	}
 
 	filename := tempFile.Name()
 	o.tempPromptFile = filename
 	err = os.WriteFile(filename, []byte(promptInstructions), 0644)
 	if err != nil {
-		display.Fatalf("Failed to write instructions to temporary file: %v", err)
+		return "", errbook.Wrap("Failed to write instructions to temporary file.", err)
 	}
 
 	editor := system.Analyse().GetEditor()
 	editorCmd := runner.PrepareEditSettingsCommand(editor, filename)
-	editorCmd.Stdin = os.Stdin
-	editorCmd.Stdout = os.Stdout
-	editorCmd.Stderr = os.Stderr
+	editorCmd.Stdin, editorCmd.Stdout, editorCmd.Stderr = o.In, o.Out, o.ErrOut
 	err = editorCmd.Start()
 	if err != nil {
-		display.Fatalf("Error opening editor: %v", err)
+		return "", errbook.Wrap("Error opening editor.", err)
 	}
 	_ = editorCmd.Wait()
 
 	bytes, err := os.ReadFile(filename)
 	if err != nil {
-		display.Fatalf("Error reading temporary file: %v", err)
+		return "", errbook.Wrap("Error reading temporary file.", err)
 	}
 
 	prompt := string(bytes)
@@ -187,5 +188,5 @@ func (o *Options) getEditorPrompt() string {
 	prompt = strings.TrimPrefix(prompt, strings.TrimSpace(promptInstructions))
 	prompt = strings.TrimSpace(prompt)
 
-	return prompt
+	return prompt, nil
 }

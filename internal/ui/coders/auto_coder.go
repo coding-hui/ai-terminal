@@ -305,7 +305,7 @@ func (a *AutoCoder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	// engine chat stream feedback
-	case llm.EngineChatStreamOutput:
+	case llm.StreamCompletionOutput:
 		if msg.IsLast() {
 			output := components.renderer.RenderContent(a.state.buffer)
 			components.prompt.Focus()

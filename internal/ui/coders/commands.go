@@ -271,7 +271,7 @@ func (c *command) commit(ctx context.Context, _ ...string) tea.Msg {
 		Out:    os.Stdout,
 		ErrOut: os.Stderr,
 	}
-	commitCmd := commit.NewOptions(true, modifiedFiles, ioStreams)
+	commitCmd := commit.NewOptions(true, modifiedFiles, ioStreams, c.coder.cfg)
 	if err := commitCmd.AutoCommit(nil, nil); err != nil {
 		return c.coder.Errorf("Failed to execute commit command: %v", err)
 	}
