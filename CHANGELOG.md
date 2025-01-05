@@ -1,6 +1,28 @@
 # Change Log
 
 
+<a name="v0.1.10"></a>
+## [v0.1.10] - 2025-01-05
+### Bug Fixes
+- correct function name typo in auto coder
+
+### Code Refactoring
+- refactor cache configuration and environment variable handling
+- refactor error handling and remove unused code
+- refactor LLM engine to use consolidated call options
+- refactor LLM call options into centralized function
+- refactor configuration management to remove viper dependency
+- refactor options package and update Go version
+- refactor error handling to use `display.Fatal`
+
+### Features
+- add default chat ID handling for LLM engine
+- add warning message display functionality in UI
+
+### Pull Requests
+- Merge pull request [#4](https://github.com/coding-hui/ai-terminal/issues/4) from eltociear/add-japanese-readme
+
+
 <a name="v0.1.9-1"></a>
 ## [v0.1.9-1] - 2024-09-15
 ### Bug Fixes
@@ -142,6 +164,9 @@
 
 <a name="v0.1.3-1"></a>
 ## [v0.1.3-1] - 2024-08-04
+### Bug Fixes
+- Fix sessions loading issue
+
 ### Code Refactoring
 - improve code quality and reliability
 - convert summary prefix to lowercase
@@ -160,7 +185,6 @@
 <a name="v0.1.3"></a>
 ## [v0.1.3] - 2024-08-04
 ### Bug Fixes
-- Fix sessions loading issue
 - By default, the local mongodb server is used
 - Fix chat session deletion issue
 - Use vim as the default editor
@@ -199,7 +223,8 @@
 - add ask cmd
 
 
-[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.1.9-1...HEAD
+[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.1.10...HEAD
+[v0.1.10]: https://github.com/coding-hui/ai-terminal/compare/v0.1.9-1...v0.1.10
 [v0.1.9-1]: https://github.com/coding-hui/ai-terminal/compare/v0.1.9...v0.1.9-1
 [v0.1.9]: https://github.com/coding-hui/ai-terminal/compare/v0.1.8...v0.1.9
 [v0.1.8]: https://github.com/coding-hui/ai-terminal/compare/v0.1.7...v0.1.8
