@@ -193,7 +193,6 @@ func (e *Engine) CreateCompletion(input string) (*EngineExecOutput, error) {
 
 	messages := e.prepareCompletionMessages()
 
-	fmt.Println(messages)
 	rsp, err := e.Model.GenerateContent(ctx, messages, e.callOptions()...)
 	if err != nil {
 		return nil, err
@@ -231,14 +230,7 @@ func (e *Engine) CreateStreamCompletion(input string) tea.Msg {
 	}
 
 	messages := e.prepareCompletionMessages()
-	rsp, err := e.Model.GenerateContent(ctx, messages,
-		llms.WithModel(e.config.Model),
-		llms.WithMaxTokens(e.config.MaxTokens),
-		llms.WithTemperature(e.config.Temperature),
-		llms.WithTopP(e.config.TopP),
-		llms.WithStreamingFunc(streamingFunc),
-		llms.WithMultiContent(false),
-	)
+	rsp, err := e.Model.GenerateContent(ctx, messages, e.callOptions(streamingFunc)...)
 	if err != nil {
 		e.running = false
 		return err
@@ -264,26 +256,6 @@ func (e *Engine) CreateStreamCompletion(input string) tea.Msg {
 	return nil
 }
 
-func (e *Engine) Completion(ctx context.Context, messages []llms.MessageContent, options ...llms.CallOption) (*llms.ContentResponse, error) {
-	e.running = true
-
-	ops := []llms.CallOption{
-		llms.WithModel(e.config.Model),
-		llms.WithMaxTokens(e.config.MaxTokens),
-		llms.WithTemperature(e.config.Temperature),
-		llms.WithTopP(e.config.TopP),
-		llms.WithMultiContent(false),
-	}
-	ops = append(ops, options...)
-	rsp, err := e.Model.GenerateContent(ctx, messages, ops...)
-	if err != nil {
-		e.running = false
-		return nil, err
-	}
-
-	return rsp, nil
-}
-
 func (e *Engine) ChatStream(ctx context.Context, messages []llms.MessageContent, options ...llms.CallOption) (*llms.ContentResponse, error) {
 	e.running = true
 
@@ -294,17 +266,9 @@ func (e *Engine) ChatStream(ctx context.Context, messages []llms.MessageContent,
 		}
 		return nil
 	}
-
-	ops := []llms.CallOption{
-		llms.WithModel(e.config.Model),
-		llms.WithMaxTokens(e.config.MaxTokens),
-		llms.WithTemperature(e.config.Temperature),
-		llms.WithTopP(e.config.TopP),
-		llms.WithStreamingFunc(streamingFunc),
-		llms.WithMultiContent(false),
-	}
-	ops = append(ops, options...)
-	rsp, err := e.Model.GenerateContent(ctx, messages, ops...)
+	opts := e.callOptions(streamingFunc)
+	opts = append(opts, options...)
+	rsp, err := e.Model.GenerateContent(ctx, messages, opts...)
 	if err != nil {
 		e.running = false
 		return nil, err

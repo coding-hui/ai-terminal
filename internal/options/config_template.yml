@@ -48,7 +48,7 @@ theme: charm
 # {{ index .Help "max-input-chars" }}
 max-input-chars: 12250
 # {{ index .Help "max-tokens" }}
-max-tokens: 2048
+# max-tokens: 100
 # {{ index .Help "datastore" }}
 datastore:
   # datastore type: file、mongo or db
