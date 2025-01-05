@@ -108,7 +108,7 @@ func (o *Options) Run(_ []string) error {
 
 	chatModel, err := chat.NewChat(input, display.StderrRenderer(), o.cfg)
 	if err != nil {
-		return errbook.Wrap("Couldn't create Bubble Tea chat model.", err)
+		return err
 	}
 
 	if _, err := tea.NewProgram(chatModel).Run(); err != nil {

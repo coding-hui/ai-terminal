@@ -439,7 +439,7 @@ func ensureApiKey(api options.API) (string, error) {
 			"%[1]s required; set the environment variable %[1]s or update %[2]s through %[3]s.",
 			display.StderrStyles().InlineCode.Render(api.APIKeyEnv),
 			display.StderrStyles().InlineCode.Render("config.yaml"),
-			display.StderrStyles().InlineCode.Render("config settings"),
+			display.StderrStyles().InlineCode.Render("ai config"),
 		),
 		errbook.NewUserErrorf(
 			"You can grab one at %s.",
