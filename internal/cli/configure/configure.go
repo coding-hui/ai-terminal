@@ -18,7 +18,7 @@ func NewCmdConfigure(ioStreams genericclioptions.IOStreams, cfg *options.Config)
 	cmd := &cobra.Command{
 		Use:     "configure",
 		Aliases: []string{"conf", "cfg", "config", "settings"},
-		Short:   "Configure AI settings",
+		Short:   "Open settings in your $EDITOR.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			editor := system.Analyse().GetEditor()
 			editorCmd := runner.PrepareEditSettingsCommand(editor, cfg.SettingsPath)
