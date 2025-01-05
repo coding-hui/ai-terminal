@@ -85,7 +85,6 @@ type Config struct {
 	TopP          float64    `yaml:"topp" env:"TOPP"`
 	TopK          int        `yaml:"topk" env:"TOPK"`
 	NoLimit       bool       `yaml:"no-limit" env:"NO_LIMIT"`
-	CachePath     string     `yaml:"cache-path" env:"CACHE_PATH"`
 	NoCache       bool       `yaml:"no-cache" env:"NO_CACHE"`
 	MaxRetries    int        `yaml:"max-retries" env:"MAX_RETRIES"`
 	WordWrap      int        `yaml:"word-wrap" env:"WORD_WRAP"`
@@ -180,11 +179,11 @@ type Ai struct {
 }
 
 type DataStore struct {
-	Type     string `yaml:"type,omitempty"`
-	Url      string `yaml:"url,omitempty"`
-	Path     string `yaml:"path,omitempty"`
-	Username string `yaml:"username,omitempty"`
-	Password string `yaml:"password,omitempty"`
+	Type      string `yaml:"type,omitempty" env:"DATASTORE_TYPE"`
+	CachePath string `yaml:"cache-path" env:"CACHE_PATH"`
+	Url       string `yaml:"url,omitempty"`
+	Username  string `yaml:"username,omitempty"`
+	Password  string `yaml:"password,omitempty"`
 }
 
 type OutputFormat string
@@ -244,15 +243,15 @@ func EnsureConfig() (Config, error) {
 	}
 	c.Models = ms
 
-	if err := env.ParseWithOptions(&c, env.Options{Prefix: "MODS_"}); err != nil {
+	if err := env.ParseWithOptions(&c, env.Options{Prefix: "AI_"}); err != nil {
 		return c, errbook.Wrap("Could not parse environment into settings file.", err)
 	}
 
-	if c.CachePath == "" {
-		c.CachePath = filepath.Join(xdg.DataHome, "mods", "conversations")
+	if c.DataStore.CachePath == "" {
+		c.DataStore.CachePath = filepath.Join(xdg.DataHome, "ai-terminal", "conversations")
 	}
 
-	if err := os.MkdirAll(c.CachePath, 0o700); err != nil { //nolint:mnd
+	if err := os.MkdirAll(c.DataStore.CachePath, 0o700); err != nil { //nolint:mnd
 		return c, errbook.Wrap("Could not create cache directory.", err)
 	}
 

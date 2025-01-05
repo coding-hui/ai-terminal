@@ -28,7 +28,7 @@ func (h *simpleChatMessageHistoryFactory) Type() string {
 
 func (h *simpleChatMessageHistoryFactory) Create(cfg options.Config, chatEngineMode string) (session.History, error) {
 	return NewChatMessageHistory(
-		WithStorePath(cfg.DataStore.Path),
+		WithStorePath(cfg.DataStore.CachePath),
 		WithChatEngineMode(chatEngineMode),
 	), nil
 }
