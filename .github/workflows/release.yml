@@ -11,24 +11,24 @@ permissions:
   packages: write
 
 jobs:
-  homebrew:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Update Homebrew formula
-        uses: dawidd6/action-homebrew-bump-formula@v3
-        with:
-          # GitHub token, required, not the default one
-          token: ${{secrets.TOKEN}}
-          # Optional, defaults to homebrew/core
-          tap: USER/REPO
-          # Formula name, required
-          formula: FORMULA
+#  homebrew:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Update Homebrew formula
+#        uses: dawidd6/action-homebrew-bump-formula@v3
+#        with:
+#           GitHub token, required, not the default one
+#          token: ${{secrets.TOKEN}}
+#           Optional, defaults to homebrew/core
+#          tap: USER/REPO
+#           Formula name, required
+#          formula: FORMULA
           # Optional, will be determined automatically
-          tag: ${{github.ref}}
+#          tag: ${{github.ref}}
           # Optional, will be determined automatically
-          revision: ${{github.sha}}
+#          revision: ${{github.sha}}
           # Optional, if don't want to check for already open PRs
-          force: false # true
+#          force: false # true
   build-go-binary:
     name: Release Go Binary
     runs-on: ubuntu-latest
