@@ -2,7 +2,6 @@ package coders
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -11,11 +10,11 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/git"
 	"github.com/coding-hui/ai-terminal/internal/llm"
 	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/ui"
-	"github.com/coding-hui/ai-terminal/internal/ui/display"
 )
 
 var program *tea.Program
@@ -55,20 +54,22 @@ type Suggester interface {
 }
 
 func StartAutoCoder() error {
-	coder := NewAutoCoder()
+	coder, err := NewAutoCoder()
+	if err != nil {
+		return err
+	}
 	program = tea.NewProgram(
 		coder,
 		// tea.WithAltScreen(),       // use the full size of the terminal in its "alternate screen buffer"
 		tea.WithMouseCellMotion(), // turn on mouse support so we can track the mouse wheel
 	)
 	if _, err := program.Run(); err != nil {
-		fmt.Println("Error running auto chat program:", err)
-		os.Exit(1)
+		return errbook.Wrap("Could not start Bubble Tea auto coder program", err)
 	}
 	return nil
 }
 
-func NewAutoCoder() *AutoCoder {
+func NewAutoCoder() (*AutoCoder, error) {
 	var err error
 	gitRepo := git.New()
 	cfg := options.NewConfig()
@@ -88,12 +89,12 @@ func NewAutoCoder() *AutoCoder {
 
 	autoCoder.llmEngine, err = llm.NewLLMEngine(llm.ChatEngineMode, cfg)
 	if err != nil {
-		display.Fatal(err)
+		return nil, errbook.Wrap("Could not initialized llm engine", err)
 	}
 
 	root, err := gitRepo.GitDir()
 	if err != nil {
-		display.Fatalf("Not a git repository (or any of the parent directories): .git. %v", err)
+		return nil, errbook.Wrap("Not a git repository (or any of the parent directories):.git. %v", err)
 	}
 
 	autoCoder.codeBasePath = filepath.Dir(root)
@@ -102,7 +103,7 @@ func NewAutoCoder() *AutoCoder {
 	// 获取所有文件
 	files, err := autoCoder.gitRepo.ListAllFiles()
 	if err != nil {
-		display.Fatal(err)
+		return nil, errbook.Wrap("Could not get all files", err)
 	}
 	autoCoder.files = files
 
@@ -111,7 +112,7 @@ func NewAutoCoder() *AutoCoder {
 	// 初始时只设置命令作为建议
 	components.prompt.SetSuggestions(getSupportedCommands())
 
-	return autoCoder
+	return autoCoder, nil
 }
 
 func (a *AutoCoder) Init() tea.Cmd {

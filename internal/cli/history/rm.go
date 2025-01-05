@@ -5,11 +5,11 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/llm"
 	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/session"
 	"github.com/coding-hui/ai-terminal/internal/ui/display"
-	"github.com/coding-hui/ai-terminal/internal/util"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 )
 
@@ -24,17 +24,12 @@ func newCmdRemoveHistory(ioStreams genericclioptions.IOStreams) *cobra.Command {
 		Short:        "Remove chat session history.",
 		SilenceUsage: true,
 		Args:         cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			util.CheckErr(o.Validate())
-			util.CheckErr(o.Run(args))
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return o.Run(args)
 		},
 	}
 
 	return cmd
-}
-
-func (r *rm) Validate() error {
-	return nil
 }
 
 func (r *rm) Run(args []string) error {
@@ -47,16 +42,15 @@ func (r *rm) Run(args []string) error {
 
 	exists, err := chatHistory.Exists(context.Background(), chatID)
 	if err != nil {
-		display.Fatalf("Failed to check existence of chat session history %s: %v", chatID, err)
+		return errbook.Wrap("Failed to check existence of chat session history: "+chatID, err)
 	}
 	if !exists {
-		display.Error("Chat session history does not exist.")
-		return nil
+		return errbook.Wrap("Chat session history does not exist: "+chatID, err)
 	}
 
 	err = chatHistory.Clear(context.Background(), chatID)
 	if err != nil {
-		display.Fatalf("Failed to remove chat history %s: %v", chatID, err)
+		return errbook.Wrap("Failed to remove chat session history: "+chatID, err)
 	}
 
 	display.Successf("Removed chat history %s", chatID)

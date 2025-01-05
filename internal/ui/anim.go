@@ -241,19 +241,6 @@ func makeGradientRamp(length int) []lipgloss.Color {
 	return c
 }
 
-func makeGradientText(baseStyle lipgloss.Style, str string) string {
-	const minSize = 3
-	if len(str) < minSize {
-		return str
-	}
-	b := strings.Builder{}
-	runes := []rune(str)
-	for i, c := range makeGradientRamp(len(str)) {
-		b.WriteString(baseStyle.Foreground(c).Render(string(runes[i])))
-	}
-	return b.String()
-}
-
 func reverse[T any](in []T) []T {
 	out := make([]T, len(in))
 	copy(out, in[:])

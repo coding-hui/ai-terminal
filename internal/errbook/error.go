@@ -26,9 +26,9 @@ type AiError struct {
 	reason string
 }
 
-func New(err string) error {
+func New(format string, a ...any) error {
 	return AiError{
-		err: errors.New(err),
+		err: fmt.Errorf(format, a...),
 	}
 }
 

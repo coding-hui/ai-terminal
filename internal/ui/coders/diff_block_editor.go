@@ -60,7 +60,7 @@ func (e *EditBlockCoder) FormatMessages(values map[string]any) ([]llms.MessageCo
 
 func (e *EditBlockCoder) GetEdits(_ context.Context) ([]PartialCodeBlock, error) {
 	openFence, closeFence := chooseBestFence(e.partialResponseContent)
-	if e.fence != nil && len(e.fence) == 2 {
+	if len(e.fence) == 2 {
 		openFence, closeFence = e.fence[0], e.fence[1]
 	}
 

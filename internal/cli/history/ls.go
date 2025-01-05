@@ -16,7 +16,6 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/llm"
 	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/session"
-	"github.com/coding-hui/ai-terminal/internal/util"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 	"github.com/coding-hui/ai-terminal/internal/util/templates"
 )
@@ -74,21 +73,12 @@ func newCmdLsHistory(ioStreams genericclioptions.IOStreams) *cobra.Command {
 		Use:     "ls",
 		Short:   "Show chat session history.",
 		Example: lsHistoryExample,
-		Run: func(cmd *cobra.Command, args []string) {
-			util.CheckErr(o.Validate())
-			util.CheckErr(o.Run(args))
-		},
-		PostRunE: func(c *cobra.Command, args []string) error {
-			return nil
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return o.Run(args)
 		},
 	}
 
 	return cmd
-}
-
-// Validate validates the provided options.
-func (o *ls) Validate() error {
-	return nil
 }
 
 // Run executes history command.

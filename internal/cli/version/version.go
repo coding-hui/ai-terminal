@@ -7,7 +7,6 @@ package version
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"text/template"
 
@@ -16,7 +15,7 @@ import (
 
 	"github.com/coding-hui/common/version"
 
-	"github.com/coding-hui/ai-terminal/internal/util"
+	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 	"github.com/coding-hui/ai-terminal/internal/util/templates"
 )
@@ -69,9 +68,11 @@ The version information includes the following fields:
 - Compiler: The compiler used to compile the binary.
 - Platform: The platform (OS/Architecture) for which the binary was built.`,
 		Example: versionExample,
-		Run: func(cmd *cobra.Command, args []string) {
-			util.CheckErr(o.Validate())
-			util.CheckErr(o.Run())
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := o.Validate(); err != nil {
+				return err
+			}
+			return o.Run()
 		},
 	}
 
@@ -85,7 +86,7 @@ The version information includes the following fields:
 // Validate validates the provided options.
 func (o *Options) Validate() error {
 	if o.Output != "" && o.Output != "yaml" && o.Output != "json" {
-		return errors.New("Invalid output format. Please use 'yaml' or 'json'.")
+		return errbook.New("Invalid output format. Please use 'yaml' or 'json'.")
 	}
 
 	return nil
@@ -93,44 +94,43 @@ func (o *Options) Validate() error {
 
 // Run executes version command.
 func (o *Options) Run() error {
-	var serverErr error
 	versionInfo := version.Get()
 
 	if o.Template != "" {
 		tmpl, err := template.New("version").Parse(o.Template)
 		if err != nil {
-			return fmt.Errorf("Failed to parse template: %v", err)
+			return errbook.Wrap("Failed to parse template", err)
 		}
 		err = tmpl.Execute(o.Out, versionInfo)
 		if err != nil {
-			return err
+			return errbook.Wrap("Failed to execute template", err)
 		}
 	} else {
 		switch o.Output {
 		case "":
 			if o.Short {
-				fmt.Fprintf(o.Out, "%s\n", versionInfo.GitVersion)
+				fmt.Fprintf(o.Out, "%s\n", versionInfo.GitVersion) //nolint:errcheck
 			} else {
-				fmt.Fprintf(o.Out, "Version: %s\n", versionInfo.GitVersion)
+				fmt.Fprintf(o.Out, "Version: %s\n", versionInfo.GitVersion) //nolint:errcheck
 			}
 		case "yaml":
 			marshaled, err := yaml.Marshal(&versionInfo)
 			if err != nil {
-				return err
+				return errbook.Wrap("Failed to marshal version info to yaml", err)
 			}
-			fmt.Fprintln(o.Out, string(marshaled))
+			fmt.Fprintln(o.Out, string(marshaled)) //nolint:errcheck
 		case "json":
 			marshaled, err := json.MarshalIndent(&versionInfo, "", "  ")
 			if err != nil {
-				return err
+				return errbook.Wrap("Failed to marshal version info to json", err)
 			}
-			fmt.Fprintln(o.Out, string(marshaled))
+			fmt.Fprintln(o.Out, string(marshaled)) //nolint:errcheck
 		default:
 			// There is a bug in the program if we hit this case.
 			// However, we follow a policy of never panicking.
-			return fmt.Errorf("Invalid output format: %q. Please use 'yaml' or 'json'.", o.Output)
+			return errbook.New("Invalid output format: %q. Please use 'yaml' or 'json'.", o.Output)
 		}
 	}
 
-	return serverErr
+	return nil
 }
