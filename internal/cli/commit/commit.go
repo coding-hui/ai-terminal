@@ -80,6 +80,13 @@ func WithCommitPrefix(prefix string) Option {
 	}
 }
 
+// WithCommitLang sets the commit language
+func WithCommitLang(lang string) Option {
+	return func(o *Options) {
+		o.commitLang = lang
+	}
+}
+
 // New creates a new Options instance with optional configurations
 func New(opts ...Option) *Options {
 	o := &Options{}
@@ -96,7 +103,8 @@ func NewCmdCommit(ioStreams genericclioptions.IOStreams, cfg *options.Config) *c
 		WithFilesToAdd([]string{}),
 		WithIOStreams(ioStreams),
 		WithConfig(cfg),
-		WithCommitPrefix(""), // Initialize with empty prefix
+		WithCommitPrefix(""),
+		WithCommitLang(prompt.DefaultLanguage),
 	)
 
 	commitCmd := &cobra.Command{
@@ -113,7 +121,7 @@ func NewCmdCommit(ioStreams genericclioptions.IOStreams, cfg *options.Config) *c
 	commitCmd.Flags().StringVar(&ops.templateString, "template-string", "", "Inline template string for the commit message")
 	commitCmd.Flags().BoolVar(&ops.commitAmend, "amend", false, "Amend the most recent commit")
 	commitCmd.Flags().BoolVar(&ops.noConfirm, "no-confirm", false, "Skip the confirmation prompt before committing")
-	commitCmd.Flags().StringVar(&ops.commitLang, "lang", "en", "Language for summarizing the commit message (e.g., 'zh-cn', 'en', 'zh-tw', 'ja', 'pt', 'pt-br')")
+	commitCmd.Flags().StringVar(&ops.commitLang, "lang", prompt.DefaultLanguage, "Language for summarizing the commit message (e.g., 'zh-cn', 'en', 'zh-tw', 'ja', 'pt', 'pt-br')")
 	commitCmd.Flags().StringSliceVar(&ops.FilesToAdd, "add", []string{}, "Files to add to the commit (e.g., 'file1.txt file2.txt')")
 	commitCmd.Flags().StringVar(&ops.commitPrefix, "prefix", "", "Specify conventional commit prefix (e.g., 'feat', 'fix', 'docs', 'style', 'refactor', 'test', 'chore')")
 
