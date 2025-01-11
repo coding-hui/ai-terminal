@@ -18,6 +18,7 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/prompt"
 	"github.com/coding-hui/ai-terminal/internal/runner"
 	"github.com/coding-hui/ai-terminal/internal/ui"
+	"github.com/coding-hui/ai-terminal/internal/ui/console"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 )
 
@@ -191,7 +192,7 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 		}
 		o.commitMsgFile = path.Join(strings.TrimSpace(out), "COMMIT_EDITMSG")
 	}
-	color.Cyan("Write the commit message to " + o.commitMsgFile + " file")
+	console.RenderCommitStep("Writing commit message to %s", o.commitMsgFile)
 	err = os.WriteFile(o.commitMsgFile, []byte(commitMessage), 0o600)
 	if err != nil {
 		return errbook.Wrap("Could not write commit message to file: "+o.commitMsgFile, err)
@@ -227,7 +228,7 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 	}
 
 	// git commit automatically
-	color.Cyan("Git record changes to the repository")
+	console.RenderCommitStep("Recording changes to repository...")
 	output, err := g.Commit(commitMessage)
 	if err != nil {
 		return errbook.Wrap("Could not commit changes to the repository.", err)
@@ -239,7 +240,7 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 
 // codeReview summary code review message from diff datas
 func (o *Options) codeReview(engine *llm.Engine, vars map[string]any) error {
-	color.Cyan("We are trying to summarize a git diff")
+	console.RenderCommitStep("Analyzing code changes...")
 
 	p, err := prompt.GetPromptStringByTemplateName(prompt.SummarizeFileDiffTemplate, vars)
 	if err != nil {
@@ -258,7 +259,7 @@ func (o *Options) codeReview(engine *llm.Engine, vars map[string]any) error {
 }
 
 func (o *Options) summarizeTitle(engine *llm.Engine, vars map[string]any) error {
-	color.Cyan("We are trying to summarize a title for pull request")
+	console.RenderCommitStep("Generating commit title...")
 
 	p, err := prompt.GetPromptStringByTemplateName(prompt.SummarizeTitleTemplate, vars)
 	if err != nil {
@@ -278,8 +279,7 @@ func (o *Options) summarizeTitle(engine *llm.Engine, vars map[string]any) error 
 }
 
 func (o *Options) summarizePrefix(engine *llm.Engine, vars map[string]any) error {
-	message := "We are trying to get conventional commit prefix"
-	color.Cyan(message + " (Tools)")
+	console.RenderCommitStep("Determining commit type...")
 
 	p, err := prompt.GetPromptStringByTemplateName(prompt.ConventionalCommitTemplate, vars)
 	if err != nil {
@@ -319,7 +319,7 @@ func (o *Options) generateCommitMsg(engine *llm.Engine, vars map[string]any) (co
 	}
 
 	if o.commitLang != prompt.DefaultLanguage {
-		color.Cyan("We are trying to translate a git commit message to " + o.commitLang + " language")
+		console.RenderCommitStep("Translating commit message to %s...", o.commitLang)
 		translationPrompt, err := prompt.GetPromptStringByTemplateName(prompt.TranslationTemplate, map[string]any{
 			prompt.OutputLanguageKey: prompt.GetLanguage(o.commitLang),
 			prompt.OutputMessageKey:  commitMessage,
@@ -340,9 +340,8 @@ func (o *Options) generateCommitMsg(engine *llm.Engine, vars map[string]any) (co
 	commitMessage = strings.TrimSpace(commitMessage)
 
 	// Output commit summary data from AI
-	color.Yellow("================Commit Summary====================")
-	color.Yellow("\n" + commitMessage + "\n\n")
-	color.Yellow("==================================================")
+	console.RenderCommitSuccess("Commit Summary")
+	console.RenderCommitSuccess("\n%s\n", commitMessage)
 
 	return commitMessage, nil
 }

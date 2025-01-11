@@ -24,7 +24,9 @@ type Styles struct {
 	Quote,
 	ConversationList,
 	SHA1,
-	Timeago lipgloss.Style
+	Timeago,
+	CommitStep,
+	CommitSuccess lipgloss.Style
 }
 
 func MakeStyles(r *lipgloss.Renderer) (s Styles) {
@@ -46,6 +48,11 @@ func MakeStyles(r *lipgloss.Renderer) (s Styles) {
 	s.ConversationList = r.NewStyle().Padding(0, 1)
 	s.SHA1 = s.Flag
 	s.Timeago = r.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#999", Dark: "#555"})
+
+	// Commit message styles
+	s.CommitStep = r.NewStyle().Foreground(lipgloss.Color("#00CED1"))    // Dark turquoise
+	s.CommitSuccess = r.NewStyle().Foreground(lipgloss.Color("#32CD32")) // Lime green
+
 	return s
 }
 
