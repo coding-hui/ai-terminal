@@ -1,5 +1,8 @@
 package console
 
+// lengthLastWord calculates the length of the last word in a string.
+// A word is defined as a sequence of non-space characters.
+// Returns 0 if the string contains no words.
 func lengthLastWord(str string) int {
 	metLastWord := false
 	metFirstChar := false
@@ -22,6 +25,9 @@ func lengthLastWord(str string) int {
 	return 0 // no word in this string
 }
 
+// lengthFirstWord calculates the length of the first word in a string.
+// A word is defined as a sequence of non-space characters.
+// Returns 0 if the string contains no words.
 func lengthFirstWord(str string) int {
 	metFirstWord := false
 	metLastChar := false

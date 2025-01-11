@@ -1,3 +1,6 @@
+// Package coders provides command execution capabilities for the AI terminal.
+// It handles commands like adding/removing files, asking questions, coding with AI,
+// committing changes, and more.
 package coders
 
 import (
@@ -20,8 +23,10 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 )
 
+// supportCommands maps command names to their handler functions
 var supportCommands = map[string]func(context.Context, ...string) error{}
 
+// getSupportedCommands returns a list of all supported command names
 func getSupportedCommands() []string {
 	commands := make([]string, 0, len(supportCommands))
 	for cmd := range supportCommands {
@@ -56,12 +61,14 @@ func (c *CommandExecutor) registryCmds() {
 	supportCommands["diff"] = c.diff
 }
 
+// isCommand checks if the input string is a command (starts with ! or /)
 func (c *CommandExecutor) isCommand(input string) bool {
 	input = strings.TrimSpace(input)
 	return strings.HasPrefix(input, "!") || strings.HasPrefix(input, "/")
 }
 
-// Executor Execute the command
+// Executor handles command execution. It parses the input, validates the command,
+// and executes the corresponding handler function.
 func (c *CommandExecutor) Executor(input string) {
 	input = strings.TrimSpace(input)
 	if input == "" {
@@ -347,7 +354,7 @@ func (c *CommandExecutor) diff(ctx context.Context, _ ...string) error {
 	// Split and highlight diff lines
 	lines := strings.Split(diffOutput, "\n")
 	var highlightedLines []string
-	
+
 	for _, line := range lines {
 		switch {
 		case strings.HasPrefix(line, "+"):
