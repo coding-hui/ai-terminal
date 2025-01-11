@@ -281,7 +281,12 @@ func (c *CommandExecutor) commit(ctx context.Context, _ ...string) error {
 		Out:    os.Stdout,
 		ErrOut: os.Stderr,
 	}
-	commitCmd := commit.NewOptions(true, modifiedFiles, ioStreams, c.coder.cfg)
+	commitCmd := commit.New(
+		commit.WithNoConfirm(true),
+		commit.WithFilesToAdd(modifiedFiles),
+		commit.WithIOStreams(ioStreams),
+		commit.WithConfig(c.coder.cfg),
+	)
 	if err := commitCmd.AutoCommit(nil, nil); err != nil {
 		return errbook.Wrap("Failed to commit changes", err)
 	}

@@ -39,18 +39,54 @@ type Options struct {
 	FilesToAdd []string
 }
 
-func NewOptions(noConfirm bool, modifyFiles []string, ioStreams genericclioptions.IOStreams, cfg *options.Config) *Options {
-	return &Options{
-		noConfirm:  noConfirm,
-		IOStreams:  ioStreams,
-		FilesToAdd: modifyFiles,
-		cfg:        cfg,
+// Option defines a function type for configuring Options
+type Option func(*Options)
+
+// WithNoConfirm sets the noConfirm flag
+func WithNoConfirm(noConfirm bool) Option {
+	return func(o *Options) {
+		o.noConfirm = noConfirm
 	}
+}
+
+// WithFilesToAdd sets the files to add
+func WithFilesToAdd(files []string) Option {
+	return func(o *Options) {
+		o.FilesToAdd = files
+	}
+}
+
+// WithIOStreams sets the IO streams
+func WithIOStreams(ioStreams genericclioptions.IOStreams) Option {
+	return func(o *Options) {
+		o.IOStreams = ioStreams
+	}
+}
+
+// WithConfig sets the configuration
+func WithConfig(cfg *options.Config) Option {
+	return func(o *Options) {
+		o.cfg = cfg
+	}
+}
+
+// New creates a new Options instance with optional configurations
+func New(opts ...Option) *Options {
+	o := &Options{}
+	for _, opt := range opts {
+		opt(o)
+	}
+	return o
 }
 
 // NewCmdCommit returns a cobra command for commit msg.
 func NewCmdCommit(ioStreams genericclioptions.IOStreams, cfg *options.Config) *cobra.Command {
-	ops := NewOptions(false, []string{}, ioStreams, cfg)
+	ops := New(
+		WithNoConfirm(false),
+		WithFilesToAdd([]string{}),
+		WithIOStreams(ioStreams),
+		WithConfig(cfg),
+	)
 
 	commitCmd := &cobra.Command{
 		Use:   "commit",
