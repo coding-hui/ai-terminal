@@ -50,8 +50,8 @@ func MakeStyles(r *lipgloss.Renderer) (s Styles) {
 	s.Timeago = r.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#999", Dark: "#555"})
 
 	// Commit message styles
-	s.CommitStep = r.NewStyle().Foreground(lipgloss.Color("#00CED1")).Bold(true)    // Dark turquoise
-	s.CommitSuccess = r.NewStyle().Foreground(lipgloss.Color("#32CD32")).Bold(false) // Lime green
+	s.CommitStep = r.NewStyle().Foreground(lipgloss.Color("#00CED1")).Bold(true)
+	s.CommitSuccess = r.NewStyle().Foreground(lipgloss.Color("#32CD32"))
 
 	return s
 }

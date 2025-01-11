@@ -1,6 +1,7 @@
 package commit
 
 import (
+	"fmt"
 	"html"
 	"os"
 	"path"
@@ -342,10 +343,10 @@ func (o *Options) generateCommitMsg(engine *llm.Engine, vars map[string]any) (co
 	// Output simplified commit summary
 	lines := strings.Split(commitMessage, "\n")
 	if len(lines) > 0 {
-		console.RenderCommitSuccess("Commit Summary:")
+		console.RenderCommitSuccess("Commit summary:")
 		for _, line := range lines {
 			if strings.TrimSpace(line) != "" {
-				console.RenderCommitSuccess("  %s", line)
+				fmt.Println("  " + line)
 			}
 		}
 	}
