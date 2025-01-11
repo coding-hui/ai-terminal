@@ -77,7 +77,7 @@ func (c *CommandExecutor) Executor(input string) {
 	if !ok {
 		console.RenderError(
 			errbook.ErrInvalidArgument,
-			"Unknown command: %s. Supported commands: %s. Type / to see all recommended commands.", 
+			"Unknown command: %s. Supported commands: %s. Type / to see all recommended commands.",
 			cmd, strings.Join(getSupportedCommands(), ", "),
 		)
 		return

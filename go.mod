@@ -12,7 +12,6 @@ require (
 	github.com/charmbracelet/bubbletea v1.2.5-0.20241205214244-9306010a31ee
 	github.com/charmbracelet/glamour v0.8.0
 	github.com/charmbracelet/huh v0.6.0
-	github.com/charmbracelet/huh/spinner v0.0.0-20250109160224-6c6b31916f8e
 	github.com/charmbracelet/lipgloss v1.0.0
 	github.com/coding-hui/common v0.8.7
 	github.com/coding-hui/go-prompt v0.2.8
