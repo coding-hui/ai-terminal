@@ -53,6 +53,7 @@ func (c *CommandExecutor) registryCmds() {
 	supportCommands["undo"] = c.undo
 	supportCommands["exit"] = c.exit
 	supportCommands["help"] = c.help
+	supportCommands["diff"] = c.diff
 }
 
 func (c *CommandExecutor) isCommand(input string) bool {
@@ -309,6 +310,7 @@ func (c *CommandExecutor) help(_ context.Context, _ ...string) error {
 		{"/coding <instructions>", "Code with AI assistance"},
 		{"/commit", "Commit changes"},
 		{"/undo", "Undo last changes"},
+		{"/diff", "Show changes in added files"},
 		{"/exit", "Exit the terminal"},
 		{"/help", "Show this help message"},
 	}
@@ -321,6 +323,28 @@ func (c *CommandExecutor) help(_ context.Context, _ ...string) error {
 			console.StdoutStyles().FlagDesc.Render(cmd.desc),
 		)
 	}
+	return nil
+}
+
+func (c *CommandExecutor) diff(ctx context.Context, _ ...string) error {
+	// Stage all added files
+	var filesToStage []string
+	for file := range c.coder.absFileNames {
+		filesToStage = append(filesToStage, file)
+	}
+
+	// Add files to git staging area
+	if err := c.coder.repo.AddFiles(filesToStage); err != nil {
+		return errbook.Wrap("Failed to stage files", err)
+	}
+
+	// Get the diff
+	diffOutput, err := c.coder.repo.DiffFiles()
+	if err != nil {
+		return errbook.Wrap("Failed to get diff", err)
+	}
+
+	console.Render("Changes:\n%s", diffOutput)
 	return nil
 }
 
