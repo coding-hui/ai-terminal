@@ -339,9 +339,16 @@ func (o *Options) generateCommitMsg(engine *llm.Engine, vars map[string]any) (co
 	commitMessage = html.UnescapeString(commitMessage)
 	commitMessage = strings.TrimSpace(commitMessage)
 
-	// Output commit summary data from AI
-	console.RenderCommitSuccess("Commit Summary")
-	console.RenderCommitSuccess("\n%s\n", commitMessage)
+	// Output simplified commit summary
+	lines := strings.Split(commitMessage, "\n")
+	if len(lines) > 0 {
+		console.RenderCommitSuccess("Commit Summary:")
+		for _, line := range lines {
+			if strings.TrimSpace(line) != "" {
+				console.RenderCommitSuccess("  %s", line)
+			}
+		}
+	}
 
 	return commitMessage, nil
 }
