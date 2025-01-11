@@ -14,6 +14,7 @@ import (
 
 	"github.com/coding-hui/ai-terminal/internal/cli/commit"
 	"github.com/coding-hui/ai-terminal/internal/errbook"
+	"github.com/coding-hui/ai-terminal/internal/prompt"
 	"github.com/coding-hui/ai-terminal/internal/ui/console"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 )
@@ -287,6 +288,7 @@ func (c *CommandExecutor) commit(ctx context.Context, _ ...string) error {
 		commit.WithIOStreams(ioStreams),
 		commit.WithConfig(c.coder.cfg),
 		commit.WithCommitPrefix(c.coder.cfg.AutoCoder.CommitPrefix), // Use configured commit prefix
+		commit.WithCommitLang(prompt.DefaultLanguage),
 	)
 	if err := commitCmd.AutoCommit(nil, nil); err != nil {
 		return errbook.Wrap("Failed to commit changes", err)
