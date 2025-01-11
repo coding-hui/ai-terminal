@@ -219,12 +219,10 @@ func (e *Engine) CreateCompletion(input string) (*EngineExecOutput, error) {
 	return &output, nil
 }
 
-func (e *Engine) CreateStreamCompletion(input string) tea.Msg {
+func (e *Engine) CreateStreamCompletion(messages []llms.ChatMessage) tea.Msg {
 	ctx := context.Background()
 
 	e.running = true
-
-	e.appendUserMessage(input)
 
 	streamingFunc := func(ctx context.Context, chunk []byte) error {
 		if !e.config.Quiet {
@@ -236,8 +234,8 @@ func (e *Engine) CreateStreamCompletion(input string) tea.Msg {
 		return nil
 	}
 
-	messages := e.prepareCompletionMessages()
-	rsp, err := e.Model.GenerateContent(ctx, messages, e.callOptions(streamingFunc)...)
+	messageParts := slices.Map(messages, convert)
+	rsp, err := e.Model.GenerateContent(ctx, messageParts, e.callOptions(streamingFunc)...)
 	if err != nil {
 		e.running = false
 		return errbook.Wrap("Failed to create stream completion.", err)

@@ -1,8 +1,6 @@
 package coders
 
 import (
-	"html"
-
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/prompts"
 )
@@ -216,32 +214,10 @@ Any other messages in the chat may contain outdated versions of the files' conte
 	})
 )
 
-func formatPrompt(promptTemplate prompts.ChatPromptTemplate, values map[string]any) ([]llms.MessageContent, error) {
+func formatPrompt(promptTemplate prompts.ChatPromptTemplate, values map[string]any) ([]llms.ChatMessage, error) {
 	messages, err := promptTemplate.FormatMessages(values)
 	if err != nil {
 		return nil, err
 	}
-
-	ret := make([]llms.MessageContent, 0, len(messages))
-	for _, msg := range messages {
-		switch msg.GetType() {
-		case llms.ChatMessageTypeAI:
-			ret = append(ret, llms.MessageContent{
-				Role:  llms.ChatMessageTypeAI,
-				Parts: []llms.ContentPart{llms.TextPart(html.UnescapeString(msg.GetContent()))},
-			})
-		case llms.ChatMessageTypeHuman:
-			ret = append(ret, llms.MessageContent{
-				Role:  llms.ChatMessageTypeHuman,
-				Parts: []llms.ContentPart{llms.TextPart(html.UnescapeString(msg.GetContent()))},
-			})
-		case llms.ChatMessageTypeSystem:
-			ret = append(ret, llms.MessageContent{
-				Role:  llms.ChatMessageTypeSystem,
-				Parts: []llms.ContentPart{llms.TextPart(html.UnescapeString(msg.GetContent()))},
-			})
-		}
-	}
-
-	return ret, nil
+	return messages, nil
 }

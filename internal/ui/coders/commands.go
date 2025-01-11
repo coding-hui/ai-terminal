@@ -15,6 +15,7 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/cli/commit"
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/prompt"
+	"github.com/coding-hui/ai-terminal/internal/ui/chat"
 	"github.com/coding-hui/ai-terminal/internal/ui/console"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 )
@@ -97,20 +98,13 @@ func (c *CommandExecutor) askFiles(ctx context.Context, args ...string) error {
 		return errbook.Wrap("Failed to prepare ask completion messages", err)
 	}
 
-	go func() {
-		for msg := range c.coder.engine.GetChannel() {
-			fmt.Print(msg.GetContent())
-		}
-	}()
+	chatModel := chat.NewChat(c.coder.cfg,
+		chat.WithContext(ctx),
+		chat.WithMessages(messages),
+		chat.WithEngine(c.coder.engine),
+	)
 
-	_, err = c.coder.engine.ChatStream(ctx, messages)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println()
-
-	return nil
+	return chatModel.Run()
 }
 
 // addFiles Add files to the chat so GPT can edit them or review them in detail
@@ -337,7 +331,7 @@ func (c *CommandExecutor) exit(_ context.Context, _ ...string) error {
 	return nil
 }
 
-func (c *CommandExecutor) prepareAskCompletionMessages(userInput string) ([]llms.MessageContent, error) {
+func (c *CommandExecutor) prepareAskCompletionMessages(userInput string) ([]llms.ChatMessage, error) {
 	addedFileMessages, err := c.getAddedFileContent()
 	if err != nil {
 		return nil, err
@@ -351,28 +345,7 @@ func (c *CommandExecutor) prepareAskCompletionMessages(userInput string) ([]llms
 		return nil, err
 	}
 
-	ret := make([]llms.MessageContent, 0, len(messages))
-	for _, msg := range messages {
-		switch msg.GetType() {
-		case llms.ChatMessageTypeAI:
-			ret = append(ret, llms.MessageContent{
-				Role:  llms.ChatMessageTypeAI,
-				Parts: []llms.ContentPart{llms.TextPart(msg.GetContent())},
-			})
-		case llms.ChatMessageTypeHuman:
-			ret = append(ret, llms.MessageContent{
-				Role:  llms.ChatMessageTypeHuman,
-				Parts: []llms.ContentPart{llms.TextPart(msg.GetContent())},
-			})
-		case llms.ChatMessageTypeSystem:
-			ret = append(ret, llms.MessageContent{
-				Role:  llms.ChatMessageTypeSystem,
-				Parts: []llms.ContentPart{llms.TextPart(msg.GetContent())},
-			})
-		}
-	}
-
-	return ret, nil
+	return messages, nil
 }
 
 func (c *CommandExecutor) getAddedFileContent() (string, error) {

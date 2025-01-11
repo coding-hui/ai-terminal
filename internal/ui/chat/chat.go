@@ -11,6 +11,8 @@ import (
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
+
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/llm"
 	"github.com/coding-hui/ai-terminal/internal/options"
@@ -40,8 +42,8 @@ type Chat struct {
 	GlamOutput string
 
 	state   state
+	opts    *Options
 	config  *options.Config
-	input   *ui.Input
 	engine  *llm.Engine
 	history *ui.History
 
@@ -58,7 +60,9 @@ type Chat struct {
 	contentMutex *sync.Mutex
 }
 
-func NewChat(input *ui.Input, r *lipgloss.Renderer, cfg *options.Config) (*Chat, error) {
+func NewChat(cfg *options.Config, opts ...Option) *Chat {
+	o := NewOptions(opts...)
+
 	gr, _ := glamour.NewTermRenderer(
 		// detect background color and pick either the default dark or light theme
 		glamour.WithAutoStyle(),
@@ -68,23 +72,41 @@ func NewChat(input *ui.Input, r *lipgloss.Renderer, cfg *options.Config) (*Chat,
 	vp := viewport.New(0, 0)
 	vp.GotoBottom()
 
-	engine, err := llm.NewLLMEngine(llm.ChatEngineMode, cfg)
-	if err != nil {
-		return nil, err
-	}
-
 	return &Chat{
-		engine:       engine,
+		engine:       o.engine,
 		config:       cfg,
 		glam:         gr,
-		input:        input,
+		opts:         o,
 		glamViewport: vp,
 		contentMutex: &sync.Mutex{},
-		renderer:     r,
+		renderer:     o.renderer,
 		state:        startState,
-		styles:       console.MakeStyles(r),
+		styles:       console.MakeStyles(o.renderer),
 		history:      ui.NewHistory(),
-	}, nil
+	}
+}
+
+// Run starts the chat.
+func (c *Chat) Run() error {
+	if _, err := tea.NewProgram(c).Run(); err != nil {
+		return errbook.Wrap("Couldn't start Bubble Tea program.", err)
+	}
+
+	if c.Error != nil {
+		return *c.Error
+	}
+
+	if term.IsOutputTTY() {
+		switch {
+		case c.GlamOutput != "":
+			fmt.Print(c.GlamOutput)
+		case c.Output != "":
+			fmt.Print(c.Output)
+		}
+		fmt.Println()
+	}
+
+	return nil
 }
 
 func (c *Chat) Init() tea.Cmd {
@@ -106,11 +128,11 @@ func (c *Chat) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		c.state = configLoadedState
 		cmds = append(cmds, c.readStdinCmd)
 	case llm.CompletionInput:
-		if removeWhitespace(msg.Content) == "" {
+		if len(msg.Messages) == 0 {
 			return c, c.quit
 		}
 		c.state = requestState
-		cmds = append(cmds, c.startCompletionCmd(msg.Content), c.awaitChatCompletedCmd())
+		cmds = append(cmds, c.startCompletionCmd(msg.Messages), c.awaitChatCompletedCmd())
 	case llm.StreamCompletionOutput:
 		if msg.GetContent() != "" {
 			c.appendToOutput(msg.GetContent())
@@ -153,7 +175,7 @@ func (c *Chat) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return c, tea.Batch(cmds...)
 }
 
-func (c Chat) viewportNeeded() bool {
+func (c *Chat) viewportNeeded() bool {
 	return c.glamHeight > c.height
 }
 
@@ -225,9 +247,9 @@ func (c *Chat) quit() tea.Msg {
 	return tea.Quit()
 }
 
-func (c *Chat) startCompletionCmd(content string) tea.Cmd {
+func (c *Chat) startCompletionCmd(messages []llms.ChatMessage) tea.Cmd {
 	return func() tea.Msg {
-		return c.engine.CreateStreamCompletion(content)
+		return c.engine.CreateStreamCompletion(messages)
 	}
 }
 
@@ -250,7 +272,20 @@ func (c *Chat) startCliCmd() tea.Cmd {
 
 // readStdinCmd reads from stdin and returns a CompletionInput message.
 func (c *Chat) readStdinCmd() tea.Msg {
-	return llm.CompletionInput{Content: c.input.GetPipe() + "\n\n" + c.input.GetArgs()}
+	var messages []llms.ChatMessage
+	if len(c.opts.messages) > 0 {
+		for _, m := range c.opts.messages {
+			messages = append(messages, m)
+		}
+	}
+	if c.opts.content != "" {
+		messages = append(messages, llms.HumanChatMessage{
+			Content: c.opts.content,
+		})
+	}
+	return llm.CompletionInput{
+		Messages: messages,
+	}
 }
 
 // if the input is whitespace only, make it empty.

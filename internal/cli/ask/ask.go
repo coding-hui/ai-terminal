@@ -5,20 +5,18 @@
 package ask
 
 import (
-	"fmt"
 	"os"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 
 	"github.com/coding-hui/ai-terminal/internal/errbook"
+	"github.com/coding-hui/ai-terminal/internal/llm"
 	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/runner"
 	"github.com/coding-hui/ai-terminal/internal/system"
 	"github.com/coding-hui/ai-terminal/internal/ui"
 	"github.com/coding-hui/ai-terminal/internal/ui/chat"
-	"github.com/coding-hui/ai-terminal/internal/ui/console"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 	"github.com/coding-hui/ai-terminal/internal/util/templates"
 	"github.com/coding-hui/ai-terminal/internal/util/term"
@@ -101,34 +99,19 @@ func (o *Options) Run(_ []string) error {
 	if o.cfg.Interactive {
 		runMode = ui.ReplMode
 	}
-	input, err := ui.NewInput(runMode, ui.ChatPromptMode, o.pipe, o.prompts)
+
+	engine, err := llm.NewLLMEngine(llm.ChatEngineMode, o.cfg)
 	if err != nil {
 		return err
 	}
 
-	chatModel, err := chat.NewChat(input, console.StderrRenderer(), o.cfg)
-	if err != nil {
-		return err
-	}
+	chatModel := chat.NewChat(o.cfg,
+		chat.WithContent(o.pipe+"\n\n"+strings.Join(o.prompts, "\n\n")),
+		chat.WithRunMode(runMode),
+		chat.WithEngine(engine),
+	)
 
-	if _, err := tea.NewProgram(chatModel).Run(); err != nil {
-		return errbook.Wrap("Couldn't start Bubble Tea program.", err)
-	}
-
-	if chatModel.Error != nil {
-		return *chatModel.Error
-	}
-
-	if term.IsOutputTTY() {
-		switch {
-		case chatModel.GlamOutput != "":
-			fmt.Print(chatModel.GlamOutput)
-		case chatModel.Output != "":
-			fmt.Print(chatModel.Output)
-		}
-	}
-
-	return nil
+	return chatModel.Run()
 }
 
 func (o *Options) preparePrompts(args []string) error {

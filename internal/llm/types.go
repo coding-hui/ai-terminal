@@ -1,5 +1,7 @@
 package llm
 
+import "github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
+
 type EngineMode int
 
 const (
@@ -39,7 +41,7 @@ func (eo EngineExecOutput) IsExecutable() bool {
 
 // CompletionInput is a tea.Msg that wraps the content read from stdin.
 type CompletionInput struct {
-	Content string
+	Messages []llms.ChatMessage
 }
 
 // StreamCompletionOutput a tea.Msg that wraps the content returned from llm.

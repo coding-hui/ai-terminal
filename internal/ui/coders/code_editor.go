@@ -32,7 +32,7 @@ type Coder interface {
 	// Prompt returns the prompt template used by the code editor.
 	Prompt() prompts.ChatPromptTemplate
 	// FormatMessages formats the messages with the provided values and returns the formatted messages.
-	FormatMessages(values map[string]any) ([]llms.MessageContent, error)
+	FormatMessages(values map[string]any) ([]llms.ChatMessage, error)
 	// GetEdits retrieves the list of edits made to the code.
 	GetEdits(ctx context.Context) ([]PartialCodeBlock, error)
 	// GetModifiedFiles retrieves the list of files that have been modified.
@@ -42,5 +42,5 @@ type Coder interface {
 	// ApplyEdits applies the given list of edits to the code.
 	ApplyEdits(ctx context.Context, edits []PartialCodeBlock, needConfirm bool) error
 	// Execute runs the code editor with the specified input messages.
-	Execute(ctx context.Context, messages []llms.MessageContent) error
+	Execute(ctx context.Context, messages []llms.ChatMessage) error
 }

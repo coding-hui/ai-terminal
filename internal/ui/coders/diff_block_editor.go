@@ -16,6 +16,7 @@ import (
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/prompts"
 
 	"github.com/coding-hui/ai-terminal/internal/errbook"
+	"github.com/coding-hui/ai-terminal/internal/ui/chat"
 	"github.com/coding-hui/ai-terminal/internal/ui/console"
 )
 
@@ -57,7 +58,7 @@ func (e *EditBlockCoder) Prompt() prompts.ChatPromptTemplate {
 	return promptBaseCoder
 }
 
-func (e *EditBlockCoder) FormatMessages(values map[string]any) ([]llms.MessageContent, error) {
+func (e *EditBlockCoder) FormatMessages(values map[string]any) ([]llms.ChatMessage, error) {
 	return formatPrompt(e.Prompt(), values)
 }
 
@@ -231,24 +232,20 @@ The SEARCH section must exactly match an existing block of lines including all w
 	return nil
 }
 
-func (e *EditBlockCoder) Execute(ctx context.Context, messages []llms.MessageContent) error {
-	//e.coder.Loading("Please wait while we design the code")
+func (e *EditBlockCoder) Execute(ctx context.Context, messages []llms.ChatMessage) error {
+	console.RenderStep("Please wait while we design the code")
 
-	go func() {
-		for output := range e.coder.engine.GetChannel() {
-			if output.IsLast() {
-				fmt.Println()
-			}
-			fmt.Print(output.GetContent())
-		}
-	}()
+	chatModel := chat.NewChat(e.coder.cfg,
+		chat.WithContext(ctx),
+		chat.WithMessages(messages),
+		chat.WithEngine(e.coder.engine),
+	)
 
-	output, err := e.coder.engine.ChatStream(ctx, messages)
-	if err != nil {
+	if err := chatModel.Run(); err != nil {
 		return err
 	}
 
-	e.partialResponseContent = output.Choices[0].Content
+	e.partialResponseContent = chatModel.Output
 
 	if ok := console.WaitForUserConfirmApplyChanges("%s\n\nAre you sure you want to apply these codes? (Y/n)", e.partialResponseContent); !ok {
 		return errbook.NewUserErrorf("Apply %s edit cancelled", e.partialResponseContent)
