@@ -60,28 +60,31 @@ func (c *CommandExecutor) isCommand(input string) bool {
 
 // Executor Execute the command
 func (c *CommandExecutor) Executor(input string) {
+	input = strings.TrimSpace(input)
 	if input == "" {
 		return
 	}
 
-	cmd, args := "ask", []string{input}
-	if c.isCommand(input) {
-		cmd, args = extractCmdArgs(input)
+	// Handle non-command input
+	if !c.isCommand(input) {
+		console.Render("Please use a command to interact with the system. Type / to see all available commands.")
+		return
 	}
 
+	// Handle command execution
+	cmd, args := extractCmdArgs(input)
 	fn, ok := supportCommands[cmd]
 	if !ok {
 		console.RenderError(
 			errbook.ErrInvalidArgument,
-			"Unknown command: %s. Only support commands: %s. Type / to see all recommended commands.", cmd, strings.Join(getSupportedCommands(), ", "),
+			"Unknown command: %s. Supported commands: %s. Type / to see all recommended commands.", 
+			cmd, strings.Join(getSupportedCommands(), ", "),
 		)
-
 		return
 	}
 
-	// do executor
+	// Execute the recognized command
 	if err := fn(context.Background(), args...); err != nil {
-		fmt.Println("ddd")
 		console.RenderError(err, "Failed to execute command %s", cmd)
 	}
 }
