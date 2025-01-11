@@ -351,26 +351,13 @@ func (c *CommandExecutor) diff(ctx context.Context, _ ...string) error {
 		return errbook.Wrap("Failed to get diff", err)
 	}
 
-	// Split and highlight diff lines
-	lines := strings.Split(diffOutput, "\n")
-	var highlightedLines []string
-
-	for _, line := range lines {
-		switch {
-		case strings.HasPrefix(line, "+"):
-			highlightedLines = append(highlightedLines, console.StdoutStyles().CommitSuccess.Render(line))
-		case strings.HasPrefix(line, "-"):
-			highlightedLines = append(highlightedLines, console.StdoutStyles().InlineCode.Render(line))
-		case strings.HasPrefix(line, "@@"):
-			highlightedLines = append(highlightedLines, console.StdoutStyles().Flag.Render(line))
-		default:
-			highlightedLines = append(highlightedLines, line)
-		}
-	}
-
-	console.Render("Changes:\n%s", strings.Join(highlightedLines, "\n"))
+	// Process and format the diff
+	formattedDiff := c.coder.repo.FormatDiff(diffOutput)
+	console.Render("Changes:\n%s", formattedDiff)
 	return nil
 }
+
+
 
 func (c *CommandExecutor) exit(_ context.Context, _ ...string) error {
 	fmt.Println("Bye!")

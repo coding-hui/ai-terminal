@@ -241,3 +241,72 @@ func (c *Command) commit(val string) *exec.Cmd {
 		args...,
 	)
 }
+
+// FormatDiff formats git diff output with color and stats
+func (c *Command) FormatDiff(diffOutput string) string {
+	lines := strings.Split(diffOutput, "\n")
+	var formattedLines []string
+	var stats struct {
+		added   int
+		removed int
+		total   int
+	}
+
+	// First pass to calculate stats
+	for _, line := range lines {
+		switch {
+		case strings.HasPrefix(line, "+"):
+			stats.added++
+			stats.total++
+		case strings.HasPrefix(line, "-"):
+			stats.removed++
+			stats.total++
+		case strings.HasPrefix(line, "@@"):
+			stats.total++
+		}
+	}
+
+	// Create progress bar
+	progress := c.createProgressBar(stats.added, stats.removed, stats.total)
+
+	// Second pass to format lines
+	for _, line := range lines {
+		switch {
+		case strings.HasPrefix(line, "+"):
+			formattedLines = append(formattedLines,
+				fmt.Sprintf("\x1b[32m%s\x1b[0m", line)) // Green for additions
+		case strings.HasPrefix(line, "-"):
+			formattedLines = append(formattedLines,
+				fmt.Sprintf("\x1b[31m%s\x1b[0m", line)) // Red for deletions
+		case strings.HasPrefix(line, "@@"):
+			formattedLines = append(formattedLines,
+				fmt.Sprintf("\x1b[33m%s\x1b[0m", line)) // Yellow for headers
+		default:
+			formattedLines = append(formattedLines, line)
+		}
+	}
+
+	// Add header with stats
+	header := fmt.Sprintf("Changes (%d added, %d removed):\n%s\n",
+		stats.added, stats.removed, progress)
+
+	return header + strings.Join(formattedLines, "\n")
+}
+
+// createProgressBar generates a visual progress bar for diff stats
+func (c *Command) createProgressBar(added, removed, total int) string {
+	const barWidth = 30
+	if total == 0 {
+		return ""
+	}
+
+	addedBlocks := int(float64(added) / float64(total) * barWidth)
+	removedBlocks := int(float64(removed) / float64(total) * barWidth)
+	unchangedBlocks := barWidth - addedBlocks - removedBlocks
+
+	bar := strings.Repeat("█", addedBlocks) +
+		strings.Repeat("░", removedBlocks) +
+		strings.Repeat(" ", unchangedBlocks)
+
+	return fmt.Sprintf("[%s] %d changes", bar, total)
+}
