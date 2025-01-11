@@ -272,9 +272,7 @@ func (c *Chat) startCliCmd() tea.Cmd {
 func (c *Chat) readStdinCmd() tea.Msg {
 	var messages []llms.ChatMessage
 	if len(c.opts.messages) > 0 {
-		for _, m := range c.opts.messages {
-			messages = append(messages, m)
-		}
+		messages = append(messages, c.opts.messages...)
 	}
 	if c.opts.content != "" {
 		messages = append(messages, llms.HumanChatMessage{
@@ -284,12 +282,4 @@ func (c *Chat) readStdinCmd() tea.Msg {
 	return llm.CompletionInput{
 		Messages: messages,
 	}
-}
-
-// if the input is whitespace only, make it empty.
-func removeWhitespace(s string) string {
-	if strings.TrimSpace(s) == "" {
-		return ""
-	}
-	return s
 }
