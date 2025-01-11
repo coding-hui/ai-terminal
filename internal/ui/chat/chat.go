@@ -41,11 +41,10 @@ type Chat struct {
 	Output     string
 	GlamOutput string
 
-	state   state
-	opts    *Options
-	config  *options.Config
-	engine  *llm.Engine
-	history *ui.History
+	state  state
+	opts   *Options
+	config *options.Config
+	engine *llm.Engine
 
 	anim         tea.Model
 	renderer     *lipgloss.Renderer
@@ -82,7 +81,6 @@ func NewChat(cfg *options.Config, opts ...Option) *Chat {
 		renderer:     o.renderer,
 		state:        startState,
 		styles:       console.MakeStyles(o.renderer),
-		history:      ui.NewHistory(),
 	}
 }
 
