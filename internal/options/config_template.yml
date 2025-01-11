@@ -58,7 +58,7 @@ datastore:
 auto-coder:
   prompt-prefix: auto-coder
   edit-format: diff
-  commit-prefix: ai
+  commit-prefix: auto-coder
 # {{ index .Help "apis" }}
 apis:
   openai:
