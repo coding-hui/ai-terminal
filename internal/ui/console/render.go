@@ -30,14 +30,14 @@ func Render(format string, args ...interface{}) {
 	fmt.Println(msg)
 }
 
-// RenderCommitStep renders commit process step messages with a prefix
-func RenderCommitStep(format string, args ...interface{}) {
+// RenderStep renders commit process step messages with a prefix
+func RenderStep(format string, args ...interface{}) {
 	msg := StdoutStyles().CommitStep.Render(fmt.Sprintf("➤ "+format, args...))
 	fmt.Println(msg)
 }
 
-// RenderCommitSuccess renders successful commit messages
-func RenderCommitSuccess(format string, args ...interface{}) {
+// RenderSuccess renders successful commit messages
+func RenderSuccess(format string, args ...interface{}) {
 	msg := StdoutStyles().CommitSuccess.Render(fmt.Sprintf("✓ "+format, args...))
 	fmt.Println(msg)
 }

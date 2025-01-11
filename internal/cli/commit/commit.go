@@ -193,7 +193,7 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 		}
 		o.commitMsgFile = path.Join(strings.TrimSpace(out), "COMMIT_EDITMSG")
 	}
-	console.RenderCommitStep("Writing commit message to %s", o.commitMsgFile)
+	console.RenderStep("Writing commit message to %s", o.commitMsgFile)
 	err = os.WriteFile(o.commitMsgFile, []byte(commitMessage), 0o600)
 	if err != nil {
 		return errbook.Wrap("Could not write commit message to file: "+o.commitMsgFile, err)
@@ -211,12 +211,7 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 	}
 
 	if !o.noConfirm {
-		input := confirmation.New("Do you want to change the commit message?", confirmation.No)
-		change, err := input.RunPrompt()
-		if err != nil {
-			return errbook.Wrap("Could not run prompt.", err)
-		}
-
+		change := console.WaitForUserConfirm("Do you want to change the commit message?")
 		if change {
 			m := ui.InitialTextareaPrompt(commitMessage)
 			p := tea.NewProgram(m)
@@ -229,7 +224,7 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 	}
 
 	// git commit automatically
-	console.RenderCommitStep("Recording changes to repository...")
+	console.RenderStep("Recording changes to repository...")
 	output, err := g.Commit(commitMessage)
 	if err != nil {
 		return errbook.Wrap("Could not commit changes to the repository.", err)
@@ -241,7 +236,7 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 
 // codeReview summary code review message from diff datas
 func (o *Options) codeReview(engine *llm.Engine, vars map[string]any) error {
-	console.RenderCommitStep("Analyzing code changes...")
+	console.RenderStep("Analyzing code changes...")
 
 	p, err := prompt.GetPromptStringByTemplateName(prompt.SummarizeFileDiffTemplate, vars)
 	if err != nil {
@@ -260,7 +255,7 @@ func (o *Options) codeReview(engine *llm.Engine, vars map[string]any) error {
 }
 
 func (o *Options) summarizeTitle(engine *llm.Engine, vars map[string]any) error {
-	console.RenderCommitStep("Generating commit title...")
+	console.RenderStep("Generating commit title...")
 
 	p, err := prompt.GetPromptStringByTemplateName(prompt.SummarizeTitleTemplate, vars)
 	if err != nil {
@@ -280,7 +275,7 @@ func (o *Options) summarizeTitle(engine *llm.Engine, vars map[string]any) error 
 }
 
 func (o *Options) summarizePrefix(engine *llm.Engine, vars map[string]any) error {
-	console.RenderCommitStep("Determining commit type...")
+	console.RenderStep("Determining commit type...")
 
 	p, err := prompt.GetPromptStringByTemplateName(prompt.ConventionalCommitTemplate, vars)
 	if err != nil {
@@ -320,7 +315,7 @@ func (o *Options) generateCommitMsg(engine *llm.Engine, vars map[string]any) (co
 	}
 
 	if o.commitLang != prompt.DefaultLanguage {
-		console.RenderCommitStep("Translating commit message to %s...", o.commitLang)
+		console.RenderStep("Translating commit message to %s...", o.commitLang)
 		translationPrompt, err := prompt.GetPromptStringByTemplateName(prompt.TranslationTemplate, map[string]any{
 			prompt.OutputLanguageKey: prompt.GetLanguage(o.commitLang),
 			prompt.OutputMessageKey:  commitMessage,
@@ -343,7 +338,7 @@ func (o *Options) generateCommitMsg(engine *llm.Engine, vars map[string]any) (co
 	// Output simplified commit summary
 	lines := strings.Split(commitMessage, "\n")
 	if len(lines) > 0 {
-		console.RenderCommitSuccess("Commit summary:")
+		console.RenderSuccess("Commit summary:")
 		for _, line := range lines {
 			if strings.TrimSpace(line) != "" {
 				fmt.Println("  " + line)
