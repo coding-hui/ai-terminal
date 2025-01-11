@@ -69,6 +69,7 @@ var help = map[string]string{
 	"theme":           "Theme to use in the forms. Valid units are: 'charm', 'catppuccin', 'dracula', and 'base16'",
 	"show-last":       "Show the last saved conversation.",
 	"datastore":       "Configure the datastore to use.",
+	"auto-coder":      "Configure the auto coder to use.",
 }
 
 // Config is a structure used to configure a AI.
@@ -94,6 +95,7 @@ type Config struct {
 	FormatAs      string     `yaml:"format-as" env:"FORMAT_AS"`
 	APIs          APIs       `yaml:"apis"`
 	DataStore     DataStore  `yaml:"datastore"`
+	AutoCoder     AutoCoder  `yaml:"auto-coder"`
 
 	DefaultPromptMode string `yaml:"default-prompt-mode,omitempty"`
 	ChatID            string `yaml:"chat-id,omitempty"`
@@ -104,6 +106,12 @@ type Config struct {
 	System       *system.Analysis
 	Interactive  bool
 	PromptFile   string
+}
+
+// AutoCoder is the configuration for the auto coder.
+type AutoCoder struct {
+	PromptPrefix string `yaml:"prompt-prefix" env:"PROMPT_PREFIX"`
+	EditFormat   string `yaml:"edit-format" env:"EDIT_FORMAT"`
 }
 
 // Model represents the LLM model used in the API call.

@@ -54,6 +54,10 @@ datastore:
   # datastore type: file、mongo or db
   type: file
   url: ""
+# {{ index .Help "auto-coder" }}
+auto-coder:
+  prompt-prefix: auto-coder
+  edit-format: diff
 # {{ index .Help "apis" }}
 apis:
   openai:

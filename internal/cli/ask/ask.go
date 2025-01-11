@@ -18,7 +18,7 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/system"
 	"github.com/coding-hui/ai-terminal/internal/ui"
 	"github.com/coding-hui/ai-terminal/internal/ui/chat"
-	"github.com/coding-hui/ai-terminal/internal/ui/display"
+	"github.com/coding-hui/ai-terminal/internal/ui/console"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 	"github.com/coding-hui/ai-terminal/internal/util/templates"
 	"github.com/coding-hui/ai-terminal/internal/util/term"
@@ -106,7 +106,7 @@ func (o *Options) Run(_ []string) error {
 		return err
 	}
 
-	chatModel, err := chat.NewChat(input, display.StderrRenderer(), o.cfg)
+	chatModel, err := chat.NewChat(input, console.StderrRenderer(), o.cfg)
 	if err != nil {
 		return err
 	}

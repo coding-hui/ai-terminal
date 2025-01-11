@@ -14,6 +14,9 @@ var ErrTimeout = errors.New("timeout")
 // ErrTimeoutUnsupported is the errbook returned when timeout is used while in accessible mode.
 var ErrTimeoutUnsupported = errors.New("timeout is not supported in accessible mode")
 
+// ErrInvalidArgument is the errbook returned when the input is invalid.
+var ErrInvalidArgument = errors.New("invalid argument")
+
 // NewUserErrorf is a user-facing errbook.
 // this function is mostly to avoid linters complain about errbook starting with a capitalized letter.
 func NewUserErrorf(format string, a ...any) error {

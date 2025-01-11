@@ -199,7 +199,7 @@ func testReplaceMostSimilarChunk(t *testing.T) {
 		{
 			"replace_part_with_whole_file",
 			args{
-				`package display
+				`package console
 
 import (
 	"fmt"
@@ -244,7 +244,7 @@ func FatalErr(err error, msgs ...string) {
 				`// Error handles and displays an error message along with optional additional messages.
 func Error(err error, msgs ...string) {`,
 			},
-			`package display
+			`package console
 
 import (
 	"fmt"

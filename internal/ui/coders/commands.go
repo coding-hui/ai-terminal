@@ -9,15 +9,16 @@ import (
 	"path/filepath"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/coding-hui/common/util/fileutil"
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
 
 	"github.com/coding-hui/ai-terminal/internal/cli/commit"
+	"github.com/coding-hui/ai-terminal/internal/errbook"
+	"github.com/coding-hui/ai-terminal/internal/ui/console"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 )
 
-var supportCommands = map[string]func(context.Context, ...string) tea.Msg{}
+var supportCommands = map[string]func(context.Context, ...string) error{}
 
 func getSupportedCommands() []string {
 	commands := make([]string, 0, len(supportCommands))
@@ -27,73 +28,92 @@ func getSupportedCommands() []string {
 	return commands
 }
 
-type command struct {
+type CommandExecutor struct {
 	coder  *AutoCoder
 	editor *EditBlockCoder
 }
 
-func newCommand(coder *AutoCoder) *command {
+func NewCommandExecutor(coder *AutoCoder) *CommandExecutor {
 	editor := NewEditBlockCoder(coder, fences[0])
-	cmds := &command{coder: coder, editor: editor}
+	cmds := &CommandExecutor{coder: coder, editor: editor}
 	cmds.registryCmds()
 	return cmds
 }
 
-func (c *command) registryCmds() {
-	supportCommands["/add"] = c.addFiles
-	supportCommands["/list"] = c.listFiles
-	supportCommands["/remove"] = c.removeFiles
-	supportCommands["/ask"] = c.askFiles
-	supportCommands["/drop"] = c.dropFiles
-	supportCommands["/coding"] = c.coding
-	supportCommands["/commit"] = c.commit
-	supportCommands["/undo"] = c.undo
+func (c *CommandExecutor) registryCmds() {
+	supportCommands["add"] = c.addFiles
+	supportCommands["list"] = c.listFiles
+	supportCommands["remove"] = c.removeFiles
+	supportCommands["ask"] = c.askFiles
+	supportCommands["drop"] = c.dropFiles
+	supportCommands["coding"] = c.coding
+	supportCommands["commit"] = c.commit
+	supportCommands["undo"] = c.undo
+	supportCommands["exit"] = c.exit
 }
 
-func (c *command) isCommand(input string) bool {
+func (c *CommandExecutor) isCommand(input string) bool {
 	input = strings.TrimSpace(input)
 	return strings.HasPrefix(input, "!") || strings.HasPrefix(input, "/")
 }
 
-func (c *command) run(input string) tea.Cmd {
-	return func() tea.Msg {
-		cmd, args := "/ask", []string{input}
-		if c.isCommand(input) {
-			cmd, args = extractCmdArgs(input)
-		}
-
-		cmdFunc, ok := supportCommands[cmd]
-		if !ok {
-			return c.coder.Errorf("Invalid command %s", cmd)
-		}
-
-		// do run
-		return cmdFunc(context.Background(), args...)
+// Executor Execute the command
+func (c *CommandExecutor) Executor(input string) {
+	if input == "" {
+		return
 	}
+
+	cmd, args := "ask", []string{input}
+	if c.isCommand(input) {
+		cmd, args = extractCmdArgs(input)
+	}
+
+	fn, ok := supportCommands[cmd]
+	if !ok {
+		console.RenderError(
+			errbook.ErrInvalidArgument,
+			"Unknown command: %s. Only support commands: %s. Type / to see all recommended commands.", cmd, strings.Join(getSupportedCommands(), ", "),
+		)
+
+		return
+	}
+
+	// do executor
+	if err := fn(context.Background(), args...); err != nil {
+		fmt.Println("ddd")
+		console.RenderError(err, "Failed to execute command %s", cmd)
+	}
+
+	return
 }
 
-func (c *command) askFiles(_ context.Context, args ...string) tea.Msg {
-	c.coder.Loading(components.spinner.randMsg)
-
-	c.coder.state.buffer = ""
-
+// askFiles Ask GPT to edit the files in the chat
+func (c *CommandExecutor) askFiles(ctx context.Context, args ...string) error {
 	messages, err := c.prepareAskCompletionMessages(strings.Join(args, " "))
 	if err != nil {
-		return c.coder.Errorf("Failed to prepare ask completion messages: %v", err)
+		return errbook.Wrap("Failed to prepare ask completion messages", err)
 	}
 
-	_, err = c.coder.llmEngine.ChatStream(context.Background(), messages)
+	go func() {
+		for msg := range c.coder.engine.GetChannel() {
+			fmt.Print(msg.GetContent())
+		}
+	}()
+
+	_, err = c.coder.engine.ChatStream(ctx, messages)
 	if err != nil {
-		return c.coder.Errorf("Failed to chat stream: %v", err)
+		return err
 	}
+
+	fmt.Println()
 
 	return nil
 }
 
 // addFiles Add files to the chat so GPT can edit them or review them in detail
-func (c *command) addFiles(_ context.Context, files ...string) tea.Msg {
+func (c *CommandExecutor) addFiles(_ context.Context, files ...string) error {
 	if len(files) <= 0 {
-		return c.coder.Error("Please provide at least one file")
+		return errbook.New("Please provide at least one file")
 	}
 
 	var matchedFiles = make([]string, 0, len(files))
@@ -101,21 +121,26 @@ func (c *command) addFiles(_ context.Context, files ...string) tea.Msg {
 	for _, pattern := range files {
 		matches, err := filepath.Glob(filepath.Join(c.coder.codeBasePath, pattern))
 		if err != nil {
-			return c.coder.Error(err)
+			return errbook.Wrap("Failed to glob files", err)
+		}
+
+		if len(matches) <= 0 {
+			console.Render("No files matched pattern [%s]", pattern)
+			break
 		}
 
 		for _, filePath := range matches {
 			fileExists, err := fileutil.FileExists(filePath)
 			if err != nil {
 				if !errors.Is(err, fs.ErrNotExist) {
-					return c.coder.Error(err)
+					return errbook.Wrap("Failed to check if file exists", err)
 				}
 			}
 
 			if fileExists {
 				matchedFiles = append(matchedFiles, filePath)
 			} else {
-				return c.coder.Errorf("File [%s] does not exist", filePath)
+				return errbook.New("File [%s] not found", filePath)
 			}
 		}
 	}
@@ -123,93 +148,85 @@ func (c *command) addFiles(_ context.Context, files ...string) tea.Msg {
 	for _, filePath := range matchedFiles {
 		absPath, err := absFilePath(c.coder.codeBasePath, filePath)
 		if err != nil {
-			return c.coder.Error(err)
+			return errbook.Wrap("Failed to get abs path", err)
 		}
 
 		if _, ok := c.coder.absFileNames[absPath]; ok {
-			return c.coder.Errorf("File [%s] already exists", filePath)
+			return errbook.New("File [%s] already exists", absPath)
 		}
 
 		c.coder.absFileNames[absPath] = struct{}{}
 
-		c.coder.Successf("Added file [%s] to chat context", filePath)
+		console.Render("Added file [%s]", absPath)
 	}
-
-	defer c.coder.Done()
 
 	return nil
 }
 
-func (c *command) listFiles(_ context.Context, _ ...string) tea.Msg {
-	fileCount := len(c.coder.absFileNames)
-	c.coder.Infof("Loaded %d files", fileCount)
-
+// listFiles List all files that have been added to the chat
+func (c *CommandExecutor) listFiles(_ context.Context, _ ...string) error {
+	if len(c.coder.absFileNames) <= 0 {
+		console.Render("No files added in chat currently")
+		return nil
+	}
 	no := 1
 	for file := range c.coder.absFileNames {
 		relPath, err := filepath.Rel(c.coder.codeBasePath, file)
 		if err != nil {
-			return c.coder.Error(err)
+			return errbook.Wrap("Failed to get relative path", err)
 		}
-		c.coder.Tracef("%d. %s", no, relPath)
+		console.Render("%d.%s", no, relPath)
 		no++
 	}
-
-	defer c.coder.Done()
 
 	return nil
 }
 
-func (c *command) removeFiles(_ context.Context, files ...string) tea.Msg {
+// removeFiles Remove files from the chat so GPT won't edit them or review them in detail
+func (c *CommandExecutor) removeFiles(_ context.Context, files ...string) error {
 	if len(files) <= 0 {
-		return c.coder.Error("Please provide at least one file")
+		return errbook.New("Please provide at least one file")
 	}
 
 	deleteCount := 0
 	for _, pattern := range files {
 		matches, err := filepath.Glob(filepath.Join(c.coder.codeBasePath, pattern))
 		if err != nil {
-			return c.coder.Error(err)
+			return errbook.Wrap("Failed to glob files", err)
 		}
 
 		for _, filePath := range matches {
 			abs, err := absFilePath(c.coder.codeBasePath, filePath)
 			if err != nil {
-				return c.coder.Error(err)
 			}
 			if _, ok := c.coder.absFileNames[abs]; ok {
 				deleteCount++
 				delete(c.coder.absFileNames, abs)
-				c.coder.Successf("Deleted file [%s]", filePath)
+				console.Render("Removed file [%s]", abs)
 			}
 		}
 	}
 
-	c.coder.Infof("Deleted %d files", deleteCount)
-
-	defer c.coder.Done()
-
 	return nil
 }
 
-func (c *command) dropFiles(_ context.Context, _ ...string) tea.Msg {
+func (c *CommandExecutor) dropFiles(_ context.Context, _ ...string) error {
 	dropCount := len(c.coder.absFileNames)
 	c.coder.absFileNames = map[string]struct{}{}
-	c.coder.Infof("Dropped %d files", dropCount)
-
-	defer c.coder.Done()
+	console.Render("Dropped %d files", dropCount)
 
 	return nil
 }
 
-func (c *command) coding(ctx context.Context, args ...string) tea.Msg {
+func (c *CommandExecutor) coding(ctx context.Context, args ...string) error {
 	addedFiles, err := c.getAddedFileContent()
 	if err != nil {
-		return c.coder.Error(err)
+		return err
 	}
 
 	openFence, closeFence := c.editor.UpdateCodeFences(ctx, addedFiles)
 
-	c.coder.Infof("Selected coder block fences %s %s", openFence, closeFence)
+	console.Render("Selected coder block fences %s %s", openFence, closeFence)
 
 	userInput := strings.Join(args, " ")
 	messages, err := c.editor.FormatMessages(map[string]any{
@@ -220,52 +237,45 @@ func (c *command) coding(ctx context.Context, args ...string) tea.Msg {
 		lazyPromptKey:   lazyPrompt,
 	})
 	if err != nil {
-		return c.coder.Error(err)
+		return err
 	}
 
 	err = c.editor.Execute(ctx, messages)
 	if err != nil {
-		return c.coder.Error(err)
+		return err
 	}
-
-	c.coder.Done()
 
 	return nil
 }
 
-func (c *command) undo(ctx context.Context, _ ...string) tea.Msg {
-	c.coder.Loading(components.spinner.randMsg)
+func (c *CommandExecutor) undo(ctx context.Context, _ ...string) error {
 	modifiedFiles, err := c.editor.GetModifiedFiles(ctx)
 	if err != nil {
-		return c.coder.Error(err)
+		return err
 	}
 	if len(modifiedFiles) == 0 {
-		return c.coder.Error("There are no file modifications")
+		return errbook.New("There are no file modifications")
 	}
-	if err := c.coder.gitRepo.RollbackLastCommit(); err != nil {
-		return c.coder.Errorf("Failed to rollback last commit: %v", err)
+	if err := c.coder.repo.RollbackLastCommit(); err != nil {
+		return errbook.Wrap("Failed to get modified files", err)
 	}
-	c.coder.Successf("Successfully rolled back the last commit")
-	defer c.coder.Done()
 
 	return nil
 }
 
-func (c *command) commit(ctx context.Context, _ ...string) tea.Msg {
-	// Get the list of files that were modified by the coding command
+func (c *CommandExecutor) commit(ctx context.Context, _ ...string) error {
+	// Get the list of files that were modified by the coding CommandExecutor
 	modifiedFiles, err := c.editor.GetModifiedFiles(ctx)
 	if err != nil {
-		return c.coder.Error(err)
+		return err
 	}
 
 	// Add the modified files to the Git staging area
-	if err := c.coder.gitRepo.AddFiles(modifiedFiles); err != nil {
-		return c.coder.Errorf("Failed to add files to Git: %v", err)
+	if err := c.coder.repo.AddFiles(modifiedFiles); err != nil {
+		return errbook.Wrap("Failed to add files to Git", err)
 	}
 
-	c.coder.Loading("Committing code changes")
-
-	// Execute the commit command
+	// Execute the commit CommandExecutor
 	ioStreams := genericclioptions.IOStreams{
 		In:     os.Stdin,
 		Out:    os.Stdout,
@@ -273,31 +283,23 @@ func (c *command) commit(ctx context.Context, _ ...string) tea.Msg {
 	}
 	commitCmd := commit.NewOptions(true, modifiedFiles, ioStreams, c.coder.cfg)
 	if err := commitCmd.AutoCommit(nil, nil); err != nil {
-		return c.coder.Errorf("Failed to execute commit command: %v", err)
+		return errbook.Wrap("Failed to commit changes", err)
 	}
-
-	c.coder.Successf("Code submitted successfully")
-
-	defer c.coder.Done()
 
 	return nil
 }
 
-func (c *command) awaitChatCompleted() tea.Cmd {
-	return func() tea.Msg {
-		output := <-c.coder.llmEngine.GetChannel()
-		c.coder.state.buffer += output.GetContent()
-		if output.IsLast() {
-			c.coder.Done()
-		}
-		return output
-	}
+func (c *CommandExecutor) exit(_ context.Context, _ ...string) error {
+	fmt.Println("Bye!")
+	os.Exit(0)
+
+	return nil
 }
 
-func (c *command) prepareAskCompletionMessages(userInput string) ([]llms.MessageContent, error) {
+func (c *CommandExecutor) prepareAskCompletionMessages(userInput string) ([]llms.MessageContent, error) {
 	addedFileMessages, err := c.getAddedFileContent()
 	if err != nil {
-		return nil, c.coder.Error(err)
+		return nil, err
 	}
 
 	messages, err := promptAsk.FormatMessages(map[string]any{
@@ -305,7 +307,7 @@ func (c *command) prepareAskCompletionMessages(userInput string) ([]llms.Message
 		userQuestionKey: userInput,
 	})
 	if err != nil {
-		return nil, c.coder.Error(err)
+		return nil, err
 	}
 
 	ret := make([]llms.MessageContent, 0, len(messages))
@@ -332,13 +334,13 @@ func (c *command) prepareAskCompletionMessages(userInput string) ([]llms.Message
 	return ret, nil
 }
 
-func (c *command) getAddedFileContent() (string, error) {
+func (c *CommandExecutor) getAddedFileContent() (string, error) {
 	addedFiles := ""
 	if len(c.coder.absFileNames) > 0 {
 		for file := range c.coder.absFileNames {
 			content, err := c.formatFileContent(file)
 			if err != nil {
-				return "", c.coder.Error(err)
+				return "", err
 			}
 			addedFiles += content
 		}
@@ -347,7 +349,7 @@ func (c *command) getAddedFileContent() (string, error) {
 	return addedFiles, nil
 }
 
-func (c *command) formatFileContent(filePath string) (string, error) {
+func (c *CommandExecutor) formatFileContent(filePath string) (string, error) {
 	content, err := os.ReadFile(filePath)
 	if err != nil {
 		return "", err
@@ -360,6 +362,8 @@ func (c *command) formatFileContent(filePath string) (string, error) {
 }
 
 func extractCmdArgs(input string) (string, []string) {
+	input = strings.TrimPrefix(input, "!")
+	input = strings.TrimPrefix(input, "/")
 	words := strings.Split(strings.TrimSpace(input), " ")
 	args := []string{}
 	for _, word := range words[1:] {

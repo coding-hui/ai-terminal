@@ -9,7 +9,7 @@ import (
 
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/options"
-	"github.com/coding-hui/ai-terminal/internal/ui/display"
+	"github.com/coding-hui/ai-terminal/internal/ui/console"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 )
 
@@ -65,8 +65,8 @@ func (r *reset) resetSettings(cfg *options.Config) error {
 		_, _ = fmt.Fprintln(r.Out, "\nSettings restored to defaults!")
 		_, _ = fmt.Fprintf(r.Out,
 			"\n  %s %s\n\n",
-			display.StderrStyles().Comment.Render("Your old settings have been saved to:"),
-			display.StderrStyles().Link.Render(cfg.SettingsPath+".bak"),
+			console.StderrStyles().Comment.Render("Your old settings have been saved to:"),
+			console.StderrStyles().Link.Render(cfg.SettingsPath+".bak"),
 		)
 	}
 	return nil

@@ -104,7 +104,7 @@ func NewAICommand(in io.Reader, out, errOut io.Writer) *cobra.Command {
 		templates.CommandGroup{
 			Message: "AI Commands:",
 			Commands: []*cobra.Command{
-				coder.NewCmdCoder(),
+				coder.NewCmdCoder(&cfg),
 				ask.NewCmdASK(ioStreams, &cfg),
 				history.NewCmdHistory(ioStreams),
 				commit.NewCmdCommit(ioStreams, &cfg),

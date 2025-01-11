@@ -14,6 +14,9 @@ import (
 	"github.com/coding-hui/common/util/fileutil"
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/prompts"
+
+	"github.com/coding-hui/ai-terminal/internal/errbook"
+	"github.com/coding-hui/ai-terminal/internal/ui/console"
 )
 
 const (
@@ -69,8 +72,6 @@ func (e *EditBlockCoder) GetEdits(_ context.Context) ([]PartialCodeBlock, error)
 		return nil, err
 	}
 
-	e.coder.Successf("Find %d code editing blocks", len(edits))
-
 	return edits, nil
 }
 
@@ -101,7 +102,6 @@ func (e *EditBlockCoder) ApplyEdits(ctx context.Context, edits []PartialCodeBloc
 	for _, block := range edits {
 		if err := e.applyEdit(ctx, block, needConfirm); err != nil {
 			failed = append(failed, block)
-			e.coder.Warningf("Failed to apply edit to %s: %v", block.Path, err)
 		}
 	}
 
@@ -124,14 +124,13 @@ func (e *EditBlockCoder) applyEdit(_ context.Context, block PartialCodeBlock, ne
 	}
 
 	if !fileExists {
-		if ok := e.coder.WaitForUserConfirm("Whether to create the %s file? (Y/n)", block.Path); ok {
+		if ok := console.WaitForUserConfirm("Whether to create the %s file? (Y/n)", block.Path); ok {
 			if err := fileutil.WriteFile(absPath, []byte("")); err != nil {
 				return err
 			}
-			e.coder.Successf("Created %s file", block.Path)
+			console.Render("Created %s file", block.Path)
 		} else {
-			e.coder.Warningf("Apply %s edit cancelled, file cannot be found", block.Path)
-			return nil
+			return errbook.NewUserErrorf("Apply %s edit cancelled, file cannot be found", block.Path)
 		}
 	}
 
@@ -161,16 +160,14 @@ Are you sure you want to apply these edits? (Y/n)`,
 	)
 
 	if needConfirm {
-		if ok := e.coder.WaitForUserConfirm(confirmMsg); !ok {
-			e.coder.Warningf("Apply %s edit cancelled", block.Path)
-			return nil
+		if ok := console.WaitForUserConfirmApplyChanges(confirmMsg); !ok {
+			return errbook.NewUserErrorf("Apply %s edit cancelled", block.Path)
 		}
 	}
 
 	newFileContent := doReplace(absPath, string(rawFileContent), block.OriginalText, block.UpdatedText, e.fence)
 	if len(newFileContent) == 0 {
-		e.coder.Warningf("Code block is empty and cannot be updated to file %s", block.Path)
-		return fmt.Errorf("code block is empty")
+		return errbook.New("Code block is empty and cannot be updated to file %s", block.Path)
 	}
 
 	err = fileutil.WriteFile(absPath, []byte(newFileContent))
@@ -178,7 +175,8 @@ Are you sure you want to apply these edits? (Y/n)`,
 		return err
 	}
 
-	e.coder.Successf("Applied edit to file block %s", block.Path)
+	console.Render("Applied %s edit", block.Path)
+
 	return nil
 }
 
@@ -227,45 +225,47 @@ The REPLACE lines are already in %s!
 The SEARCH section must exactly match an existing block of lines including all white  space, comments, indentation, docstrings, etc.
 `, block.Path)
 		}
-
-		e.coder.Warning(errMsg)
+		console.Render(errMsg)
 	}
 
 	return nil
 }
 
 func (e *EditBlockCoder) Execute(ctx context.Context, messages []llms.MessageContent) error {
-	e.coder.Loading("Please wait while we design the code")
+	//e.coder.Loading("Please wait while we design the code")
 
-	output, err := e.coder.llmEngine.ChatStream(ctx, messages)
+	go func() {
+		for output := range e.coder.engine.GetChannel() {
+			if output.IsLast() {
+				fmt.Println()
+			}
+			fmt.Print(output.GetContent())
+		}
+	}()
+
+	output, err := e.coder.engine.ChatStream(ctx, messages)
 	if err != nil {
-		return e.coder.Error(err)
+		return err
 	}
 
 	e.partialResponseContent = output.Choices[0].Content
 
-	if ok := e.coder.WaitForUserConfirm("%s\n\nAre you sure you want to apply these codes? (Y/n)", e.partialResponseContent); !ok {
-		e.coder.Warningf("Apply code cancelled")
-		return nil
+	if ok := console.WaitForUserConfirmApplyChanges("%s\n\nAre you sure you want to apply these codes? (Y/n)", e.partialResponseContent); !ok {
+		return errbook.NewUserErrorf("Apply %s edit cancelled", e.partialResponseContent)
 	}
 
 	edits, err := e.GetEdits(ctx)
 	if err != nil {
-		return e.coder.Error(err)
 	}
 
 	if len(edits) <= 0 {
-		return e.coder.Errorf("No edits were made")
+		return errbook.New("No edits were made")
 	}
-
-	e.coder.Infof("Applying %d edits...", len(edits))
 
 	err = e.ApplyEdits(ctx, edits, false)
 	if err != nil {
-		return e.coder.Error(err)
+		return err
 	}
-
-	e.coder.Successf("Code editing completed")
 
 	return nil
 }

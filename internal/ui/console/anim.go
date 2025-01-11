@@ -1,4 +1,4 @@
-package ui
+package console
 
 import (
 	"math/rand"
@@ -10,8 +10,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/muesli/termenv"
-
-	"github.com/coding-hui/ai-terminal/internal/ui/display"
 )
 
 const (
@@ -79,10 +77,10 @@ type anim struct {
 	label           []rune
 	ellipsis        spinner.Model
 	ellipsisStarted bool
-	styles          display.Styles
+	styles          Styles
 }
 
-func NewAnim(cyclingCharsSize uint, label string, r *lipgloss.Renderer, s display.Styles) anim {
+func NewAnim(cyclingCharsSize uint, label string, r *lipgloss.Renderer, s Styles) anim {
 	// #nosec G115
 	n := int(cyclingCharsSize)
 	if n > maxCyclingChars {
@@ -108,7 +106,7 @@ func NewAnim(cyclingCharsSize uint, label string, r *lipgloss.Renderer, s displa
 		// Note: double capacity for color cycling as we'll need to reverse and
 		// append the ramp for seamless transitions.
 		c.ramp = make([]lipgloss.Style, n, n*2) //nolint:mnd
-		ramp := makeGradientRamp(n)
+		ramp := MakeGradientRamp(n)
 		for i, color := range ramp {
 			c.ramp[i] = r.NewStyle().Foreground(color)
 		}
@@ -226,7 +224,20 @@ func (a anim) View() string {
 	return b.String() + a.ellipsis.View()
 }
 
-func makeGradientRamp(length int) []lipgloss.Color {
+func MakeGradientText(baseStyle lipgloss.Style, str string) string {
+	const minSize = 3
+	if len(str) < minSize {
+		return str
+	}
+	b := strings.Builder{}
+	runes := []rune(str)
+	for i, c := range MakeGradientRamp(len(str)) {
+		b.WriteString(baseStyle.Foreground(c).Render(string(runes[i])))
+	}
+	return b.String()
+}
+
+func MakeGradientRamp(length int) []lipgloss.Color {
 	const startColor = "#F967DC"
 	const endColor = "#6B50FF"
 	var (

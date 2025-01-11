@@ -9,7 +9,7 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/llm"
 	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/session"
-	"github.com/coding-hui/ai-terminal/internal/ui/display"
+	"github.com/coding-hui/ai-terminal/internal/ui/console"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 )
 
@@ -53,7 +53,7 @@ func (r *rm) Run(args []string) error {
 		return errbook.Wrap("Failed to remove chat session history: "+chatID, err)
 	}
 
-	display.Successf("Removed chat history %s", chatID)
+	console.Successf("Removed chat history %s", chatID)
 
 	return nil
 }

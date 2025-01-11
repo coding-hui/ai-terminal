@@ -19,7 +19,7 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/session"
-	"github.com/coding-hui/ai-terminal/internal/ui/display"
+	"github.com/coding-hui/ai-terminal/internal/ui/console"
 )
 
 const (
@@ -48,12 +48,12 @@ func NewLLMEngine(mode EngineMode, cfg *options.Config) (*Engine, error) {
 			return nil, errbook.Wrap(
 				fmt.Sprintf(
 					"Model %s is not in the settings file.",
-					display.StderrStyles().InlineCode.Render(cfg.Model),
+					console.StderrStyles().InlineCode.Render(cfg.Model),
 				),
 				errbook.NewUserErrorf(
 					"Please specify an API endpoint with %s or configure the model in the settings: %s",
-					display.StderrStyles().InlineCode.Render("--api"),
-					display.StderrStyles().InlineCode.Render("ai -s"),
+					console.StderrStyles().InlineCode.Render("--api"),
+					console.StderrStyles().InlineCode.Render("ai -s"),
 				),
 			)
 		}
@@ -73,12 +73,12 @@ func NewLLMEngine(mode EngineMode, cfg *options.Config) (*Engine, error) {
 	if api.Name == "" {
 		eps := make([]string, 0)
 		for _, a := range cfg.APIs {
-			eps = append(eps, display.StderrStyles().InlineCode.Render(a.Name))
+			eps = append(eps, console.StderrStyles().InlineCode.Render(a.Name))
 		}
 		return nil, errbook.Wrap(
 			fmt.Sprintf(
 				"The API endpoint %s is not configured.",
-				display.StderrStyles().InlineCode.Render(cfg.API),
+				console.StderrStyles().InlineCode.Render(cfg.API),
 			),
 			errbook.NewUserErrorf(
 				"Your configured API endpoints are: %s",
@@ -437,13 +437,13 @@ func ensureApiKey(api options.API) (string, error) {
 	return "", errbook.Wrap(
 		fmt.Sprintf(
 			"%[1]s required; set the environment variable %[1]s or update %[2]s through %[3]s.",
-			display.StderrStyles().InlineCode.Render(api.APIKeyEnv),
-			display.StderrStyles().InlineCode.Render("config.yaml"),
-			display.StderrStyles().InlineCode.Render("ai config"),
+			console.StderrStyles().InlineCode.Render(api.APIKeyEnv),
+			console.StderrStyles().InlineCode.Render("config.yaml"),
+			console.StderrStyles().InlineCode.Render("ai config"),
 		),
 		errbook.NewUserErrorf(
 			"You can grab one at %s.",
-			display.StderrStyles().Link.Render(api.BaseURL),
+			console.StderrStyles().Link.Render(api.BaseURL),
 		),
 	)
 }

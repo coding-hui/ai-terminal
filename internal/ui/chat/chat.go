@@ -15,7 +15,7 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/llm"
 	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/ui"
-	"github.com/coding-hui/ai-terminal/internal/ui/display"
+	"github.com/coding-hui/ai-terminal/internal/ui/console"
 	"github.com/coding-hui/ai-terminal/internal/util/term"
 )
 
@@ -49,7 +49,7 @@ type Chat struct {
 	renderer     *lipgloss.Renderer
 	glam         *glamour.TermRenderer
 	glamViewport viewport.Model
-	styles       display.Styles
+	styles       console.Styles
 	glamHeight   int
 	width        int
 	height       int
@@ -82,7 +82,7 @@ func NewChat(input *ui.Input, r *lipgloss.Renderer, cfg *options.Config) (*Chat,
 		contentMutex: &sync.Mutex{},
 		renderer:     r,
 		state:        startState,
-		styles:       display.MakeStyles(r),
+		styles:       console.MakeStyles(r),
 		history:      ui.NewHistory(),
 	}, nil
 }
@@ -100,7 +100,7 @@ func (c *Chat) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case ui.CacheDetailsMsg:
 		if !c.config.Quiet {
-			c.anim = ui.NewAnim(c.config.Fanciness, c.config.LoadingText, c.renderer, c.styles)
+			c.anim = console.NewAnim(c.config.Fanciness, c.config.LoadingText, c.renderer, c.styles)
 			cmds = append(cmds, c.anim.Init())
 		}
 		c.state = configLoadedState

@@ -1,16 +1,29 @@
 package ui
 
+// PromptMode represents different modes of user interaction
 type PromptMode int
 
 const (
+	// ExecPromptMode is for executing commands
 	ExecPromptMode PromptMode = iota
+
+	// TokenConfigPromptMode is for configuring API tokens
 	TokenConfigPromptMode
+
+	// ModelConfigPromptMode is for configuring models
 	ModelConfigPromptMode
+
+	// ApiBaseConfigPromptMode is for configuring API base URLs
 	ApiBaseConfigPromptMode
+
+	// ChatPromptMode is for chat interactions
 	ChatPromptMode
+
+	// DefaultPromptMode is the fallback mode
 	DefaultPromptMode
 )
 
+// String returns the string representation of a PromptMode
 func (m PromptMode) String() string {
 	switch m {
 	case ExecPromptMode:
@@ -28,6 +41,7 @@ func (m PromptMode) String() string {
 	}
 }
 
+// GetPromptModeFromString converts a string to its corresponding PromptMode
 func GetPromptModeFromString(s string) PromptMode {
 	switch s {
 	case "exec":
@@ -45,13 +59,18 @@ func GetPromptModeFromString(s string) PromptMode {
 	}
 }
 
+// RunMode represents different runtime modes
 type RunMode int
 
 const (
+	// CliMode is for command-line interface operation
 	CliMode RunMode = iota
+
+	// ReplMode is for read-eval-print-loop operation
 	ReplMode
 )
 
+// String returns the string representation of a RunMode
 func (m RunMode) String() string {
 	if m == CliMode {
 		return "cli"
@@ -60,6 +79,10 @@ func (m RunMode) String() string {
 	}
 }
 
+// CacheDetailsMsg contains information about cached data
 type CacheDetailsMsg struct {
-	WriteID, Title, ReadID, Model string
+	WriteID string // ID for writing to cache
+	Title   string // Title of the cached item
+	ReadID  string // ID for reading from cache
+	Model   string // Model associated with the cache
 }
