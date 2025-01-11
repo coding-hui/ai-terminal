@@ -225,7 +225,7 @@ The REPLACE lines are already in %s!
 The SEARCH section must exactly match an existing block of lines including all white  space, comments, indentation, docstrings, etc.
 `, block.Path)
 		}
-		console.Render(errMsg)
+		console.Render("%s", errMsg)
 	}
 
 	return nil
@@ -256,6 +256,7 @@ func (e *EditBlockCoder) Execute(ctx context.Context, messages []llms.MessageCon
 
 	edits, err := e.GetEdits(ctx)
 	if err != nil {
+		return err
 	}
 
 	if len(edits) <= 0 {

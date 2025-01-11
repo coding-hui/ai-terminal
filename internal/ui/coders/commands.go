@@ -84,8 +84,6 @@ func (c *CommandExecutor) Executor(input string) {
 		fmt.Println("ddd")
 		console.RenderError(err, "Failed to execute command %s", cmd)
 	}
-
-	return
 }
 
 // askFiles Ask GPT to edit the files in the chat
@@ -199,6 +197,7 @@ func (c *CommandExecutor) removeFiles(_ context.Context, files ...string) error 
 		for _, filePath := range matches {
 			abs, err := absFilePath(c.coder.codeBasePath, filePath)
 			if err != nil {
+				return errbook.Wrap("Failed to get abs path", err)
 			}
 			if _, ok := c.coder.absFileNames[abs]; ok {
 				deleteCount++
