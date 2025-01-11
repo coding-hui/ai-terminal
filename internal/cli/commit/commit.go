@@ -23,7 +23,7 @@ import (
 
 type Options struct {
 	commitMsgFile  string
-	preview        bool
+	preview        bool  
 	diffUnified    int
 	excludeList    []string
 	templateFile   string
@@ -32,6 +32,7 @@ type Options struct {
 	noConfirm      bool
 	commitLang     string
 	userPrompt     string
+	commitPrefix   string
 
 	cfg *options.Config
 	genericclioptions.IOStreams
@@ -70,6 +71,13 @@ func WithConfig(cfg *options.Config) Option {
 	}
 }
 
+// WithCommitPrefix sets the commit prefix
+func WithCommitPrefix(prefix string) Option {
+	return func(o *Options) {
+		o.commitPrefix = prefix
+	}
+}
+
 // New creates a new Options instance with optional configurations
 func New(opts ...Option) *Options {
 	o := &Options{}
@@ -86,6 +94,7 @@ func NewCmdCommit(ioStreams genericclioptions.IOStreams, cfg *options.Config) *c
 		WithFilesToAdd([]string{}),
 		WithIOStreams(ioStreams),
 		WithConfig(cfg),
+		WithCommitPrefix(""), // Initialize with empty prefix
 	)
 
 	commitCmd := &cobra.Command{
@@ -104,6 +113,7 @@ func NewCmdCommit(ioStreams genericclioptions.IOStreams, cfg *options.Config) *c
 	commitCmd.Flags().BoolVar(&ops.noConfirm, "no-confirm", false, "Skip the confirmation prompt before committing")
 	commitCmd.Flags().StringVar(&ops.commitLang, "lang", "en", "Language for summarizing the commit message (e.g., 'zh-cn', 'en', 'zh-tw', 'ja', 'pt', 'pt-br')")
 	commitCmd.Flags().StringSliceVar(&ops.FilesToAdd, "add", []string{}, "Files to add to the commit (e.g., 'file1.txt file2.txt')")
+	commitCmd.Flags().StringVar(&ops.commitPrefix, "prefix", "", "Specify conventional commit prefix (e.g., 'feat', 'fix', 'docs', 'style', 'refactor', 'test', 'chore')")
 
 	return commitCmd
 }
@@ -158,9 +168,15 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 		return errbook.Wrap("Could not generate summarize title.", err)
 	}
 
-	err = o.summarizePrefix(llmEngine, vars)
-	if err != nil {
-		return errbook.Wrap("Could not generate summarize prefix.", err)
+	// If prefix is specified, use it directly
+	if o.commitPrefix != "" {
+		vars[prompt.SummarizePrefixKey] = strings.ToLower(o.commitPrefix)
+	} else {
+		// Otherwise generate prefix from LLM
+		err = o.summarizePrefix(llmEngine, vars)
+		if err != nil {
+			return errbook.Wrap("Could not generate summarize prefix.", err)
+		}
 	}
 
 	commitMessage, err := o.generateCommitMsg(llmEngine, vars)
