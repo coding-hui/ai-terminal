@@ -112,6 +112,7 @@ type Config struct {
 type AutoCoder struct {
 	PromptPrefix string `yaml:"prompt-prefix" env:"PROMPT_PREFIX"`
 	EditFormat   string `yaml:"edit-format" env:"EDIT_FORMAT"`
+	CommitPrefix string `yaml:"commit-prefix" env:"COMMIT_PREFIX"`
 }
 
 // Model represents the LLM model used in the API call.

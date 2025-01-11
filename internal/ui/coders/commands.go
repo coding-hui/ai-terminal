@@ -286,6 +286,7 @@ func (c *CommandExecutor) commit(ctx context.Context, _ ...string) error {
 		commit.WithFilesToAdd(modifiedFiles),
 		commit.WithIOStreams(ioStreams),
 		commit.WithConfig(c.coder.cfg),
+		commit.WithCommitPrefix(c.coder.cfg.AutoCoder.CommitPrefix), // Use configured commit prefix
 	)
 	if err := commitCmd.AutoCommit(nil, nil); err != nil {
 		return errbook.Wrap("Failed to commit changes", err)

@@ -23,7 +23,7 @@ import (
 
 type Options struct {
 	commitMsgFile  string
-	preview        bool  
+	preview        bool
 	diffUnified    int
 	excludeList    []string
 	templateFile   string
