@@ -140,32 +140,6 @@ func (e *EditBlockCoder) applyEdit(_ context.Context, block PartialCodeBlock, ne
 		return err
 	}
 
-	fileExt := strings.TrimLeft(filepath.Ext(absPath), ".")
-	confirmMsg := fmt.Sprintf(`
-%s
-%s%s
-<<<<<<< SEARCH
-%s
-=======
-%s
->>>>>>> REPLACE
-%s
-
-Are you sure you want to apply these edits? (Y/n)`,
-		block.Path,
-		e.fence[0],
-		fileExt,
-		block.OriginalText,
-		block.UpdatedText,
-		e.fence[1],
-	)
-
-	if needConfirm {
-		if ok := console.WaitForUserConfirmApplyChanges(confirmMsg); !ok {
-			return errbook.NewUserErrorf("Apply %s edit cancelled", block.Path)
-		}
-	}
-
 	newFileContent := doReplace(absPath, string(rawFileContent), block.OriginalText, block.UpdatedText, e.fence)
 	if len(newFileContent) == 0 {
 		return errbook.New("Code block is empty and cannot be updated to file %s", block.Path)
@@ -247,8 +221,8 @@ func (e *EditBlockCoder) Execute(ctx context.Context, messages []llms.ChatMessag
 
 	e.partialResponseContent = chatModel.Output
 
-	if ok := console.WaitForUserConfirmApplyChanges("%s\n\nAre you sure you want to apply these codes? (Y/n)", e.partialResponseContent); !ok {
-		return errbook.NewUserErrorf("Apply %s edit cancelled", e.partialResponseContent)
+	if ok := console.WaitForUserConfirm("Are you sure you want to apply these codes? (Y/n)"); ok {
+		return errbook.NewUserErrorf("Apply edit cancelled!")
 	}
 
 	edits, err := e.GetEdits(ctx)
