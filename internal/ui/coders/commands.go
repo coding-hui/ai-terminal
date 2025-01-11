@@ -51,6 +51,7 @@ func (c *CommandExecutor) registryCmds() {
 	supportCommands["commit"] = c.commit
 	supportCommands["undo"] = c.undo
 	supportCommands["exit"] = c.exit
+	supportCommands["help"] = c.help
 }
 
 func (c *CommandExecutor) isCommand(input string) bool {
@@ -296,6 +297,36 @@ func (c *CommandExecutor) commit(ctx context.Context, _ ...string) error {
 		return errbook.Wrap("Failed to commit changes", err)
 	}
 
+	return nil
+}
+
+func (c *CommandExecutor) help(_ context.Context, _ ...string) error {
+	console.Render("Available commands:")
+
+	commands := []struct {
+		cmd  string
+		desc string
+	}{
+		{"/add <file patterns>", "Add files to the chat"},
+		{"/list", "List all added files"},
+		{"/remove <file patterns>", "Remove files from chat"},
+		{"/ask <question>", "Ask about the code"},
+		{"/drop", "Remove all files from chat"},
+		{"/coding <instructions>", "Code with AI assistance"},
+		{"/commit", "Commit changes"},
+		{"/undo", "Undo last changes"},
+		{"/exit", "Exit the terminal"},
+		{"/help", "Show this help message"},
+	}
+
+	for _, cmd := range commands {
+		formatted := fmt.Sprintf("  %-44s", cmd.cmd)
+		console.Render(
+			"%s%s",
+			console.StdoutStyles().Flag.Render(formatted),
+			console.StdoutStyles().FlagDesc.Render(cmd.desc),
+		)
+	}
 	return nil
 }
 
