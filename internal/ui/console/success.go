@@ -11,19 +11,28 @@ var successStyle = lipgloss.NewStyle().
 	PaddingTop(1).
 	Foreground(lipgloss.Color("2"))
 
-// Success prints the given text with a success style (green color and bold).
-// It adds top padding and automatically appends a newline.
+// Success prints styled success message to standard output.
+// The message is rendered in bold green text with top padding and automatically
+// includes a trailing newline.
+//
+// Use this for indicating successful operations to users.
+//
 // Example:
-//   console.Success("Operation completed successfully")
+//
+//	console.Success("Operation completed successfully")
 func Success(text string) {
 	fmt.Println(successStyle.Render(text))
 }
 
-// Successf prints formatted text with a success style (green color and bold).
-// It adds top padding and automatically appends a newline.
-// The format string follows fmt.Printf conventions.
+// Successf prints a formatted success message to standard output.
+// The message is rendered in bold green text with top padding and automatically
+// includes a trailing newline. Formatting follows fmt.Printf conventions.
+//
+// Use this for indicating parameterized successful operations to users.
+//
 // Example:
-//   console.Successf("Processed %d items successfully", count)
+//
+//	console.Successf("Processed %d items successfully", count)
 func Successf(format string, args ...interface{}) {
 	fmt.Println(successStyle.Render(fmt.Sprintf(format, args...)))
 }
