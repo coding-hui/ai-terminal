@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/coding-hui/ai-terminal/internal/conversation"
+	"github.com/coding-hui/ai-terminal/internal/convo"
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/ui/console"
@@ -34,12 +34,12 @@ func newCmdRemoveHistory(ioStreams genericclioptions.IOStreams) *cobra.Command {
 func (r *rm) Run(args []string) error {
 	chatID := args[0]
 
-	chatHistory, err := conversation.GetConversationStore(*options.NewConfig())
+	chatHistory, err := convo.GetConversationStore(*options.NewConfig())
 	if err != nil {
 		return err
 	}
 
-	exists, err := chatHistory.Exists(context.Background(), chatID)
+	exists, err := chatHistory.ConversationExists(context.Background(), chatID)
 	if err != nil {
 		return errbook.Wrap("Failed to check existence of chat conversation history: "+chatID, err)
 	}
@@ -47,7 +47,7 @@ func (r *rm) Run(args []string) error {
 		return errbook.Wrap("Chat conversation history does not exist: "+chatID, err)
 	}
 
-	err = chatHistory.Clear(context.Background())
+	err = chatHistory.ClearConversations(context.Background())
 	if err != nil {
 		return errbook.Wrap("Failed to remove chat conversation history: "+chatID, err)
 	}

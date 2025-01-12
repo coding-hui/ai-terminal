@@ -14,7 +14,7 @@ import (
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms/openai"
 
-	"github.com/coding-hui/ai-terminal/internal/conversation"
+	"github.com/coding-hui/ai-terminal/internal/convo"
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/ui/console"
@@ -33,7 +33,7 @@ type Engine struct {
 	running bool
 	chatID  string
 
-	chatHistory conversation.Store
+	chatHistory convo.Store
 
 	Model *openai.Model
 }
@@ -101,7 +101,7 @@ func NewLLMEngine(mode EngineMode, cfg *options.Config) (*Engine, error) {
 		return nil, err
 	}
 
-	chatHistory, err := conversation.GetConversationStore(*cfg)
+	chatHistory, err := convo.GetConversationStore(*cfg)
 	if err != nil {
 		return nil, errbook.Wrap("Failed to get chat history store.", err)
 	}
@@ -151,14 +151,14 @@ func (e *Engine) Interrupt() {
 }
 
 func (e *Engine) Clear() {
-	err := e.chatHistory.Clear(context.Background())
+	err := e.chatHistory.ClearConversations(context.Background())
 	if err != nil {
 		errbook.HandleError(errbook.Wrap("failed to clear chat history.", err))
 	}
 }
 
 func (e *Engine) Reset() {
-	err := e.chatHistory.Clear(context.Background())
+	err := e.chatHistory.ClearConversations(context.Background())
 	if err != nil {
 		errbook.HandleError(errbook.Wrap("failed to reset chat history.", err))
 	}

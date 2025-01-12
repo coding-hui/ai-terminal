@@ -10,12 +10,12 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	"github.com/coding-hui/ai-terminal/internal/conversation"
+	"github.com/coding-hui/ai-terminal/internal/convo"
 	"github.com/coding-hui/ai-terminal/internal/options"
 )
 
 func init() {
-	conversation.RegisterConversationStore(&sqliteStoreFactor{})
+	convo.RegisterConversationStore(&sqliteStoreFactor{})
 }
 
 var (
@@ -29,7 +29,7 @@ func (s *sqliteStoreFactor) Type() string {
 	return "db"
 }
 
-func (s *sqliteStoreFactor) Create(options options.Config) (conversation.Store, error) {
+func (s *sqliteStoreFactor) Create(options options.Config) (convo.Store, error) {
 	return NewSqliteStore(
 		WithDataPath(options.DataStore.CachePath),
 		WithConversation(options.ChatID),
@@ -43,24 +43,25 @@ type SqliteStore struct {
 	Ctx context.Context
 	// DBAddress is the address or file path for connecting the db.
 	DBAddress string
-	// ConvoID defines a session name or ConvoID for a conversation.
+	// ConvoID defines a session name or ConvoID for a convo.
 	ConvoID string
 	// DataPath is the path to the data directory.
 	DataPath string
 
-	*conversation.SimpleChatHistoryStore
+	*convo.SimpleChatHistoryStore
+	*sqliteLoadContextStore
 }
 
 // Statically assert that SqliteStore implement the chat message history interface.
-var _ conversation.Store = &SqliteStore{}
+var _ convo.Store = &SqliteStore{}
 
 func NewSqliteStore(options ...SqliteChatMessageHistoryOption) *SqliteStore {
 	return applyChatOptions(options...)
 }
 
-// Latest returns the last message in the chat history.
-func (h *SqliteStore) Latest(ctx context.Context) (*conversation.Conversation, error) {
-	var convo conversation.Conversation
+// LatestConversation returns the last message in the chat history.
+func (h *SqliteStore) LatestConversation(ctx context.Context) (*convo.Conversation, error) {
+	var convo convo.Conversation
 	if err := h.DB.Get(&convo, `
 		SELECT
 		  *
@@ -76,12 +77,12 @@ func (h *SqliteStore) Latest(ctx context.Context) (*conversation.Conversation, e
 	return &convo, nil
 }
 
-// Get retrieves a conversation from the store
-func (h *SqliteStore) Get(ctx context.Context, id string) (*conversation.Conversation, error) {
-	var conversations []conversation.Conversation
+// GetConversation retrieves a convo from the store
+func (h *SqliteStore) GetConversation(ctx context.Context, id string) (*convo.Conversation, error) {
+	var conversations []convo.Conversation
 	var err error
 
-	if len(id) < conversation.Sha1minLen {
+	if len(id) < convo.Sha1minLen {
 		err = h.findByExactTitle(ctx, &conversations, id)
 	} else {
 		err = h.findByIDOrTitle(ctx, &conversations, id)
@@ -99,7 +100,7 @@ func (h *SqliteStore) Get(ctx context.Context, id string) (*conversation.Convers
 	return nil, errNoMatches
 }
 
-func (h *SqliteStore) findByExactTitle(ctx context.Context, result *[]conversation.Conversation, in string) error {
+func (h *SqliteStore) findByExactTitle(ctx context.Context, result *[]convo.Conversation, in string) error {
 	if err := h.DB.SelectContext(ctx, result, h.DB.Rebind(`
 		SELECT
 		  *
@@ -113,7 +114,7 @@ func (h *SqliteStore) findByExactTitle(ctx context.Context, result *[]conversati
 	return nil
 }
 
-func (h *SqliteStore) findByIDOrTitle(ctx context.Context, result *[]conversation.Conversation, in string) error {
+func (h *SqliteStore) findByIDOrTitle(ctx context.Context, result *[]convo.Conversation, in string) error {
 	if err := h.DB.SelectContext(ctx, result, h.DB.Rebind(`
 		SELECT
 		  *
@@ -128,9 +129,9 @@ func (h *SqliteStore) findByIDOrTitle(ctx context.Context, result *[]conversatio
 	return nil
 }
 
-// List retrieves all conversation ConvoID from the store
-func (h *SqliteStore) List(ctx context.Context) ([]conversation.Conversation, error) {
-	var convos []conversation.Conversation
+// ListConversations retrieves all convo ConvoID from the store
+func (h *SqliteStore) ListConversations(ctx context.Context) ([]convo.Conversation, error) {
+	var convos []convo.Conversation
 	if err := h.DB.SelectContext(ctx, &convos, `
 		SELECT
 		  *
@@ -139,14 +140,14 @@ func (h *SqliteStore) List(ctx context.Context) ([]conversation.Conversation, er
 		ORDER BY
 		  updated_at DESC
 	`); err != nil {
-		return convos, fmt.Errorf("List: %w", err)
+		return convos, fmt.Errorf("ListContextsByteConvoID: %w", err)
 	}
 	return convos, nil
 }
 
-// ListOlderThan retrieves all conversation ConvoID from the store that are older than the given time.
-func (h *SqliteStore) ListOlderThan(ctx context.Context, t time.Duration) ([]conversation.Conversation, error) {
-	var convos []conversation.Conversation
+// ListConversationsOlderThan retrieves all convo ConvoID from the store that are older than the given time.
+func (h *SqliteStore) ListConversationsOlderThan(ctx context.Context, t time.Duration) ([]convo.Conversation, error) {
+	var convos []convo.Conversation
 	if err := h.DB.SelectContext(ctx, &convos, h.DB.Rebind(`
 		SELECT
 		  *
@@ -160,7 +161,7 @@ func (h *SqliteStore) ListOlderThan(ctx context.Context, t time.Duration) ([]con
 	return convos, nil
 }
 
-func (h *SqliteStore) Save(ctx context.Context, id, title, model string) error {
+func (h *SqliteStore) SaveConversation(ctx context.Context, id, title, model string) error {
 	res, err := h.DB.ExecContext(ctx, h.DB.Rebind(`
 		UPDATE conversations
 		SET
@@ -171,12 +172,12 @@ func (h *SqliteStore) Save(ctx context.Context, id, title, model string) error {
 		  id = ?
 	`), title, model, id)
 	if err != nil {
-		return fmt.Errorf("Save: %w", err)
+		return fmt.Errorf("SaveContext: %w", err)
 	}
 
 	rows, err := res.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("Save: %w", err)
+		return fmt.Errorf("SaveContext: %w", err)
 	}
 
 	if rows > 0 {
@@ -189,33 +190,33 @@ func (h *SqliteStore) Save(ctx context.Context, id, title, model string) error {
 		VALUES
 		  (?, ?, ?)
 	`), id, title, model); err != nil {
-		return fmt.Errorf("Save: %w", err)
+		return fmt.Errorf("SaveContext: %w", err)
 	}
 
 	return nil
 }
 
-func (h *SqliteStore) Delete(ctx context.Context, id string) error {
+func (h *SqliteStore) DeleteConversation(ctx context.Context, id string) error {
 	if _, err := h.DB.ExecContext(ctx, h.DB.Rebind(`
 		DELETE FROM conversations
 		WHERE
 		  id = ?
 	`), id); err != nil {
-		return fmt.Errorf("Delete: %w", err)
+		return fmt.Errorf("DeleteContexts: %w", err)
 	}
 	return nil
 }
 
-// Clear resets messages.
-func (h *SqliteStore) Clear(ctx context.Context) error {
+// ClearConversations resets messages.
+func (h *SqliteStore) ClearConversations(ctx context.Context) error {
 	if _, err := h.DB.ExecContext(ctx, `DELETE FROM conversations`); err != nil {
-		return fmt.Errorf("Clear: %w", err)
+		return fmt.Errorf("CleanContexts: %w", err)
 	}
 	return nil
 }
 
-// Exists checks if the given chat conversation exists.
-func (h *SqliteStore) Exists(ctx context.Context, id string) (bool, error) {
+// ConversationExists checks if the given chat convo exists.
+func (h *SqliteStore) ConversationExists(ctx context.Context, id string) (bool, error) {
 	var count int
 	if err := h.DB.GetContext(ctx, &count, h.DB.Rebind(`
 		SELECT

@@ -6,15 +6,9 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	"github.com/coding-hui/ai-terminal/internal/conversation"
+	"github.com/coding-hui/ai-terminal/internal/convo"
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 )
-
-// DefaultLimit sets a default limit for select queries.
-const DefaultLimit = 1000
-
-// DefaultTableName sets a default table name.
-const DefaultTableName = "ai_terminal_conversations"
 
 // DefaultSchema sets a default schema to be run after connecting.
 const DefaultSchema = `CREATE TABLE
@@ -27,7 +21,22 @@ const DefaultSchema = `CREATE TABLE
 		    CHECK (title <> '')
 		  );
 CREATE INDEX IF NOT EXISTS idx_conv_id ON conversations (id);
-CREATE INDEX IF NOT EXISTS idx_conv_title ON conversations (title)
+CREATE INDEX IF NOT EXISTS idx_conv_title ON conversations (title);
+
+CREATE TABLE IF NOT EXISTS load_contexts (
+	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+	type string NOT NULL,
+	url string,
+	file_path string,
+	content text NOT NULL,
+	name string NOT NULL,
+	conversation_id string NOT NULL,
+	updated_at datetime NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
+	CHECK (name <> ''),
+	CHECK (conversation_id <> ''),
+	FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_loadctx_convo ON load_contexts (conversation_id);
 `
 
 // SqliteChatMessageHistoryOption is a function for creating new
@@ -97,8 +106,6 @@ func applyChatOptions(options ...SqliteChatMessageHistoryOption) *SqliteStore {
 		h.DataPath = "./data"
 	}
 
-	h.SimpleChatHistoryStore = conversation.NewSimpleChatHistoryStore(h.DataPath)
-
 	if h.DB == nil {
 		db, err := sqlx.Open("sqlite", h.DBAddress)
 		if err != nil {
@@ -114,9 +121,12 @@ func applyChatOptions(options ...SqliteChatMessageHistoryOption) *SqliteStore {
 	}
 
 	if _, err := h.DB.ExecContext(h.Ctx, DefaultSchema); err != nil {
-		errbook.HandleError(errbook.Wrap("Could not create conversation db table.", err))
+		errbook.HandleError(errbook.Wrap("Could not create convo db table.", err))
 		os.Exit(1)
 	}
+
+	h.SimpleChatHistoryStore = convo.NewSimpleChatHistoryStore(h.DataPath)
+	h.sqliteLoadContextStore = newLoadContextStore(h.DB)
 
 	return h
 }

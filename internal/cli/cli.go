@@ -32,7 +32,7 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 	"github.com/coding-hui/ai-terminal/internal/util/templates"
 
-	_ "github.com/coding-hui/ai-terminal/internal/conversation/sqlite3"
+	_ "github.com/coding-hui/ai-terminal/internal/convo/sqlite3"
 )
 
 var logFlushFreq = pflag.Duration(options.FlagLogFlushFrequency, 5*time.Second, "Maximum number of seconds between log flushes")

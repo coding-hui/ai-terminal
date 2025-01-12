@@ -1,4 +1,4 @@
-package conversation
+package convo
 
 import (
 	"encoding/gob"

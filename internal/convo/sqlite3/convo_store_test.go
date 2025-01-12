@@ -11,14 +11,14 @@ import (
 
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
 
-	"github.com/coding-hui/ai-terminal/internal/conversation"
+	"github.com/coding-hui/ai-terminal/internal/convo"
 )
 
 func TestSqliteStore(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	convoID := conversation.NewConversationID()
+	convoID := convo.NewConversationID()
 	h := NewSqliteStore(
 		WithConversation(convoID),
 		WithContext(ctx),
@@ -26,24 +26,24 @@ func TestSqliteStore(t *testing.T) {
 	)
 
 	t.Run("Save and Get conversation", func(t *testing.T) {
-		err := h.Save(ctx, convoID, "foo", "test")
+		err := h.SaveConversation(ctx, convoID, "foo", "test")
 		require.NoError(t, err)
 
-		convo, err := h.Get(ctx, convoID)
+		convo, err := h.GetConversation(ctx, convoID)
 		require.NoError(t, err)
 		assert.Equal(t, "foo", convo.Title)
 		assert.False(t, convo.UpdatedAt.IsZero())
 	})
 
 	t.Run("Get non-existent conversation", func(t *testing.T) {
-		_, err := h.Get(ctx, "nonexistent")
+		_, err := h.GetConversation(ctx, "nonexistent")
 		assert.True(t, errors.Is(err, errNoMatches))
 	})
 
 	t.Run("Delete conversation", func(t *testing.T) {
-		require.NoError(t, h.Delete(ctx, convoID))
+		require.NoError(t, h.DeleteConversation(ctx, convoID))
 
-		ok, err := h.Exists(ctx, convoID)
+		ok, err := h.ConversationExists(ctx, convoID)
 		require.NoError(t, err)
 		assert.False(t, ok)
 	})
@@ -51,20 +51,20 @@ func TestSqliteStore(t *testing.T) {
 	t.Run("List conversations", func(t *testing.T) {
 		// Create multiple conversations
 		ids := []string{
-			conversation.NewConversationID(),
-			conversation.NewConversationID(),
+			convo.NewConversationID(),
+			convo.NewConversationID(),
 		}
-		require.NoError(t, h.Save(ctx, ids[0], "first", "test"))
-		require.NoError(t, h.Save(ctx, ids[1], "second", "test"))
+		require.NoError(t, h.SaveConversation(ctx, ids[0], "first", "test"))
+		require.NoError(t, h.SaveConversation(ctx, ids[1], "second", "test"))
 
-		convos, err := h.List(ctx)
+		convos, err := h.ListConversations(ctx)
 		require.NoError(t, err)
 		assert.GreaterOrEqual(t, len(convos), 2)
 	})
 
 	t.Run("ListOlderThan", func(t *testing.T) {
-		oldID := conversation.NewConversationID()
-		require.NoError(t, h.Save(ctx, oldID, "old", "test"))
+		oldID := convo.NewConversationID()
+		require.NoError(t, h.SaveConversation(ctx, oldID, "old", "test"))
 
 		// Update timestamp to be old
 		_, err := h.DB.ExecContext(ctx, `
@@ -74,15 +74,15 @@ func TestSqliteStore(t *testing.T) {
 		`, oldID)
 		require.NoError(t, err)
 
-		convos, err := h.ListOlderThan(ctx, 30*time.Minute)
+		convos, err := h.ListConversationsOlderThan(ctx, 30*time.Minute)
 		require.NoError(t, err)
 		assert.GreaterOrEqual(t, len(convos), 1)
 	})
 
 	t.Run("Clear all conversations", func(t *testing.T) {
-		require.NoError(t, h.Clear(ctx))
+		require.NoError(t, h.ClearConversations(ctx))
 
-		convos, err := h.List(ctx)
+		convos, err := h.ListConversations(ctx)
 		require.NoError(t, err)
 		assert.Empty(t, convos)
 	})
@@ -92,7 +92,7 @@ func TestSqliteChatMessageHistory(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	convoID := conversation.NewConversationID()
+	convoID := convo.NewConversationID()
 	h := NewSqliteStore(
 		WithContext(ctx),
 		WithDataPath(t.TempDir()),

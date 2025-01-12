@@ -79,17 +79,17 @@ func (o *ls) Run(_ []string) error {
 	//	return err
 	//}
 	//
-	//chatHistory, err := conversation.GetConversationStore(*cfg, llm.ChatEngineMode.String())
+	//chatHistory, err := convo.GetConversationStore(*cfg, llm.ChatEngineMode.String())
 	//if err != nil {
 	//	return err
 	//}
 	//
-	//allSession, err := chatHistory.List(context.Background())
+	//allSession, err := chatHistory.ListContextsByteConvoID(context.Background())
 	//if err != nil {
 	//	return err
 	//}
 	//
-	//// Fix: Return early if there is no history conversation
+	//// Fix: Return early if there is no history convo
 	//if len(allSession) == 0 {
 	//	color.Cyan("Could not find any chat sessions.")
 	//	return nil
