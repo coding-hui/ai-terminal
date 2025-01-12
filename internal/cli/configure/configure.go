@@ -44,6 +44,7 @@ func NewCmdConfigure(ioStreams genericclioptions.IOStreams, cfg *options.Config)
 
 	cmd.AddCommand(newCmdResetConfig(ioStreams, cfg))
 	cmd.AddCommand(newCmdEchoConfig(ioStreams, cfg))
+	cmd.AddCommand(newCmdGetConfig(ioStreams, cfg))
 
 	return cmd
 }
