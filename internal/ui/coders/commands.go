@@ -288,17 +288,30 @@ func (c *CommandExecutor) coding(ctx context.Context, args ...string) error {
 }
 
 func (c *CommandExecutor) undo(ctx context.Context, _ ...string) error {
+	// First check if there are any files in the chat
+	if len(c.coder.absFileNames) == 0 {
+		return errbook.New("No files added. Please use /add to add files first")
+	}
+
 	modifiedFiles, err := c.editor.GetModifiedFiles(ctx)
 	if err != nil {
 		return err
 	}
 	if len(modifiedFiles) == 0 {
-		return errbook.New("There are no file modifications")
-	}
-	if err := c.coder.repo.RollbackLastCommit(); err != nil {
-		return errbook.Wrap("Failed to get modified files", err)
+		return errbook.New("There are no file modifications to undo")
 	}
 
+	// Confirm with user before undoing
+	if !console.WaitForUserConfirm(console.No, "Are you sure you want to undo the last changes?") {
+		console.Render("Undo canceled")
+		return nil
+	}
+
+	if err := c.coder.repo.RollbackLastCommit(); err != nil {
+		return errbook.Wrap("Failed to undo changes", err)
+	}
+
+	console.Render("Successfully undone last changes")
 	return nil
 }
 
