@@ -26,7 +26,13 @@ type Styles struct {
 	SHA1,
 	Timeago,
 	CommitStep,
-	CommitSuccess lipgloss.Style
+	CommitSuccess,
+	DiffHeader,
+	DiffFileHeader,
+	DiffHunkHeader,
+	DiffAdded,
+	DiffRemoved,
+	DiffContext lipgloss.Style
 }
 
 func MakeStyles(r *lipgloss.Renderer) (s Styles) {
@@ -52,6 +58,14 @@ func MakeStyles(r *lipgloss.Renderer) (s Styles) {
 	// Commit message styles
 	s.CommitStep = r.NewStyle().Foreground(lipgloss.Color("#00CED1")).Bold(true)
 	s.CommitSuccess = r.NewStyle().Foreground(lipgloss.Color("#32CD32"))
+
+	// Diff styles
+	s.DiffHeader = r.NewStyle().Bold(true)
+	s.DiffFileHeader = r.NewStyle().Foreground(lipgloss.Color("#00CED1")).Bold(true)
+	s.DiffHunkHeader = r.NewStyle().Foreground(lipgloss.Color("#888888")).Bold(true)
+	s.DiffAdded = r.NewStyle().Foreground(lipgloss.Color("#00AA00"))
+	s.DiffRemoved = r.NewStyle().Foreground(lipgloss.Color("#AA0000"))
+	s.DiffContext = r.NewStyle().Foreground(lipgloss.Color("#888888"))
 
 	return s
 }

@@ -6,8 +6,11 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/coding-hui/ai-terminal/internal/ui/console"
 )
 
 const (
@@ -242,71 +245,133 @@ func (c *Command) commit(val string) *exec.Cmd {
 	)
 }
 
+// DiffStats holds statistics about the diff
+type DiffStats struct {
+	Added      int
+	Removed    int
+	Total      int
+	Context    int
+	FileHeader string
+}
+
 // FormatDiff formats git diff output with color and stats
 func (c *Command) FormatDiff(diffOutput string) string {
-	lines := strings.Split(diffOutput, "\n")
-	var formattedLines []string
-	var stats struct {
-		added   int
-		removed int
-		total   int
+	if diffOutput == "" {
+		return ""
 	}
 
-	// First pass to calculate stats
+	lines := strings.Split(diffOutput, "\n")
+	stats := c.calculateDiffStats(lines)
+	formattedLines := c.formatDiffLines(lines, stats)
+
+	header := c.createDiffHeader(stats)
+	return header + strings.Join(formattedLines, "\n")
+}
+
+// calculateDiffStats calculates statistics from diff lines
+func (c *Command) calculateDiffStats(lines []string) *DiffStats {
+	stats := &DiffStats{}
+	var origLineNum, updatedLineNum int
+	var lastNonDeleted int
+
 	for _, line := range lines {
 		switch {
+		case strings.HasPrefix(line, "+++"):
+			stats.FileHeader = line
 		case strings.HasPrefix(line, "+"):
-			stats.added++
-			stats.total++
+			stats.Added++
+			stats.Total++
+			updatedLineNum++
+			lastNonDeleted = updatedLineNum
 		case strings.HasPrefix(line, "-"):
-			stats.removed++
-			stats.total++
+			stats.Removed++
+			stats.Total++
+			origLineNum++
 		case strings.HasPrefix(line, "@@"):
-			stats.total++
+			stats.Total++
+			if matches := regexp.MustCompile(`@@ -(\d+),\d+ \+(\d+),\d+ @@`).FindStringSubmatch(line); len(matches) > 0 {
+				origLineNum, _ = strconv.Atoi(matches[1])
+				updatedLineNum, _ = strconv.Atoi(matches[2])
+				lastNonDeleted = updatedLineNum
+			}
+		case strings.HasPrefix(line, " "):
+			stats.Context++
+			stats.Total++
+			origLineNum++
+			updatedLineNum++
+			lastNonDeleted = updatedLineNum
 		}
 	}
 
-	// Create progress bar
-	progress := c.createProgressBar(stats.added, stats.removed, stats.total)
+	stats.Context = lastNonDeleted
+	return stats
+}
 
-	// Second pass to format lines
+// formatDiffLines formats diff lines with proper styling
+func (c *Command) formatDiffLines(lines []string, stats *DiffStats) []string {
+	var formattedLines []string
+	var origLineNum, updatedLineNum int
+
 	for _, line := range lines {
 		switch {
-		case strings.HasPrefix(line, "+"):
+		case strings.HasPrefix(line, "+++") || strings.HasPrefix(line, "---"):
 			formattedLines = append(formattedLines,
-				fmt.Sprintf("\x1b[32m%s\x1b[0m", line)) // Green for additions
-		case strings.HasPrefix(line, "-"):
-			formattedLines = append(formattedLines,
-				fmt.Sprintf("\x1b[31m%s\x1b[0m", line)) // Red for deletions
+				console.StdoutStyles().DiffFileHeader.Render(line))
 		case strings.HasPrefix(line, "@@"):
 			formattedLines = append(formattedLines,
-				fmt.Sprintf("\x1b[33m%s\x1b[0m", line)) // Yellow for headers
+				console.StdoutStyles().DiffHunkHeader.Render(line))
+			if matches := regexp.MustCompile(`@@ -(\d+),\d+ \+(\d+),\d+ @@`).FindStringSubmatch(line); len(matches) > 0 {
+				origLineNum, _ = strconv.Atoi(matches[1])
+				updatedLineNum, _ = strconv.Atoi(matches[2])
+			}
+		case strings.HasPrefix(line, "+"):
+			formattedLines = append(formattedLines,
+				console.StdoutStyles().DiffAdded.Render(fmt.Sprintf("%4d + %s", updatedLineNum, line[1:])))
+			updatedLineNum++
+		case strings.HasPrefix(line, "-"):
+			formattedLines = append(formattedLines,
+				console.StdoutStyles().DiffRemoved.Render(fmt.Sprintf("%4d - %s", origLineNum, line[1:])))
+			origLineNum++
+		case strings.HasPrefix(line, " "):
+			formattedLines = append(formattedLines,
+				console.StdoutStyles().DiffContext.Render(fmt.Sprintf("%4d   %s", origLineNum, line[1:])))
+			origLineNum++
+			updatedLineNum++
 		default:
 			formattedLines = append(formattedLines, line)
 		}
 	}
 
-	// Add header with stats
-	header := fmt.Sprintf("Changes (%d added, %d removed):\n%s\n",
-		stats.added, stats.removed, progress)
-
-	return header + strings.Join(formattedLines, "\n")
+	return formattedLines
 }
 
-// createProgressBar generates a visual progress bar for diff stats
-func (c *Command) createProgressBar(added, removed, total int) string {
+// createDiffHeader creates the header with stats and progress
+func (c *Command) createDiffHeader(stats *DiffStats) string {
+	progress := c.createProgressBar(stats.Added, stats.Removed, stats.Total, stats.Context, stats.Total)
+
+	return console.StdoutStyles().DiffHeader.Render(
+		fmt.Sprintf("Changes (%d added, %d removed, %d unchanged):\n%s\n",
+			stats.Added, stats.Removed, stats.Context, progress))
+}
+
+// createProgressBar generates a visual progress bar with line numbers
+func (c *Command) createProgressBar(added, removed, total, lastNonDeleted, totalLines int) string {
 	const barWidth = 30
-	if total == 0 {
+	if totalLines == 0 {
 		return ""
 	}
 
-	addedBlocks := int(float64(added) / float64(total) * barWidth)
-	removedBlocks := int(float64(removed) / float64(total) * barWidth)
-	unchangedBlocks := barWidth - addedBlocks - removedBlocks
+	// Calculate progress based on last non-deleted line
+	progress := float64(lastNonDeleted) / float64(totalLines)
 
-	bar := strings.Repeat("█", addedBlocks) +
-		strings.Repeat("░", removedBlocks) +
-		strings.Repeat(" ", unchangedBlocks)
+	// Calculate bar segments
+	filledBlocks := int(progress * barWidth)
+	emptyBlocks := barWidth - filledBlocks
 
-	return fmt.Sprintf("[%s] %d changes", bar, total)
+	bar := strings.Repeat("█", filledBlocks) +
+		strings.Repeat(" ", emptyBlocks)
+
+	percentage := progress * 100
+	return fmt.Sprintf("%3d / %3d lines [%s] %3.0f%%",
+		lastNonDeleted, totalLines, bar, percentage)
 }
