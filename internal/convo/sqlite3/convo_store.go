@@ -32,7 +32,7 @@ func (s *sqliteStoreFactor) Type() string {
 func (s *sqliteStoreFactor) Create(options options.Config) (convo.Store, error) {
 	return NewSqliteStore(
 		WithDataPath(options.DataStore.CachePath),
-		WithConversation(options.ChatID),
+		WithConversation(options.ConversationID),
 	), nil
 }
 

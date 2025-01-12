@@ -31,7 +31,6 @@ type Engine struct {
 	channel chan StreamCompletionOutput
 	pipe    string
 	running bool
-	chatID  string
 
 	chatHistory convo.Store
 
@@ -106,11 +105,6 @@ func NewLLMEngine(mode EngineMode, cfg *options.Config) (*Engine, error) {
 		return nil, errbook.Wrap("Failed to get chat history store.", err)
 	}
 
-	charID := defaultChatID
-	if cfg.ChatID != "" {
-		charID = cfg.ChatID
-	}
-
 	return &Engine{
 		mode:        mode,
 		config:      cfg,
@@ -118,7 +112,6 @@ func NewLLMEngine(mode EngineMode, cfg *options.Config) (*Engine, error) {
 		channel:     make(chan StreamCompletionOutput),
 		pipe:        "",
 		running:     false,
-		chatID:      charID,
 		chatHistory: chatHistory,
 	}, nil
 }
@@ -262,7 +255,7 @@ func (e *Engine) appendUserMessage(content string) {
 		return
 	}
 	if e.chatHistory != nil {
-		if err := e.chatHistory.AddUserMessage(context.Background(), e.chatID, content); err != nil {
+		if err := e.chatHistory.AddUserMessage(context.Background(), e.config.ConversationID, content); err != nil {
 			errbook.HandleError(errbook.Wrap("failed to add user chat input message to history", err))
 		}
 	}
@@ -270,7 +263,7 @@ func (e *Engine) appendUserMessage(content string) {
 
 func (e *Engine) appendAssistantMessage(content string) {
 	if e.chatHistory != nil {
-		if err := e.chatHistory.AddAIMessage(context.Background(), e.chatID, content); err != nil {
+		if err := e.chatHistory.AddAIMessage(context.Background(), e.config.ConversationID, content); err != nil {
 			errbook.HandleError(errbook.Wrap("failed to add assistant chat output message to history", err))
 		}
 	}
@@ -297,7 +290,7 @@ func (e *Engine) prepareCompletionMessages() []llms.MessageContent {
 	}
 
 	if e.chatHistory != nil {
-		history, err := e.chatHistory.Messages(context.Background(), e.chatID)
+		history, err := e.chatHistory.Messages(context.Background(), e.config.ConversationID)
 		if err != nil {
 			errbook.HandleError(errbook.Wrap("failed to get chat history", err))
 		}

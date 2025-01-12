@@ -99,7 +99,7 @@ type Config struct {
 	AutoCoder     AutoCoder  `yaml:"auto-coder"`
 
 	DefaultPromptMode string `yaml:"default-prompt-mode,omitempty"`
-	ChatID            string `yaml:"chat-id,omitempty"`
+	ConversationID    string `yaml:"convo-id,omitempty"`
 	Ai                Ai     `yaml:"ai"`
 
 	Models       map[string]Model
