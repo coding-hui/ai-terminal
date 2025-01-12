@@ -1,6 +1,7 @@
 package convo
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -23,27 +24,45 @@ type Factory interface {
 }
 
 func GetConversationStore(cfg *options.Config) (Store, error) {
-	if cfg.ConversationID == "" {
-		cfg.ConversationID = NewConversationID()
-	}
-
 	dsType := cfg.DataStore.Type
-	if store, ok := conversationStores[dsType]; ok {
-		return store, nil
+
+	// Check if store already exists
+	store, exists := conversationStores[dsType]
+	if !exists {
+		// Create new store if it doesn't exist
+		factory, ok := conversationStoreFactories[dsType]
+		if !ok {
+			return nil, fmt.Errorf("chat history store %s is not supported", dsType)
+		}
+
+		newStore, err := factory.Create(cfg)
+		if err != nil {
+			return nil, errbook.Wrap("Failed to create chat history store: "+dsType, err)
+		}
+
+		lock.Lock()
+		conversationStores[dsType] = newStore
+		lock.Unlock()
+		store = newStore
 	}
 
-	if factory, ok := conversationStoreFactories[dsType]; ok {
-		if store, err := factory.Create(cfg); err != nil {
-			return nil, errbook.Wrap("Failed to create chat history store: "+dsType, err)
+	// Handle conversation ID if not provided
+	if cfg.ConversationID == "" {
+		// Try to get latest conversation
+		latest, err := store.LatestConversation(context.Background())
+		if err != nil {
+			return nil, errbook.Wrap("Failed to get latest conversation", err)
+		}
+
+		if latest != nil {
+			cfg.ConversationID = latest.ID
 		} else {
-			lock.TryLock()
-			defer lock.Unlock()
-			conversationStores[dsType] = store
-			return store, nil
+			// No conversations exist, generate new ID
+			cfg.ConversationID = NewConversationID()
 		}
 	}
 
-	return nil, fmt.Errorf("chat history store %s is not supported", dsType)
+	return store, nil
 }
 
 func RegisterConversationStore(factory Factory) {
