@@ -13,9 +13,16 @@ func NewCmdContext(ioStreams genericclioptions.IOStreams, cfg *options.Config) *
 		Use:     "context",
 		Aliases: []string{"context", "ctx"},
 		Short:   "Manage context for AI interactions",
+		Run: func(cmd *cobra.Command, args []string) {
+			_ = cmd.Help()
+		},
 	}
 
-	cmd.AddCommand(newCmdLoad(ioStreams, cfg))
+	cmd.AddCommand(
+		newCmdLoad(ioStreams, cfg),
+		newCmdList(ioStreams, cfg),
+		newCmdClean(ioStreams, cfg),
+	)
 
 	return cmd
 }

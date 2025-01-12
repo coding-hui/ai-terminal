@@ -115,6 +115,6 @@ type LoadContextStore interface {
 	ListContextsByteConvoID(ctx context.Context, conversationID string) ([]LoadContext, error)
 	// DeleteContexts removes a load context
 	DeleteContexts(ctx context.Context, id uint64) error
-	// CleanContexts removes all load contexts for a convo
-	CleanContexts(ctx context.Context, conversationID string) error
+	// CleanContexts removes all load contexts for a convo and returns the count deleted
+	CleanContexts(ctx context.Context, conversationID string) (int64, error)
 }

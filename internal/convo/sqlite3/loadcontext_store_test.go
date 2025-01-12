@@ -113,7 +113,8 @@ func TestLoadContextStore(t *testing.T) {
 		require.NoError(t, store.SaveContext(ctx, lc1))
 		require.NoError(t, store.SaveContext(ctx, lc2))
 
-		require.NoError(t, store.CleanContexts(ctx, convID))
+		_, err := store.CleanContexts(ctx, convID)
+		require.NoError(t, err)
 
 		contexts, err := store.ListContextsByteConvoID(ctx, convID)
 		require.NoError(t, err)

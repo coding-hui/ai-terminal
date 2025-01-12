@@ -11,8 +11,8 @@ func NewCmdHistory(ioStreams genericclioptions.IOStreams) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "history",
 		Short: "Managing chat conversation history.",
-		PostRunE: func(c *cobra.Command, args []string) error {
-			return nil
+		Run: func(cmd *cobra.Command, args []string) {
+			_ = cmd.Help()
 		},
 	}
 

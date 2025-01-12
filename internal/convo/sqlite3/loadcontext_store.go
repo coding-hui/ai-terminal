@@ -116,22 +116,22 @@ func (s *sqliteLoadContextStore) DeleteContexts(ctx context.Context, id uint64) 
 	return nil
 }
 
-func (s *sqliteLoadContextStore) CleanContexts(ctx context.Context, conversationID string) error {
+func (s *sqliteLoadContextStore) CleanContexts(ctx context.Context, conversationID string) (int64, error) {
 	res, err := s.db.ExecContext(ctx, s.db.Rebind(`
 		DELETE FROM load_contexts WHERE conversation_id = ?
 	`), conversationID)
 	if err != nil {
-		return fmt.Errorf("CleanContexts: %w", err)
+		return 0, fmt.Errorf("CleanContexts: %w", err)
 	}
 
 	rows, err := res.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("CleanContexts: %w", err)
+		return 0, fmt.Errorf("CleanContexts: %w", err)
 	}
 
 	if rows == 0 {
-		return fmt.Errorf("CleanContexts: no rows affected")
+		return 0, fmt.Errorf("CleanContexts: no rows affected")
 	}
 
-	return nil
+	return rows, nil
 }
