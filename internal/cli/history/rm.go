@@ -34,7 +34,7 @@ func newCmdRemoveHistory(ioStreams genericclioptions.IOStreams) *cobra.Command {
 func (r *rm) Run(args []string) error {
 	chatID := args[0]
 
-	chatHistory, err := convo.GetConversationStore(*options.NewConfig())
+	chatHistory, err := convo.GetConversationStore(options.NewConfig())
 	if err != nil {
 		return err
 	}

@@ -29,7 +29,7 @@ func (s *sqliteStoreFactor) Type() string {
 	return "db"
 }
 
-func (s *sqliteStoreFactor) Create(options options.Config) (convo.Store, error) {
+func (s *sqliteStoreFactor) Create(options *options.Config) (convo.Store, error) {
 	return NewSqliteStore(
 		WithDataPath(options.DataStore.CachePath),
 		WithConversation(options.ConversationID),

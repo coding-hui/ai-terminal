@@ -32,7 +32,7 @@ type Engine struct {
 	pipe    string
 	running bool
 
-	chatHistory convo.Store
+	convoStore convo.Store
 
 	Model *openai.Model
 }
@@ -100,19 +100,19 @@ func NewLLMEngine(mode EngineMode, cfg *options.Config) (*Engine, error) {
 		return nil, err
 	}
 
-	chatHistory, err := convo.GetConversationStore(*cfg)
+	chatHistory, err := convo.GetConversationStore(cfg)
 	if err != nil {
 		return nil, errbook.Wrap("Failed to get chat history store.", err)
 	}
 
 	return &Engine{
-		mode:        mode,
-		config:      cfg,
-		Model:       llm,
-		channel:     make(chan StreamCompletionOutput),
-		pipe:        "",
-		running:     false,
-		chatHistory: chatHistory,
+		mode:       mode,
+		config:     cfg,
+		Model:      llm,
+		channel:    make(chan StreamCompletionOutput),
+		pipe:       "",
+		running:    false,
+		convoStore: chatHistory,
 	}, nil
 }
 
@@ -141,20 +141,6 @@ func (e *Engine) Interrupt() {
 	}
 
 	e.running = false
-}
-
-func (e *Engine) Clear() {
-	err := e.chatHistory.ClearConversations(context.Background())
-	if err != nil {
-		errbook.HandleError(errbook.Wrap("failed to clear chat history.", err))
-	}
-}
-
-func (e *Engine) Reset() {
-	err := e.chatHistory.ClearConversations(context.Background())
-	if err != nil {
-		errbook.HandleError(errbook.Wrap("failed to reset chat history.", err))
-	}
 }
 
 func (e *Engine) CreateCompletion(messages []llms.ChatMessage) (*EngineExecOutput, error) {
@@ -254,16 +240,16 @@ func (e *Engine) appendUserMessage(content string) {
 		errbook.HandleError(errbook.New("empty input is not allowed."))
 		return
 	}
-	if e.chatHistory != nil {
-		if err := e.chatHistory.AddUserMessage(context.Background(), e.config.ConversationID, content); err != nil {
+	if e.convoStore != nil {
+		if err := e.convoStore.AddUserMessage(context.Background(), e.config.ConversationID, content); err != nil {
 			errbook.HandleError(errbook.Wrap("failed to add user chat input message to history", err))
 		}
 	}
 }
 
 func (e *Engine) appendAssistantMessage(content string) {
-	if e.chatHistory != nil {
-		if err := e.chatHistory.AddAIMessage(context.Background(), e.config.ConversationID, content); err != nil {
+	if e.convoStore != nil {
+		if err := e.convoStore.AddAIMessage(context.Background(), e.config.ConversationID, content); err != nil {
 			errbook.HandleError(errbook.Wrap("failed to add assistant chat output message to history", err))
 		}
 	}
@@ -289,8 +275,8 @@ func (e *Engine) prepareCompletionMessages() []llms.MessageContent {
 		)
 	}
 
-	if e.chatHistory != nil {
-		history, err := e.chatHistory.Messages(context.Background(), e.config.ConversationID)
+	if e.convoStore != nil {
+		history, err := e.convoStore.Messages(context.Background(), e.config.ConversationID)
 		if err != nil {
 			errbook.HandleError(errbook.Wrap("failed to get chat history", err))
 		}
