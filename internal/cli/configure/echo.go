@@ -25,7 +25,18 @@ func newCmdEchoConfig(ioStreams genericclioptions.IOStreams, cfg *options.Config
 	}
 	cmd := &cobra.Command{
 		Use:          "echo",
-		Short:        "Echo your current settings.",
+		Short:        "Display current configuration settings",
+		Example: `  # Show full configuration
+  ai cfg echo
+  
+  # Show specific setting using template
+  ai cfg echo -t "{{.Model}}"
+  
+  # Show API endpoints
+  ai cfg echo -t "{{range .APIs}}{{.Name}}: {{.BaseURL}}\n{{end}}"
+  
+  # Check cache location
+  ai cfg echo -t "Cache: {{.DataStore.CachePath}}"`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return e.echoSettings(cfg)

@@ -18,18 +18,24 @@ func NewCmdConfigure(ioStreams genericclioptions.IOStreams, cfg *options.Config)
 	cmd := &cobra.Command{
 		Use:     "configure",
 		Aliases: []string{"conf", "cfg", "config", "settings"},
-		Short:   "Open settings in your $EDITOR.",
-		Example: `  # Open settings in editor
+		Short:   "Manage AI Terminal configuration settings",
+		Example: `  # Open settings in default editor
   ai cfg
   
-  # Get specific config value
+  # Get specific config value (e.g. cache path)
   ai cfg get -t "{{.DataStore.CachePath}}"
   
-  # Get API endpoint
+  # Get current API endpoint
   ai cfg get -t "{{.API}}"
   
-  # Get default model
-  ai cfg get -t "{{.Model}}"`,
+  # Get default model name
+  ai cfg get -t "{{.Model}}"
+  
+  # List all available models
+  ai cfg get -t "{{range $key, $value := .Models}}{{$key}} {{end}}"
+  
+  # Check current temperature setting
+  ai cfg get -t "{{.Temperature}}"`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			editor := system.Analyse().GetEditor()
 			editorCmd := runner.PrepareEditSettingsCommand(editor, cfg.SettingsPath)

@@ -23,7 +23,15 @@ func newCmdResetConfig(ioStreams genericclioptions.IOStreams, cfg *options.Confi
 	}
 	cmd := &cobra.Command{
 		Use:          "reset",
-		Short:        "Backup your old settings file and reset everything to the defaults.",
+		Short:        "Reset configuration to default values",
+		Example: `  # Reset settings with backup
+  ai cfg reset
+  
+  # Reset and show backup location
+  ai cfg reset --quiet=false
+  
+  # Reset and open new config in editor
+  ai cfg reset && ai cfg`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return r.resetSettings(cfg)
