@@ -259,7 +259,7 @@ func EnsureConfig() (Config, error) {
 	}
 
 	if c.DataStore.CachePath == "" {
-		c.DataStore.CachePath = filepath.Join(xdg.DataHome, "ai-terminal", "conversations")
+		c.DataStore.CachePath = filepath.Join(xdg.DataHome, "ai-terminal", "cache")
 	}
 
 	if err := os.MkdirAll(c.DataStore.CachePath, 0o700); err != nil { //nolint:mnd

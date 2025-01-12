@@ -141,7 +141,7 @@ func (o *Options) preparePrompts(args []string) error {
 
 func (o *Options) getEditorPrompt() (string, error) {
 	safePrefix := term.SanitizeFilename("ai_prompt_")
-	tempFile, err := os.CreateTemp(os.TempDir(), safePrefix + "*.txt")
+	tempFile, err := os.CreateTemp(os.TempDir(), safePrefix+"*.txt")
 	if err != nil {
 		return "", errbook.Wrap("Failed to create temporary file.", err)
 	}
