@@ -3,24 +3,17 @@ package console
 import (
 	"fmt"
 
-	"github.com/charmbracelet/huh"
+	"github.com/erikgeiser/promptkit/confirmation"
 )
 
-func WaitForUserConfirm(format string, args ...interface{}) (confirm bool) {
-	err := huh.Run(
-		huh.NewConfirm().
-			Title(fmt.Sprintf(format, args...)).
-			Inline(true).
-			Affirmative("Yes!").
-			Negative("No.").
-			Value(&confirm),
-	)
+var No = confirmation.No
+var Yes = confirmation.Yes
+
+func WaitForUserConfirm(defaultVal confirmation.Value, format string, args ...interface{}) bool {
+	input := confirmation.New(fmt.Sprintf(format, args...), defaultVal)
+	confirm, err := input.RunPrompt()
 	if err != nil {
 		return false
 	}
-	return
-}
-
-func WaitForUserConfirmApplyChanges(format string, args ...interface{}) (confirm bool) {
-	return true
+	return confirm
 }

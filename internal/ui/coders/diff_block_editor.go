@@ -125,7 +125,7 @@ func (e *EditBlockCoder) applyEdit(_ context.Context, block PartialCodeBlock) er
 	}
 
 	if !fileExists {
-		if ok := console.WaitForUserConfirm("Whether to create the %s file? (Y/n)", block.Path); ok {
+		if ok := console.WaitForUserConfirm(console.Yes, "Whether to create the %s file? (Y/n)", block.Path); !ok {
 			if err := fileutil.WriteFile(absPath, []byte("")); err != nil {
 				return err
 			}
@@ -221,7 +221,7 @@ func (e *EditBlockCoder) Execute(ctx context.Context, messages []llms.ChatMessag
 
 	e.partialResponseContent = chatModel.Output
 
-	if ok := console.WaitForUserConfirm("Are you sure you want to apply these codes? (Y/n)"); ok {
+	if ok := console.WaitForUserConfirm(console.Yes, "Are you sure you want to apply these codes? (Y/n)"); !ok {
 		return errbook.NewUserErrorf("Apply edit cancelled!")
 	}
 

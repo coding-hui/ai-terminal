@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/erikgeiser/promptkit/confirmation"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
@@ -208,19 +207,13 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 	}
 
 	if o.preview && !o.noConfirm {
-		input := confirmation.New("Commit preview summary?", confirmation.Yes)
-		ready, err := input.RunPrompt()
-		if err != nil {
-			return errbook.Wrap("Could not run prompt.", err)
-		}
-		if !ready {
+		if ok := console.WaitForUserConfirm(console.No, "Commit preview summary?"); !ok {
 			return nil
 		}
 	}
 
 	if !o.noConfirm {
-		change := console.WaitForUserConfirm("Do you want to change the commit message?")
-		if change {
+		if change := console.WaitForUserConfirm(console.No, "Do you want to change the commit message?"); change {
 			m := ui.InitialTextareaPrompt(commitMessage)
 			p := tea.NewProgram(m)
 			if _, err := p.Run(); err != nil {
