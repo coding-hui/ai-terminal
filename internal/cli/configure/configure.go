@@ -22,20 +22,11 @@ func NewCmdConfigure(ioStreams genericclioptions.IOStreams, cfg *options.Config)
 		Example: `  # Open settings in default editor
   ai cfg
   
-  # Get specific config value (e.g. cache path)
-  ai cfg get -t "{{.DataStore.CachePath}}"
+  # Reset settings to defaults
+  ai cfg reset
   
-  # Get current API endpoint
-  ai cfg get -t "{{.API}}"
-  
-  # Get default model name
-  ai cfg get -t "{{.Model}}"
-  
-  # List all available models
-  ai cfg get -t "{{range $key, $value := .Models}}{{$key}} {{end}}"
-  
-  # Check current temperature setting
-  ai cfg get -t "{{.Temperature}}"`,
+  # Show current configuration
+  ai cfg echo`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			editor := system.Analyse().GetEditor()
 			editorCmd := runner.PrepareEditSettingsCommand(editor, cfg.SettingsPath)
@@ -61,7 +52,6 @@ func NewCmdConfigure(ioStreams genericclioptions.IOStreams, cfg *options.Config)
 
 	cmd.AddCommand(newCmdResetConfig(ioStreams, cfg))
 	cmd.AddCommand(newCmdEchoConfig(ioStreams, cfg))
-	cmd.AddCommand(newCmdGetConfig(ioStreams, cfg))
 
 	return cmd
 }

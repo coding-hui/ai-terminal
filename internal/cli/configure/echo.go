@@ -32,9 +32,6 @@ func newCmdEchoConfig(ioStreams genericclioptions.IOStreams, cfg *options.Config
   # Show specific setting using template
   ai cfg echo -t "{{.Model}}"
   
-  # Show API endpoints
-  ai cfg echo -t "{{range .APIs}}{{.Name}}: {{.BaseURL}}\n{{end}}"
-  
   # Check cache location
   ai cfg echo -t "Cache: {{.DataStore.CachePath}}"`,
 		SilenceUsage: true,
