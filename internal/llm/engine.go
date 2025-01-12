@@ -10,15 +10,13 @@ import (
 
 	"github.com/caarlos0/go-shellwords"
 	tea "github.com/charmbracelet/bubbletea"
-	"k8s.io/klog/v2"
-
 	"github.com/coding-hui/common/util/slices"
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms/openai"
 
+	"github.com/coding-hui/ai-terminal/internal/conversation"
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/options"
-	"github.com/coding-hui/ai-terminal/internal/session"
 	"github.com/coding-hui/ai-terminal/internal/ui/console"
 )
 
@@ -35,7 +33,7 @@ type Engine struct {
 	running bool
 	chatID  string
 
-	chatHistory session.History
+	chatHistory conversation.Store
 
 	Model *openai.Model
 }
@@ -103,11 +101,11 @@ func NewLLMEngine(mode EngineMode, cfg *options.Config) (*Engine, error) {
 		return nil, err
 	}
 
-	if klog.V(2).Enabled() {
-		llm.CallbacksHandler = LogHandler{}
+	chatHistory, err := conversation.GetConversationStore(*cfg)
+	if err != nil {
+		return nil, errbook.Wrap("Failed to get chat history store.", err)
 	}
 
-	chatHistory, _ := session.GetHistoryStore(*cfg, ChatEngineMode.String())
 	charID := defaultChatID
 	if cfg.ChatID != "" {
 		charID = cfg.ChatID
@@ -153,40 +151,17 @@ func (e *Engine) Interrupt() {
 }
 
 func (e *Engine) Clear() {
-	err := e.chatHistory.Clear(context.Background(), e.chatID)
+	err := e.chatHistory.Clear(context.Background())
 	if err != nil {
-		klog.Fatal("failed to clean chat history.", err)
+		errbook.HandleError(errbook.Wrap("failed to clear chat history.", err))
 	}
 }
 
 func (e *Engine) Reset() {
-	err := e.chatHistory.Clear(context.Background(), e.chatID)
+	err := e.chatHistory.Clear(context.Background())
 	if err != nil {
-		klog.Fatal("failed to clean chat history.", err)
+		errbook.HandleError(errbook.Wrap("failed to reset chat history.", err))
 	}
-}
-
-func (e *Engine) SummaryMessages(messages []llms.ChatMessage) (string, error) {
-	ctx := context.Background()
-
-	messageParts := slices.Map(messages, convert)
-	messageParts = append(messageParts, llms.MessageContent{
-		Role:  llms.ChatMessageTypeHuman,
-		Parts: []llms.ContentPart{llms.TextPart(summaryMessagesPrompt)},
-	})
-
-	rsp, err := e.Model.GenerateContent(ctx, messageParts,
-		llms.WithModel(e.config.Model),
-		llms.WithTemperature(e.config.Temperature),
-		llms.WithTopP(e.config.TopP),
-		llms.WithMaxTokens(256),
-		llms.WithMultiContent(false),
-	)
-	if err != nil {
-		return "", err
-	}
-
-	return rsp.Choices[0].Content, nil
 }
 
 func (e *Engine) CreateCompletion(input string) (*EngineExecOutput, error) {
@@ -324,12 +299,12 @@ func (e *Engine) callOptions(streamingFunc ...func(ctx context.Context, chunk []
 
 func (e *Engine) appendUserMessage(content string) {
 	if len(strings.TrimSpace(content)) == 0 {
-		klog.V(2).Info("user input content is empty")
+		errbook.HandleError(errbook.New("empty input is not allowed."))
 		return
 	}
 	if e.chatHistory != nil {
 		if err := e.chatHistory.AddUserMessage(context.Background(), e.chatID, content); err != nil {
-			klog.Fatal("failed to add user chat input message to history", err)
+			errbook.HandleError(errbook.Wrap("failed to add user chat input message to history", err))
 		}
 	}
 }
@@ -337,7 +312,7 @@ func (e *Engine) appendUserMessage(content string) {
 func (e *Engine) appendAssistantMessage(content string) {
 	if e.chatHistory != nil {
 		if err := e.chatHistory.AddAIMessage(context.Background(), e.chatID, content); err != nil {
-			klog.Fatal("failed to add assistant chat output message to history", err)
+			errbook.HandleError(errbook.Wrap("failed to add assistant chat output message to history", err))
 		}
 	}
 }
@@ -365,7 +340,7 @@ func (e *Engine) prepareCompletionMessages() []llms.MessageContent {
 	if e.chatHistory != nil {
 		history, err := e.chatHistory.Messages(context.Background(), e.chatID)
 		if err != nil {
-			klog.Fatal("failed to get chat history messages", err)
+			errbook.HandleError(errbook.Wrap("failed to get chat history", err))
 		}
 		messages = append(messages, slices.Map(history, convert)...)
 	}

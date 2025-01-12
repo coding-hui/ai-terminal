@@ -52,7 +52,7 @@ max-input-chars: 12250
 # {{ index .Help "datastore" }}
 datastore:
   # datastore type: file、mongo or db
-  type: file
+  type: db
   url: ""
 # {{ index .Help "auto-coder" }}
 auto-coder:

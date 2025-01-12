@@ -1,27 +1,17 @@
 package history
 
 import (
-	"context"
-	"fmt"
-	"os"
-	"sync"
-
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/fatih/color"
 	"github.com/spf13/cobra"
-	"k8s.io/klog/v2"
 
-	"github.com/coding-hui/ai-terminal/internal/llm"
-	"github.com/coding-hui/ai-terminal/internal/options"
-	"github.com/coding-hui/ai-terminal/internal/session"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 	"github.com/coding-hui/ai-terminal/internal/util/templates"
 )
 
 var lsHistoryExample = templates.Examples(`
-		# Managing session history:
+		# Managing conversation history:
           ai history ls
 `)
 
@@ -71,7 +61,7 @@ func newCmdLsHistory(ioStreams genericclioptions.IOStreams) *cobra.Command {
 	o := &ls{IOStreams: ioStreams}
 	cmd := &cobra.Command{
 		Use:     "ls",
-		Short:   "Show chat session history.",
+		Short:   "Show chat conversation history.",
 		Example: lsHistoryExample,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.Run(args)
@@ -83,70 +73,70 @@ func newCmdLsHistory(ioStreams genericclioptions.IOStreams) *cobra.Command {
 
 // Run executes history command.
 func (o *ls) Run(_ []string) error {
-	cfg := options.NewConfig()
-	engine, err := llm.NewLLMEngine(llm.ChatEngineMode, cfg)
-	if err != nil {
-		return err
-	}
-
-	chatHistory, err := session.GetHistoryStore(*cfg, llm.ChatEngineMode.String())
-	if err != nil {
-		return err
-	}
-
-	allSession, err := chatHistory.Sessions(context.Background())
-	if err != nil {
-		return err
-	}
-
-	// Fix: Return early if there is no history session
-	if len(allSession) == 0 {
-		color.Cyan("Could not find any chat sessions.")
-		return nil
-	}
-
-	var (
-		items []list.Item
-		mutex sync.Mutex
-		wg    sync.WaitGroup
-	)
-	for _, sessionId := range allSession {
-		wg.Add(1)
-		go func(sessionId string) {
-			defer wg.Done()
-
-			messages, err := chatHistory.Messages(context.Background(), sessionId)
-			if err != nil {
-				klog.Fatal(err)
-			}
-
-			summary, err := engine.SummaryMessages(messages)
-			if err != nil {
-				klog.Fatal(err)
-			}
-
-			mutex.Lock()
-			defer mutex.Unlock()
-			items = append(items, historyItem{
-				title: sessionId,
-				desc:  summary,
-			})
-		}(sessionId)
-	}
-	wg.Wait()
-
-	m := listModel{
-		list:          list.New(items, list.NewDefaultDelegate(), 0, 0),
-		itemStyle:     lipgloss.NewStyle().Margin(1, 2),
-		quitTextStyle: lipgloss.NewStyle().Margin(1, 0, 2, 4),
-	}
-	m.list.Title = "Chat History"
-
-	p := tea.NewProgram(m, tea.WithAltScreen())
-	if _, err := p.Run(); err != nil {
-		fmt.Println("Error running program:", err)
-		os.Exit(1)
-	}
+	//cfg := options.NewConfig()
+	//engine, err := llm.NewLLMEngine(llm.ChatEngineMode, cfg)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//chatHistory, err := conversation.GetConversationStore(*cfg, llm.ChatEngineMode.String())
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//allSession, err := chatHistory.List(context.Background())
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//// Fix: Return early if there is no history conversation
+	//if len(allSession) == 0 {
+	//	color.Cyan("Could not find any chat sessions.")
+	//	return nil
+	//}
+	//
+	//var (
+	//	items []list.Item
+	//	mutex sync.Mutex
+	//	wg    sync.WaitGroup
+	//)
+	//for _, sessionId := range allSession {
+	//	wg.Add(1)
+	//	//go func(sessionId string) {
+	//	//	defer wg.Done()
+	//	//
+	//	//	messages, err := chatHistory.Messages(context.Background(), sessionId)
+	//	//	if err != nil {
+	//	//		klog.Fatal(err)
+	//	//	}
+	//	//
+	//	//	summary, err := engine.SummaryMessages(messages)
+	//	//	if err != nil {
+	//	//		klog.Fatal(err)
+	//	//	}
+	//	//
+	//	//	mutex.Lock()
+	//	//	defer mutex.Unlock()
+	//	//	items = append(items, historyItem{
+	//	//		title: sessionId,
+	//	//		desc:  summary,
+	//	//	})
+	//	//}(sessionId)
+	//}
+	//wg.Wait()
+	//
+	//m := listModel{
+	//	list:          list.New(items, list.NewDefaultDelegate(), 0, 0),
+	//	itemStyle:     lipgloss.NewStyle().Margin(1, 2),
+	//	quitTextStyle: lipgloss.NewStyle().Margin(1, 0, 2, 4),
+	//}
+	//m.list.Title = "Chat Store"
+	//
+	//p := tea.NewProgram(m, tea.WithAltScreen())
+	//if _, err := p.Run(); err != nil {
+	//	fmt.Println("Error running program:", err)
+	//	os.Exit(1)
+	//}
 
 	return nil
 }
