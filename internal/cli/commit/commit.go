@@ -11,6 +11,8 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
+	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
+
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/git"
 	"github.com/coding-hui/ai-terminal/internal/llm"
@@ -244,7 +246,7 @@ func (o *Options) codeReview(engine *llm.Engine, vars map[string]any) error {
 		return err
 	}
 
-	resp, err := engine.CreateCompletion(strings.TrimSpace(p))
+	resp, err := engine.CreateCompletion(p.Messages())
 	if err != nil {
 		return err
 	}
@@ -263,7 +265,7 @@ func (o *Options) summarizeTitle(engine *llm.Engine, vars map[string]any) error 
 		return err
 	}
 
-	resp, err := engine.CreateCompletion(strings.TrimSpace(p))
+	resp, err := engine.CreateCompletion(p.Messages())
 	if err != nil {
 		return err
 	}
@@ -283,7 +285,7 @@ func (o *Options) summarizePrefix(engine *llm.Engine, vars map[string]any) error
 		return err
 	}
 
-	resp, err := engine.CreateCompletion(strings.TrimSpace(p))
+	resp, err := engine.CreateCompletion(p.Messages())
 	if err != nil {
 		return err
 	}
@@ -293,51 +295,54 @@ func (o *Options) summarizePrefix(engine *llm.Engine, vars map[string]any) error
 	return nil
 }
 
-func (o *Options) generateCommitMsg(engine *llm.Engine, vars map[string]any) (commitMessage string, err error) {
+func (o *Options) generateCommitMsg(engine *llm.Engine, vars map[string]any) (string, error) {
+	var err error
+	var commitPromptVal llms.PromptValue
 	if o.templateFile != "" {
 		format, err := os.ReadFile(o.templateFile)
 		if err != nil {
 			return "", err
 		}
-		commitMessage, err = prompt.GetPromptStringByTemplate(string(format), vars)
+		commitPromptVal, err = prompt.GetPromptStringByTemplate(string(format), vars)
 		if err != nil {
 			return "", err
 		}
 	} else if o.templateString != "" {
-		commitMessage, err = prompt.GetPromptStringByTemplate(o.templateString, vars)
+		commitPromptVal, err = prompt.GetPromptStringByTemplate(o.templateString, vars)
 		if err != nil {
 			return "", err
 		}
 	} else {
-		commitMessage, err = prompt.GetPromptStringByTemplateName(prompt.CommitMessageTemplate, vars)
+		commitPromptVal, err = prompt.GetPromptStringByTemplateName(prompt.CommitMessageTemplate, vars)
 		if err != nil {
 			return "", err
 		}
 	}
 
+	var commitMsg string
 	if o.commitLang != prompt.DefaultLanguage {
 		console.RenderStep("Translating commit message to %s...", o.commitLang)
 		translationPrompt, err := prompt.GetPromptStringByTemplateName(prompt.TranslationTemplate, map[string]any{
 			prompt.OutputLanguageKey: prompt.GetLanguage(o.commitLang),
-			prompt.OutputMessageKey:  commitMessage,
+			prompt.OutputMessageKey:  commitPromptVal.String(),
 		})
 		if err != nil {
 			return "", err
 		}
 
-		resp, err := engine.CreateCompletion(strings.TrimSpace(translationPrompt))
+		resp, err := engine.CreateCompletion(translationPrompt.Messages())
 		if err != nil {
 			return "", err
 		}
-		commitMessage = resp.Explanation
+		commitMsg = resp.Explanation
 	}
 
 	// unescape html entities in commit message
-	commitMessage = html.UnescapeString(commitMessage)
-	commitMessage = strings.TrimSpace(commitMessage)
+	commitMsg = html.UnescapeString(commitPromptVal.String())
+	commitMsg = strings.TrimSpace(commitPromptVal.String())
 
 	// Output simplified commit summary
-	lines := strings.Split(commitMessage, "\n")
+	lines := strings.Split(commitPromptVal.String(), "\n")
 	if len(lines) > 0 {
 		console.RenderSuccess("Commit summary:")
 		for _, line := range lines {
@@ -347,5 +352,5 @@ func (o *Options) generateCommitMsg(engine *llm.Engine, vars map[string]any) (co
 		}
 	}
 
-	return commitMessage, nil
+	return commitMsg, nil
 }

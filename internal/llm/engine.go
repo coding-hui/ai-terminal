@@ -164,16 +164,12 @@ func (e *Engine) Reset() {
 	}
 }
 
-func (e *Engine) CreateCompletion(input string) (*EngineExecOutput, error) {
+func (e *Engine) CreateCompletion(messages []llms.ChatMessage) (*EngineExecOutput, error) {
 	ctx := context.Background()
 
 	e.running = true
 
-	e.appendUserMessage(input)
-
-	messages := e.prepareCompletionMessages()
-
-	rsp, err := e.Model.GenerateContent(ctx, messages, e.callOptions()...)
+	rsp, err := e.Model.GenerateContent(ctx, slices.Map(messages, convert), e.callOptions()...)
 	if err != nil {
 		return nil, errbook.Wrap("Failed to create completion.", err)
 	}
