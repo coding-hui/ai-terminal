@@ -76,11 +76,6 @@ Here are some examples of how to use AI-Terminal, grouped by functionality:
   ai ask "What is the best way to manage Docker containers?"
   ```
 
-- **Interactive Dialogue:**
-  ```sh
-  ai ask --interactive
-  ```
-
 - **Use a Prompt File:**
   ```sh
   ai ask --file /path/to/prompt_file.txt

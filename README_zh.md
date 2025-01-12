@@ -71,11 +71,6 @@ ai completion powershell -h
   ai ask "管理Docker容器的最佳方式是什么？"
   ```
 
-- **交互式对话：**
-  ```sh
-  ai ask --interactive
-  ```
-
 - **使用提示文件：**
   ```sh
   ai ask --file /path/to/prompt_file.txt

@@ -71,11 +71,6 @@ AI-ターミナルの使用例を機能別に紹介します：
   ai ask "Dockerコンテナを管理する最良の方法は何ですか？"
   ```
 
-- **対話型ダイアログ：**
-  ```sh
-  ai ask --interactive
-  ```
-
 - **プロンプトファイルを使用する：**
   ```sh
   ai ask --file /path/to/prompt_file.txt
