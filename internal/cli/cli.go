@@ -12,12 +12,9 @@ import (
 	"slices"
 	"time"
 
+	cliflag "github.com/coding-hui/common/cli/flag"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/klog/v2"
-
-	cliflag "github.com/coding-hui/common/cli/flag"
 
 	"github.com/coding-hui/ai-terminal/internal/cli/ask"
 	"github.com/coding-hui/ai-terminal/internal/cli/coder"
@@ -47,9 +44,6 @@ func NewDefaultAICommand() *cobra.Command {
 
 // NewAICommand returns new initialized instance of 'ai' root command.
 func NewAICommand(in io.Reader, out, errOut io.Writer) *cobra.Command {
-	klog.InitFlags(nil)
-	klog.LogToStderr(false)
-
 	cfg, err := options.EnsureConfig()
 	if err != nil {
 		errbook.HandleError(errbook.Wrap("Could not load your configuration file.", err))
@@ -129,10 +123,6 @@ func NewAICommand(in io.Reader, out, errOut io.Writer) *cobra.Command {
 
 	cmds.AddCommand(version.NewCmdVersion(ioStreams))
 	cmds.AddCommand(options.NewCmdOptions(ioStreams.Out))
-
-	// The default klog flush interval is 30 seconds, which is frighteningly long.
-	go wait.Until(klog.Flush, *logFlushFreq, wait.NeverStop)
-	defer klog.Flush()
 
 	return cmds
 }
