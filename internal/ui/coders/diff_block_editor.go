@@ -97,11 +97,11 @@ func (e *EditBlockCoder) UpdateCodeFences(_ context.Context, code string) (strin
 	return e.fence[0], e.fence[1]
 }
 
-func (e *EditBlockCoder) ApplyEdits(ctx context.Context, edits []PartialCodeBlock, needConfirm bool) error {
+func (e *EditBlockCoder) ApplyEdits(ctx context.Context, edits []PartialCodeBlock) error {
 	var failed []PartialCodeBlock
 
 	for _, block := range edits {
-		if err := e.applyEdit(ctx, block, needConfirm); err != nil {
+		if err := e.applyEdit(ctx, block); err != nil {
 			failed = append(failed, block)
 		}
 	}
@@ -113,7 +113,7 @@ func (e *EditBlockCoder) ApplyEdits(ctx context.Context, edits []PartialCodeBloc
 	return nil
 }
 
-func (e *EditBlockCoder) applyEdit(_ context.Context, block PartialCodeBlock, needConfirm bool) error {
+func (e *EditBlockCoder) applyEdit(_ context.Context, block PartialCodeBlock) error {
 	absPath, err := absFilePath(e.coder.codeBasePath, block.Path)
 	if err != nil {
 		return err
@@ -234,7 +234,7 @@ func (e *EditBlockCoder) Execute(ctx context.Context, messages []llms.ChatMessag
 		return errbook.New("No edits were made")
 	}
 
-	err = e.ApplyEdits(ctx, edits, false)
+	err = e.ApplyEdits(ctx, edits)
 	if err != nil {
 		return err
 	}

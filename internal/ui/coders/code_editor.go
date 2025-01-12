@@ -40,7 +40,7 @@ type Coder interface {
 	// UpdateCodeFences updates the code fence for the given code.
 	UpdateCodeFences(ctx context.Context, code string) (string, string)
 	// ApplyEdits applies the given list of edits to the code.
-	ApplyEdits(ctx context.Context, edits []PartialCodeBlock, needConfirm bool) error
+	ApplyEdits(ctx context.Context, edits []PartialCodeBlock) error
 	// Execute runs the code editor with the specified input messages.
 	Execute(ctx context.Context, messages []llms.ChatMessage) error
 }
