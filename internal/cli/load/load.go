@@ -108,7 +108,7 @@ func (o *Options) saveContent(sourcePath, content string) error {
 		return errbook.Wrap("Failed to save content", err)
 	}
 
-	console.Render("Successfully loaded and cached [%s]", sourcePath)
+	console.Render("Successfully loaded and cached [%s] to [%s]", sourcePath, cachePath)
 
 	return nil
 }
