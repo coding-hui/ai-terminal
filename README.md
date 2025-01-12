@@ -1,14 +1,9 @@
-Language : [us](./README.md) | [🇨🇳](./README_zh.md) | [ja](./README_ja.md)
+Language : [🇺🇸 us](./README.md) | [🇨🇳 zh](./README_zh.md) | [🇯🇵 ja](./README_ja.md)
 
-<h1 align="center">AI-Terminal</h1>
-
-<div align="center">
+# AI-Terminal
 
 AI-Terminal is an advanced AI-powered CLI that enhances terminal workflows through AI-driven automation and
 optimization. It efficiently manages tasks such as file management, data processing, and system diagnostics.
-
-</div>
-
 
 ## Key Features
 
@@ -26,22 +21,49 @@ optimization. It efficiently manages tasks such as file management, data process
 
 ### Installation
 
-To install AI-Terminal, follow these steps:
+Install using Homebrew:
 
-1. Ensure you have Go version v1.22.0 or higher installed.
-2. Build and install the Go binary:
+```bash
+brew install coding-hui/tap/ai-terminal
+```
+
+Or, download it:
+
+- [Packages][releases] are available in Debian and RPM formats
+- [Binaries][releases] are available for Linux, macOS, and Windows
+
+[releases]: https://github.com/coding-hui/ai-terminal/releases
+
+Or, build from source (requires Go 1.22+):
 
 ```sh
 make build
 ```
 
-This command will generate the binary file at `./bin/ai` for Unix-based systems or `./bin/ai.exe` for Windows.
-
-3. Initialize the AI model configuration:
-
+Then initialize configuration:
 ```sh
 ai configure
 ```
+
+<details>
+<summary>Shell Completions</summary>
+
+All packages and archives come with pre-generated completion files for Bash,
+ZSH, Fish, and PowerShell.
+
+If you built it from source, you can generate them with:
+
+```bash
+ai completion bash -h
+ai completion zsh -h
+ai completion fish -h
+ai completion powershell -h
+```
+
+If you use a package (like Homebrew, Debs, etc), the completions should be set
+up automatically, given your shell is configured properly.
+
+</details>
 
 ### Usage
 

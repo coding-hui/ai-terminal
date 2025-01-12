@@ -18,22 +18,47 @@ AI-ターミナルは、AI駆動の自動化と最適化を通じてターミナ
 
 ### インストール
 
-AI-ターミナルをインストールするには、以下の手順に従ってください：
+Homebrewを使用してインストール：
 
-1. Goバージョンv1.22.0以上がインストールされていることを確認します。
-2. Goバイナリをビルドしてインストールします：
+```bash
+brew install coding-hui/tap/ai-terminal
+```
+
+または直接ダウンロード：
+
+- [パッケージ][releases] Debian および RPM 形式で提供
+- [バイナリ][releases] Linux、macOS、Windows 用
+
+[releases]: https://github.com/coding-hui/ai-terminal/releases
+
+またはソースからビルド（Go 1.22+ が必要）：
 
 ```sh
 make build
 ```
 
-このコマンドは、Unixベースのシステムでは`./bin/ai`、Windowsでは`./bin/ai.exe`にバイナリファイルを生成します。
-
-3. AIモデルの設定を初期化します：
-
+設定を初期化：
 ```sh
 ai configure
 ```
+
+<details>
+<summary>シェル補完</summary>
+
+すべてのパッケージとアーカイブには、Bash、ZSH、Fish、PowerShell 用の事前生成された補完ファイルが含まれています。
+
+ソースからビルドした場合、以下のコマンドで生成できます：
+
+```bash
+ai completion bash -h
+ai completion zsh -h
+ai completion fish -h
+ai completion powershell -h
+```
+
+パッケージ（Homebrew、Debs など）を使用する場合、シェルの設定が正しければ補完は自動的に設定されます。
+
+</details>
 
 ### 使用方法
 

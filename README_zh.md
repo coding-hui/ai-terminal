@@ -18,22 +18,47 @@ AI-终端是一个先进的AI驱动的CLI，通过AI驱动的自动化和优化�
 
 ### 安装
 
-要安装AI-终端，请按照以下步骤操作：
+使用 Homebrew 安装：
 
-1. 确保您已安装Go版本v1.22.0或更高版本。
-2. 构建并安装Go二进制文件：
+```bash
+brew install coding-hui/tap/ai-terminal
+```
+
+或者直接下载：
+
+- [软件包][releases] 提供 Debian 和 RPM 格式
+- [二进制文件][releases] 适用于 Linux、macOS 和 Windows
+
+[releases]: https://github.com/coding-hui/ai-terminal/releases
+
+或者从源码编译（需要 Go 1.22+）：
 
 ```sh
 make build
 ```
 
-此命令将在 `./bin/ai` 路径下生成二进制文件，如果是Windows系统，则路径为 `./bin/ai.exe`。
-
-3. 初始化AI模型配置：
-
+然后初始化配置：
 ```sh
 ai configure
 ```
+
+<details>
+<summary>Shell 自动补全</summary>
+
+所有软件包和压缩包都包含预生成的 Bash、ZSH、Fish 和 PowerShell 的自动补全文件。
+
+如果从源码构建，可以使用以下命令生成：
+
+```bash
+ai completion bash -h
+ai completion zsh -h
+ai completion fish -h
+ai completion powershell -h
+```
+
+如果使用软件包（如 Homebrew、Debs 等），只要 shell 配置正确，自动补全应该会自动设置。
+
+</details>
 
 ### 使用
 
