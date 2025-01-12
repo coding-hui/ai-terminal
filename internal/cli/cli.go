@@ -6,6 +6,7 @@
 package cli
 
 import (
+	"context"
 	"flag"
 	"io"
 	"os"
@@ -27,8 +28,10 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/cli/manpage"
 	"github.com/coding-hui/ai-terminal/internal/cli/review"
 	"github.com/coding-hui/ai-terminal/internal/cli/version"
+	"github.com/coding-hui/ai-terminal/internal/convo"
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/options"
+	"github.com/coding-hui/ai-terminal/internal/util/debug"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 	"github.com/coding-hui/ai-terminal/internal/util/templates"
 
@@ -72,7 +75,7 @@ func NewAICommand(in io.Reader, out, errOut io.Writer) *cobra.Command {
 			return initProfiling()
 		},
 		PersistentPostRunE: func(*cobra.Command, []string) error {
-			return flushProfiling()
+			return postRunHook(&cfg)
 		},
 	}
 
@@ -124,9 +127,29 @@ func NewAICommand(in io.Reader, out, errOut io.Writer) *cobra.Command {
 	cmds.AddCommand(version.NewCmdVersion(ioStreams))
 	cmds.AddCommand(options.NewCmdOptions(ioStreams.Out))
 
+	defer func() {
+		debug.Teardown()
+	}()
+
 	return cmds
 }
 
 func runHelp(cmd *cobra.Command, _ []string) {
 	_ = cmd.Help()
+}
+
+func postRunHook(cfg *options.Config) error {
+	if err := flushProfiling(); err != nil {
+		return err
+	}
+
+	convoStore, _ := convo.GetConversationStore(cfg)
+	if !cfg.NoCache && convoStore != nil {
+		err := convoStore.SaveConversation(context.Background(), cfg.ConversationID, "convo", cfg.Model)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

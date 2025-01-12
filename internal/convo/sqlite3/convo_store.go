@@ -2,8 +2,10 @@ package sqlite3
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -33,6 +35,7 @@ func (s *sqliteStoreFactor) Create(options *options.Config) (convo.Store, error)
 	return NewSqliteStore(
 		WithDataPath(options.DataStore.CachePath),
 		WithConversation(options.ConversationID),
+		WithDBAddress(filepath.Join(options.DataStore.CachePath, "convo.db")),
 	), nil
 }
 
@@ -62,7 +65,7 @@ func NewSqliteStore(options ...SqliteChatMessageHistoryOption) *SqliteStore {
 // LatestConversation returns the last message in the chat history.
 func (h *SqliteStore) LatestConversation(ctx context.Context) (*convo.Conversation, error) {
 	var convo convo.Conversation
-	if err := h.DB.Get(&convo, `
+	err := h.DB.Get(&convo, `
 		SELECT
 		  *
 		FROM
@@ -71,7 +74,8 @@ func (h *SqliteStore) LatestConversation(ctx context.Context) (*convo.Conversati
 		  updated_at DESC
 		LIMIT
 		  1
-	`); err != nil {
+	`)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("FindHead: %w", err)
 	}
 	return &convo, nil

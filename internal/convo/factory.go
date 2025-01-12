@@ -7,6 +7,7 @@ import (
 
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/options"
+	"github.com/coding-hui/ai-terminal/internal/util/debug"
 )
 
 var (
@@ -54,11 +55,12 @@ func GetConversationStore(cfg *options.Config) (Store, error) {
 			return nil, errbook.Wrap("Failed to get latest conversation", err)
 		}
 
-		if latest != nil {
+		if latest != nil && latest.ID != "" {
 			cfg.ConversationID = latest.ID
 		} else {
 			// No conversations exist, generate new ID
 			cfg.ConversationID = NewConversationID()
+			debug.Trace("conversation id not provided, generating new id %s", cfg.ConversationID)
 		}
 	}
 
