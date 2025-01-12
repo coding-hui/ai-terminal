@@ -119,19 +119,22 @@ func (c *CommandExecutor) askFiles(ctx context.Context, args ...string) error {
 // addFiles Add files to the chat so GPT can edit them or review them in detail
 func (c *CommandExecutor) loadFileContent(path string) (string, error) {
 	// Handle remote URLs
-	if rest.IsRemoteFile(path) {
-		return rest.FetchRemoteContent(path)
+	if rest.IsValidURL(path) {
+		console.Render("Loading remote content [%s]", path)
+		return rest.FetchURLContent(path)
 	}
 
 	// Handle local files
+	console.Render("Loading local file [%s]", path)
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return "", errbook.Wrap("Failed to read local file", err)
 	}
+
 	return string(content), nil
 }
 
-func (c *CommandExecutor) addFiles(_ context.Context, files ...string) error {
+func (c *CommandExecutor) addFiles(_ context.Context, files ...string) (err error) {
 	if len(files) <= 0 {
 		return errbook.New("Please provide at least one file or URL")
 	}
@@ -140,7 +143,7 @@ func (c *CommandExecutor) addFiles(_ context.Context, files ...string) error {
 
 	for _, pattern := range files {
 		// Handle remote URLs directly
-		if rest.IsRemoteFile(pattern) {
+		if rest.IsValidURL(pattern) {
 			matchedFiles = append(matchedFiles, pattern)
 			continue
 		}
@@ -173,9 +176,12 @@ func (c *CommandExecutor) addFiles(_ context.Context, files ...string) error {
 	}
 
 	for _, filePath := range matchedFiles {
-		absPath, err := absFilePath(c.coder.codeBasePath, filePath)
-		if err != nil {
-			return errbook.Wrap("Failed to get abs path", err)
+		absPath := filePath
+		if !rest.IsValidURL(filePath) {
+			absPath, err = absFilePath(c.coder.codeBasePath, filePath)
+			if err != nil {
+				return errbook.Wrap("Failed to get abs path", err)
+			}
 		}
 
 		if _, ok := c.coder.absFileNames[absPath]; ok {
@@ -184,7 +190,7 @@ func (c *CommandExecutor) addFiles(_ context.Context, files ...string) error {
 
 		c.coder.absFileNames[absPath] = struct{}{}
 
-		console.Render("Added file [%s]", absPath)
+		console.Render("Added [%s]", absPath)
 	}
 
 	return nil
@@ -449,8 +455,13 @@ func (c *CommandExecutor) formatFileContent(filePath string) (string, error) {
 	}
 
 	// For remote URLs, use the full URL as the identifier
-	if rest.IsRemoteFile(filePath) {
-		return fmt.Sprintf("\n%s%s", filePath, wrapFenceWithType(content, filePath)), nil
+	if rest.IsValidURL(filePath) {
+		name := rest.SanitizeURL(filePath)
+		// show the first 20 characters, then ellipsis then the last 20 characters of 'name'
+		if len(name) > 40 {
+			name = name[:20] + "⋯" + name[len(name)-20:]
+		}
+		return fmt.Sprintf("\n%s%s", filePath, wrapFenceWithType(content, name)), nil
 	}
 
 	// For local files, use relative path

@@ -1,58 +1,91 @@
 package rest
 
 import (
-	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
+	"strings"
 	"time"
+
+	"github.com/PuerkitoBio/goquery"
 
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 )
 
 const (
-	defaultTimeout = 30 * time.Second
+	// Constants for fetchURLContent function
+	maxRedirections    = 10
+	httpTimeout        = 30 * time.Second
+	maxContentSizeInMB = 10
 )
 
-// IsRemoteFile checks if a path is a remote URL
-func IsRemoteFile(path string) bool {
-	u, err := url.Parse(path)
-	if err != nil {
-		return false
+func FetchURLContent(url string) (string, error) {
+	client := &http.Client{
+		Timeout: httpTimeout,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if len(via) >= maxRedirections {
+				return errbook.New("stopped after too many redirects")
+			}
+			return nil
+		},
 	}
-	return u.Scheme != "" && (u.Scheme == "http" || u.Scheme == "https")
+
+	resp, err := client.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close() //nolint:errcheck
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", errbook.New("non-2xx HTTP response status: " + resp.Status)
+	}
+
+	// Limit the response reader to a maximum amount
+	limitedReader := io.LimitReader(resp.Body, maxContentSizeInMB*1024*1024)
+
+	content, err := io.ReadAll(limitedReader)
+	if err != nil {
+		return "", err
+	}
+
+	contentType := resp.Header.Get("Content-Type")
+	if strings.Contains(contentType, "text/html") {
+		return ExtractTextualContent(string(content)), nil
+	} else {
+		return string(content), nil
+	}
 }
 
-// FetchRemoteContent downloads content from a remote URL with timeout
-func FetchRemoteContent(url string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+func ExtractTextualContent(htmlContent string) string {
+	r := strings.NewReader(htmlContent)
+	doc, err := goquery.NewDocumentFromReader(r)
 	if err != nil {
-		return "", errbook.Wrap("Failed to create request", err)
+		return ""
 	}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", errbook.Wrap("Failed to fetch remote content", err)
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			fmt.Printf("warning: failed to close response body: %v\n", err)
-		}
-	}()
+	return doc.Text()
+}
 
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-	}
+func SanitizeURL(url string) string {
+	// remove protocol portion with a regex
+	re := regexp.MustCompile(`^.*?://`)
+	url = re.ReplaceAllString(url, "")
 
-	content, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", errbook.Wrap("Failed to read response body", err)
-	}
+	// Replace common invalid filename characters. You can extend this list as needed.
+	sanitized := strings.ReplaceAll(url, ":", "_")
+	sanitized = strings.ReplaceAll(sanitized, "/", "_")
+	sanitized = strings.ReplaceAll(sanitized, "?", "_")
+	sanitized = strings.ReplaceAll(sanitized, "&", "_")
+	sanitized = strings.ReplaceAll(sanitized, "=", "_")
+	sanitized = strings.ReplaceAll(sanitized, "#", "_")
+	sanitized = strings.ReplaceAll(sanitized, "%", "_")
+	sanitized = strings.ReplaceAll(sanitized, "*", "_")
+	sanitized = strings.ReplaceAll(sanitized, " ", "_")
+	return sanitized
+}
 
-	return string(content), nil
+func IsValidURL(str string) bool {
+	u, err := url.Parse(str)
+	return err == nil && u.Scheme != "" && u.Host != ""
 }
