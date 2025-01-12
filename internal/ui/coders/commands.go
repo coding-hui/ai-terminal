@@ -255,6 +255,13 @@ func (c *CommandExecutor) coding(ctx context.Context, args ...string) error {
 		return err
 	}
 
+	// Auto-commit if enabled in config
+	if c.coder.cfg.AutoCoder.AutoCommit {
+		if err := c.commit(ctx); err != nil {
+			return errbook.Wrap("Failed to auto-commit changes", err)
+		}
+	}
+
 	return nil
 }
 
