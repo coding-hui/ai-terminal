@@ -7,25 +7,25 @@ package load
 import (
 	"os"
 	"path/filepath"
-	"strings"
+
+	"github.com/spf13/cobra"
 
 	"github.com/coding-hui/ai-terminal/internal/errbook"
-	"github.com/coding-hui/ai-terminal/internal/system"
+	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/ui/console"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 	"github.com/coding-hui/ai-terminal/internal/util/rest"
 	"github.com/coding-hui/ai-terminal/internal/util/term"
-	"github.com/spf13/cobra"
 )
 
 // Options is a struct to support load command
 type Options struct {
 	genericclioptions.IOStreams
-	cfg *system.Config
+	cfg *options.Config
 }
 
 // NewOptions returns initialized Options
-func NewOptions(ioStreams genericclioptions.IOStreams, cfg *system.Config) *Options {
+func NewOptions(ioStreams genericclioptions.IOStreams, cfg *options.Config) *Options {
 	return &Options{
 		IOStreams: ioStreams,
 		cfg:       cfg,
@@ -33,7 +33,7 @@ func NewOptions(ioStreams genericclioptions.IOStreams, cfg *system.Config) *Opti
 }
 
 // NewCmdLoad returns a cobra command for loading files
-func NewCmdLoad(ioStreams genericclioptions.IOStreams, cfg *system.Config) *cobra.Command {
+func NewCmdLoad(ioStreams genericclioptions.IOStreams, cfg *options.Config) *cobra.Command {
 	o := NewOptions(ioStreams, cfg)
 
 	cmd := &cobra.Command{
@@ -83,17 +83,18 @@ func (o *Options) loadPath(path string) error {
 		return errbook.Wrap("Failed to get absolute path", err)
 	}
 
-	content, err := os.ReadFile(absPath)
+	_, err = os.ReadFile(absPath)
 	if err != nil {
 		return errbook.Wrap("Failed to read file", err)
 	}
 
-	return o.saveContent(absPath, string(content))
+	console.Render("Successfully loaded [%s]", absPath)
+	return nil
 }
 
 func (o *Options) saveContent(sourcePath, content string) error {
 	// Create cache directory if it doesn't exist
-	cacheDir := filepath.Join(o.cfg.CacheDir, "loaded")
+	cacheDir := filepath.Join(o.cfg.DataStore.CachePath, "loaded")
 	if err := os.MkdirAll(cacheDir, 0755); err != nil {
 		return errbook.Wrap("Failed to create cache directory", err)
 	}
@@ -108,5 +109,6 @@ func (o *Options) saveContent(sourcePath, content string) error {
 	}
 
 	console.Render("Successfully loaded and cached [%s]", sourcePath)
+
 	return nil
 }
