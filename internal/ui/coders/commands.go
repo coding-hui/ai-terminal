@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/coding-hui/ai-terminal/internal/util/rest"
+
 	"github.com/coding-hui/common/util/fileutil"
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
 
@@ -116,14 +118,35 @@ func (c *CommandExecutor) askFiles(ctx context.Context, args ...string) error {
 }
 
 // addFiles Add files to the chat so GPT can edit them or review them in detail
+func (c *CommandExecutor) loadFileContent(path string) (string, error) {
+	// Handle remote URLs
+	if rest.IsRemoteFile(path) {
+		return rest.FetchRemoteContent(path)
+	}
+
+	// Handle local files
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return "", errbook.Wrap("Failed to read local file", err)
+	}
+	return string(content), nil
+}
+
 func (c *CommandExecutor) addFiles(_ context.Context, files ...string) error {
 	if len(files) <= 0 {
-		return errbook.New("Please provide at least one file")
+		return errbook.New("Please provide at least one file or URL")
 	}
 
 	var matchedFiles = make([]string, 0, len(files))
 
 	for _, pattern := range files {
+		// Handle remote URLs directly
+		if rest.IsRemoteFile(pattern) {
+			matchedFiles = append(matchedFiles, pattern)
+			continue
+		}
+
+		// Handle local file patterns
 		matches, err := filepath.Glob(filepath.Join(c.coder.codeBasePath, pattern))
 		if err != nil {
 			return errbook.Wrap("Failed to glob files", err)
@@ -131,7 +154,7 @@ func (c *CommandExecutor) addFiles(_ context.Context, files ...string) error {
 
 		if len(matches) <= 0 {
 			console.Render("No files matched pattern [%s]", pattern)
-			break
+			continue
 		}
 
 		for _, filePath := range matches {
@@ -408,15 +431,22 @@ func (c *CommandExecutor) getAddedFileContent() (string, error) {
 }
 
 func (c *CommandExecutor) formatFileContent(filePath string) (string, error) {
-	content, err := os.ReadFile(filePath)
+	content, err := c.loadFileContent(filePath)
 	if err != nil {
 		return "", err
 	}
+
+	// For remote URLs, use the full URL as the identifier
+	if rest.IsRemoteFile(filePath) {
+		return fmt.Sprintf("\n%s%s", filePath, wrapFenceWithType(content, filePath)), nil
+	}
+
+	// For local files, use relative path
 	relPath, err := filepath.Rel(c.coder.codeBasePath, filePath)
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("\n%s%s", relPath, wrapFenceWithType(string(content), filePath)), nil
+	return fmt.Sprintf("\n%s%s", relPath, wrapFenceWithType(content, filePath)), nil
 }
 
 func extractCmdArgs(input string) (string, []string) {
