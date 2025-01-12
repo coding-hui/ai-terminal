@@ -12,8 +12,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/coding-hui/ai-terminal/internal/util/rest"
-
 	"github.com/coding-hui/common/util/fileutil"
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
 
@@ -23,6 +21,7 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/ui/chat"
 	"github.com/coding-hui/ai-terminal/internal/ui/console"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
+	"github.com/coding-hui/ai-terminal/internal/util/rest"
 )
 
 // supportCommands maps command names to their handler functions
