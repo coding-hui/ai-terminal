@@ -22,13 +22,10 @@ func newCmdResetConfig(ioStreams genericclioptions.IOStreams, cfg *options.Confi
 		IOStreams: ioStreams,
 	}
 	cmd := &cobra.Command{
-		Use:          "reset",
-		Short:        "Reset configuration to default values",
+		Use:   "reset",
+		Short: "Reset configuration to default values",
 		Example: `  # Reset settings with backup
   ai cfg reset
-  
-  # Reset and show backup location
-  ai cfg reset --quiet=false
   
   # Reset and open new config in editor
   ai cfg reset && ai cfg`,

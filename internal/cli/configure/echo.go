@@ -24,8 +24,8 @@ func newCmdEchoConfig(ioStreams genericclioptions.IOStreams, cfg *options.Config
 		Template:  "",
 	}
 	cmd := &cobra.Command{
-		Use:          "echo",
-		Short:        "Display current configuration settings",
+		Use:   "echo",
+		Short: "Display current configuration settings",
 		Example: `  # Show full configuration
   ai cfg echo
   
