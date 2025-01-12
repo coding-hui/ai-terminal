@@ -1,8 +1,45 @@
 # Change Log
 
 
+<a name="v0.12.0"></a>
+## [v0.12.0] - 2025-01-12
+### Bug Fixes
+- fix HTML entity handling and improve env prefix consistency
+- improve error handling and code cleanup in command execution
+
+### Code Refactoring
+- refactor confirmation logic and remove unused dependencies
+- remove `needConfirm` parameter from `ApplyEdits`
+- improve diff output formatting and rendering
+- simplify edit confirmation logic in diff block editor
+- refactor chat message handling and remove unused code
+- remove unused UI history and spinner components
+- refactor chat system to use `llms.ChatMessage` for message handling
+- refactor console rendering for consistency and simplicity
+- refactor commit message rendering and styling
+- refactor commit message rendering with styled UI components
+- refactor options initialization using functional pattern
+- Refactor auto.coder to support command completion
+- refactor error handling and improve config error messaging
+
+### Features
+- add language support to commit command
+- add support for commit message language configuration
+- add support for conventional commit prefixes
+- add shorthand flag for version command output
+
+
+<a name="v0.1.11"></a>
+## [v0.1.11] - 2025-01-05
+### Code Refactoring
+- improve error handling and streaming logic in LLM engine
+
+
 <a name="v0.1.10"></a>
 ## [v0.1.10] - 2025-01-05
+
+<a name="0.1.10"></a>
+## [0.1.10] - 2025-01-05
 ### Bug Fixes
 - correct function name typo in auto coder
 
@@ -16,6 +53,7 @@
 - refactor error handling to use `display.Fatal`
 
 ### Features
+- add shell completions and manpage generation support
 - add default chat ID handling for LLM engine
 - add warning message display functionality in UI
 
@@ -223,8 +261,11 @@
 - add ask cmd
 
 
-[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.1.10...HEAD
-[v0.1.10]: https://github.com/coding-hui/ai-terminal/compare/v0.1.9-1...v0.1.10
+[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.12.0...HEAD
+[v0.12.0]: https://github.com/coding-hui/ai-terminal/compare/v0.1.11...v0.12.0
+[v0.1.11]: https://github.com/coding-hui/ai-terminal/compare/v0.1.10...v0.1.11
+[v0.1.10]: https://github.com/coding-hui/ai-terminal/compare/0.1.10...v0.1.10
+[0.1.10]: https://github.com/coding-hui/ai-terminal/compare/v0.1.9-1...0.1.10
 [v0.1.9-1]: https://github.com/coding-hui/ai-terminal/compare/v0.1.9...v0.1.9-1
 [v0.1.9]: https://github.com/coding-hui/ai-terminal/compare/v0.1.8...v0.1.9
 [v0.1.8]: https://github.com/coding-hui/ai-terminal/compare/v0.1.7...v0.1.8

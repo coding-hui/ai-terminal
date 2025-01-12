@@ -96,6 +96,9 @@ changelog:
     - title: "Code Refactoring"
       regexp: '^.*?refactor(\([[:word:]]+\))??!?:.+$'
       order: 3
+    - title: "Auto Coder Generated Code"
+      regexp: '^.*?auto-coder(\([[:word:]]+\))??!?:.+$'
+      order: 4
     - title: Others
       order: 999
 
