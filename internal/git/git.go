@@ -264,8 +264,17 @@ func (c *Command) FormatDiff(diffOutput string) string {
 	stats := c.calculateDiffStats(lines)
 	formattedLines := c.formatDiffLines(lines, stats)
 
+	// Add separator before file header
+	if stats.FileHeader != "" {
+		separator := strings.Repeat("─", 80)
+		formattedLines = append([]string{
+			console.StdoutStyles().DiffContext.Render(separator),
+			"",
+		}, formattedLines...)
+	}
+
 	header := c.createDiffHeader(stats)
-	return header + strings.Join(formattedLines, "\n")
+	return header + "\n" + strings.Join(formattedLines, "\n")
 }
 
 // calculateDiffStats calculates statistics from diff lines
@@ -326,15 +335,15 @@ func (c *Command) formatDiffLines(lines []string, stats *DiffStats) []string {
 			}
 		case strings.HasPrefix(line, "+"):
 			formattedLines = append(formattedLines,
-				console.StdoutStyles().DiffAdded.Render(fmt.Sprintf("%4d + %s", updatedLineNum, line[1:])))
+				console.StdoutStyles().DiffAdded.Render(fmt.Sprintf("%4d +%s", updatedLineNum, line[1:])))
 			updatedLineNum++
 		case strings.HasPrefix(line, "-"):
 			formattedLines = append(formattedLines,
-				console.StdoutStyles().DiffRemoved.Render(fmt.Sprintf("%4d - %s", origLineNum, line[1:])))
+				console.StdoutStyles().DiffRemoved.Render(fmt.Sprintf("%4d -%s", origLineNum, line[1:])))
 			origLineNum++
 		case strings.HasPrefix(line, " "):
 			formattedLines = append(formattedLines,
-				console.StdoutStyles().DiffContext.Render(fmt.Sprintf("%4d   %s", origLineNum, line[1:])))
+				console.StdoutStyles().DiffContext.Render(fmt.Sprintf("%4d  %s", origLineNum, line[1:])))
 			origLineNum++
 			updatedLineNum++
 		default:

@@ -352,12 +352,10 @@ func (c *CommandExecutor) diff(ctx context.Context, _ ...string) error {
 	}
 
 	// Process and format the diff
-	formattedDiff := c.coder.repo.FormatDiff(diffOutput)
-	console.Render("Changes:\n%s", formattedDiff)
+	fmt.Println(c.coder.repo.FormatDiff(diffOutput))
+
 	return nil
 }
-
-
 
 func (c *CommandExecutor) exit(_ context.Context, _ ...string) error {
 	fmt.Println("Bye!")
