@@ -238,43 +238,6 @@ func (e *Engine) CreateStreamCompletion(messages []llms.ChatMessage) tea.Msg {
 	}
 }
 
-func (e *Engine) ChatStream(ctx context.Context, messages []llms.MessageContent, options ...llms.CallOption) (*llms.ContentResponse, error) {
-	e.running = true
-
-	streamingFunc := func(ctx context.Context, chunk []byte) error {
-		e.channel <- StreamCompletionOutput{
-			content: string(chunk),
-			last:    false,
-		}
-		return nil
-	}
-	opts := e.callOptions(streamingFunc)
-	opts = append(opts, options...)
-	rsp, err := e.Model.GenerateContent(ctx, messages, opts...)
-	if err != nil {
-		e.running = false
-		return nil, errbook.Wrap("Failed to create stream completion.", err)
-	}
-
-	executable := false
-	output := rsp.Choices[0].Content
-
-	if e.mode == ExecEngineMode {
-		if !strings.HasPrefix(output, noExec) && !strings.Contains(output, "\n") {
-			executable = true
-		}
-	}
-
-	e.channel <- StreamCompletionOutput{
-		content:    "",
-		last:       true,
-		executable: executable,
-	}
-	e.running = false
-
-	return rsp, nil
-}
-
 func (e *Engine) callOptions(streamingFunc ...func(ctx context.Context, chunk []byte) error) []llms.CallOption {
 	var opts []llms.CallOption
 	if e.config.MaxTokens > 0 {
