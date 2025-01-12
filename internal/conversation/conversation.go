@@ -7,11 +7,61 @@ import (
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
 )
 
+// ContentType defines the type of content being loaded into the conversation.
+// It can be one of: file, URL, or plain text.
+type ContentType string
+
+const (
+	// ContentTypeFile represents content loaded from a local file
+	ContentTypeFile ContentType = "file"
+
+	// ContentTypeURL represents content loaded from a remote URL
+	ContentTypeURL ContentType = "url"
+
+	// ContentTypeText represents direct text content
+	ContentTypeText ContentType = "text"
+)
+
+// LoadContext contains metadata and content information for loaded resources.
+// It tracks the source, type, conversation association, and additional metadata
+// about the content being used in conversations.
+type LoadContext struct {
+	// Type indicates the content source type (file, URL, or text)
+	Type ContentType `db:"type" json:"type"`
+
+	// URL contains the source URL if loading from a remote resource
+	URL string `db:"url" json:"url"`
+
+	// FilePath contains the local file path if loading from a file
+	FilePath string `db:"file_path" json:"filePath"`
+
+	// Content contains the actual loaded content as a string
+	Content string `db:"content" json:"content"`
+
+	// Name is a human-readable identifier for the content
+	Name string `db:"name" json:"name"`
+
+	// ConversationID associates the content with a specific conversation
+	ConversationID string `db:"conversation_id" json:"conversationId"`
+
+	// Metadata contains additional key-value pairs about the content
+	Metadata map[string]string `db:"metadata" json:"metadata"`
+}
+
+// Conversation represents a chat conversation with metadata and history.
+// It tracks the conversation ID, title, last update time, and optional model info.
 type Conversation struct {
-	ID        string    `db:"id" json:"id"`
-	Title     string    `db:"title" json:"title"`
-	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`
-	Model     *string   `db:"model" json:"model"`
+	// ID is the unique identifier for the conversation
+	ID string `db:"id" json:"id"`
+
+	// Title is a human-readable name for the conversation
+	Title string `db:"title" json:"title"`
+
+	// UpdatedAt tracks the last modification time of the conversation
+	UpdatedAt time.Time `db:"updated_at" json:"updatedAt"`
+
+	// Model optionally specifies the AI model used in the conversation
+	Model *string `db:"model" json:"model"`
 }
 
 type ChatMessageHistory interface {
