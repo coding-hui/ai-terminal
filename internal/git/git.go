@@ -366,15 +366,28 @@ func (c *Command) createDiffHeader(stats *DiffStats) string {
 // createProgressBar generates a visual progress bar with line numbers
 func (c *Command) createProgressBar(lastNonDeleted, totalLines int) string {
 	const barWidth = 30
-	if totalLines == 0 {
+
+	// Handle edge cases
+	if totalLines <= 0 || lastNonDeleted < 0 {
 		return ""
+	}
+
+	// Ensure lastNonDeleted doesn't exceed totalLines
+	if lastNonDeleted > totalLines {
+		lastNonDeleted = totalLines
 	}
 
 	// Calculate progress based on last non-deleted line
 	progress := float64(lastNonDeleted) / float64(totalLines)
 
-	// Calculate bar segments
+	// Calculate bar segments ensuring non-negative values
 	filledBlocks := int(progress * barWidth)
+	if filledBlocks < 0 {
+		filledBlocks = 0
+	}
+	if filledBlocks > barWidth {
+		filledBlocks = barWidth
+	}
 	emptyBlocks := barWidth - filledBlocks
 
 	bar := strings.Repeat("█", filledBlocks) +
