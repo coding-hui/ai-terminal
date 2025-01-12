@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT style
 // license that can be found in the LICENSE file.
 
-package load
+package loadctx
 
 import (
 	"context"
@@ -20,33 +20,32 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/util/term"
 )
 
-// Options is a struct to support load command
-type Options struct {
+// load is a struct to support load command
+type load struct {
 	genericclioptions.IOStreams
 	cfg        *options.Config
 	convoStore convo.Store
 }
 
-// NewOptions returns initialized Options
-func NewOptions(ioStreams genericclioptions.IOStreams, cfg *options.Config) *Options {
-	return &Options{
+// newLoad returns initialized load
+func newLoad(ioStreams genericclioptions.IOStreams, cfg *options.Config) *load {
+	return &load{
 		IOStreams: ioStreams,
 		cfg:       cfg,
 	}
 }
 
-// NewCmdLoad returns a cobra command for loading files
-func NewCmdLoad(ioStreams genericclioptions.IOStreams, cfg *options.Config) *cobra.Command {
-	o := NewOptions(ioStreams, cfg)
+func newCmdLoad(ioStreams genericclioptions.IOStreams, cfg *options.Config) *cobra.Command {
+	o := newLoad(ioStreams, cfg)
 
 	cmd := &cobra.Command{
 		Use:   "load <file|url>",
 		Short: "Preload files or remote documents for later use",
 		Example: `  # Load a local file
-  ai load ./example.txt
+  ai context load ./example.txt
 
-  # Load a remote document
-  ai load https://example.com/doc.txt`,
+  # Load a remote document  
+  ai context load https://example.com/doc.txt`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return errbook.New("Please provide at least one file or URL to load")
@@ -59,7 +58,7 @@ func NewCmdLoad(ioStreams genericclioptions.IOStreams, cfg *options.Config) *cob
 }
 
 // Run executes the load command
-func (o *Options) Run(args []string) (err error) {
+func (o *load) Run(args []string) (err error) {
 	// Initialize conversation store
 	o.convoStore, err = convo.GetConversationStore(o.cfg)
 	if err != nil {
@@ -75,7 +74,7 @@ func (o *Options) Run(args []string) (err error) {
 	return nil
 }
 
-func (o *Options) loadPath(path string) error {
+func (o *load) loadPath(path string) error {
 	// Handle remote URLs
 	if rest.IsValidURL(path) {
 		console.Render("Loading remote content [%s]", path)
@@ -95,7 +94,7 @@ func (o *Options) loadPath(path string) error {
 	return nil
 }
 
-func (o *Options) saveContent(sourcePath, content string, contentType convo.ContentType) error {
+func (o *load) saveContent(sourcePath, content string, contentType convo.ContentType) error {
 	// Create cache directory if it doesn't exist
 	cacheDir := filepath.Join(o.cfg.DataStore.CachePath, "loaded")
 	if err := os.MkdirAll(cacheDir, 0755); err != nil {
