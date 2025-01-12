@@ -38,7 +38,7 @@ func FetchURLContent(url string) (string, error) {
 	defer resp.Body.Close() //nolint:errcheck
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return "", errbook.New("non-2xx HTTP response status: " + resp.Status)
+		return "", errbook.New("unexpected status code %d", resp.StatusCode)
 	}
 
 	// Limit the response reader to a maximum amount
