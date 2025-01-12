@@ -19,6 +19,17 @@ func NewCmdConfigure(ioStreams genericclioptions.IOStreams, cfg *options.Config)
 		Use:     "configure",
 		Aliases: []string{"conf", "cfg", "config", "settings"},
 		Short:   "Open settings in your $EDITOR.",
+		Example: `  # Open settings in editor
+  ai cfg
+  
+  # Get specific config value
+  ai cfg get -t "{{.DataStore.CachePath}}"
+  
+  # Get API endpoint
+  ai cfg get -t "{{.API}}"
+  
+  # Get default model
+  ai cfg get -t "{{.Model}}"`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			editor := system.Analyse().GetEditor()
 			editorCmd := runner.PrepareEditSettingsCommand(editor, cfg.SettingsPath)
