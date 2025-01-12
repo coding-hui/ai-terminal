@@ -262,7 +262,7 @@ func (c *Command) FormatDiff(diffOutput string) string {
 
 	lines := strings.Split(diffOutput, "\n")
 	stats := c.calculateDiffStats(lines)
-	formattedLines := c.formatDiffLines(lines, stats)
+	formattedLines := c.formatDiffLines(lines)
 
 	// Add separator before file header
 	if stats.FileHeader != "" {
@@ -317,7 +317,7 @@ func (c *Command) calculateDiffStats(lines []string) *DiffStats {
 }
 
 // formatDiffLines formats diff lines with proper styling
-func (c *Command) formatDiffLines(lines []string, stats *DiffStats) []string {
+func (c *Command) formatDiffLines(lines []string) []string {
 	var formattedLines []string
 	var origLineNum, updatedLineNum int
 
@@ -356,7 +356,7 @@ func (c *Command) formatDiffLines(lines []string, stats *DiffStats) []string {
 
 // createDiffHeader creates the header with stats and progress
 func (c *Command) createDiffHeader(stats *DiffStats) string {
-	progress := c.createProgressBar(stats.Added, stats.Removed, stats.Total, stats.Context, stats.Total)
+	progress := c.createProgressBar(stats.Context, stats.Total)
 
 	return console.StdoutStyles().DiffHeader.Render(
 		fmt.Sprintf("Changes (%d added, %d removed, %d unchanged):\n%s\n",
@@ -364,7 +364,7 @@ func (c *Command) createDiffHeader(stats *DiffStats) string {
 }
 
 // createProgressBar generates a visual progress bar with line numbers
-func (c *Command) createProgressBar(added, removed, total, lastNonDeleted, totalLines int) string {
+func (c *Command) createProgressBar(lastNonDeleted, totalLines int) string {
 	const barWidth = 30
 	if totalLines == 0 {
 		return ""

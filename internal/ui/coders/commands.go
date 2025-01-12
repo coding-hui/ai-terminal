@@ -337,9 +337,9 @@ func (c *CommandExecutor) help(_ context.Context, _ ...string) error {
 	return nil
 }
 
-func (c *CommandExecutor) diff(ctx context.Context, _ ...string) error {
+func (c *CommandExecutor) diff(_ context.Context, _ ...string) error {
 	// Stage all added files
-	var filesToStage []string
+	filesToStage := make([]string, 0, len(c.coder.absFileNames))
 	for file := range c.coder.absFileNames {
 		filesToStage = append(filesToStage, file)
 	}
