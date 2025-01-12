@@ -61,8 +61,8 @@ func SanitizeFilename(filename string) string {
 	}
 
 	// Limit length to 255 characters (common filesystem limit)
-	if len(filename) > 255 {
-		filename = filename[:255]
+	if len(filename) > 64 {
+		filename = filename[:64]
 	}
 
 	return filename

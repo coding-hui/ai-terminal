@@ -5,11 +5,13 @@
 package load
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
 
+	"github.com/coding-hui/ai-terminal/internal/convo"
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/ui/console"
@@ -21,7 +23,8 @@ import (
 // Options is a struct to support load command
 type Options struct {
 	genericclioptions.IOStreams
-	cfg *options.Config
+	cfg        *options.Config
+	convoStore convo.Store
 }
 
 // NewOptions returns initialized Options
@@ -56,12 +59,19 @@ func NewCmdLoad(ioStreams genericclioptions.IOStreams, cfg *options.Config) *cob
 }
 
 // Run executes the load command
-func (o *Options) Run(args []string) error {
+func (o *Options) Run(args []string) (err error) {
+	// Initialize conversation store
+	o.convoStore, err = convo.GetConversationStore(o.cfg)
+	if err != nil {
+		return errbook.Wrap("Failed to initialize conversation store", err)
+	}
+
 	for _, path := range args {
-		if err := o.loadPath(path); err != nil {
+		if err = o.loadPath(path); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -73,26 +83,19 @@ func (o *Options) loadPath(path string) error {
 		if err != nil {
 			return errbook.Wrap("Failed to load remote content", err)
 		}
-		return o.saveContent(path, content)
+		return o.saveContent(path, content, convo.ContentTypeURL)
 	}
 
 	// Handle local files
 	console.Render("Loading local file [%s]", path)
-	absPath, err := filepath.Abs(path)
-	if err != nil {
-		return errbook.Wrap("Failed to get absolute path", err)
+	if err := o.saveContent(path, "", convo.ContentTypeFile); err != nil {
+		return err
 	}
 
-	_, err = os.ReadFile(absPath)
-	if err != nil {
-		return errbook.Wrap("Failed to read file", err)
-	}
-
-	console.Render("Successfully loaded [%s]", absPath)
 	return nil
 }
 
-func (o *Options) saveContent(sourcePath, content string) error {
+func (o *Options) saveContent(sourcePath, content string, contentType convo.ContentType) error {
 	// Create cache directory if it doesn't exist
 	cacheDir := filepath.Join(o.cfg.DataStore.CachePath, "loaded")
 	if err := os.MkdirAll(cacheDir, 0755); err != nil {
@@ -103,12 +106,26 @@ func (o *Options) saveContent(sourcePath, content string) error {
 	filename := term.SanitizeFilename(sourcePath)
 	cachePath := filepath.Join(cacheDir, filename)
 
-	// Save content to cache
-	if err := os.WriteFile(cachePath, []byte(content), 0644); err != nil {
-		return errbook.Wrap("Failed to save content", err)
+	if contentType != convo.ContentTypeFile {
+		// Save content to cache
+		if err := os.WriteFile(cachePath, []byte(content), 0644); err != nil {
+			return errbook.Wrap("Failed to save content", err)
+		}
 	}
 
-	console.Render("Successfully loaded and cached [%s] to [%s]", sourcePath, cachePath)
+	err := o.convoStore.SaveContext(context.Background(), &convo.LoadContext{
+		ConversationID: o.cfg.ConversationID,
+		Name:           filename,
+		Type:           contentType,
+		URL:            sourcePath,
+		FilePath:       cachePath,
+		Content:        content,
+	})
+	if err != nil {
+		return errbook.Wrap("Failed to save load content", err)
+	}
+
+	console.Render("Successfully loaded and cached [%s]", filename)
 
 	return nil
 }
