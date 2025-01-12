@@ -70,6 +70,7 @@ var help = map[string]string{
 	"show-last":       "Show the last saved conversation.",
 	"datastore":       "Configure the datastore to use.",
 	"auto-coder":      "Configure the auto coder to use.",
+	"auto-commit":     "Automatically commit code changes after generation.",
 }
 
 // Config is a structure used to configure a AI.
@@ -113,6 +114,7 @@ type AutoCoder struct {
 	PromptPrefix string `yaml:"prompt-prefix" env:"PROMPT_PREFIX"`
 	EditFormat   string `yaml:"edit-format" env:"EDIT_FORMAT"`
 	CommitPrefix string `yaml:"commit-prefix" env:"COMMIT_PREFIX"`
+	AutoCommit   bool   `yaml:"auto-commit" env:"AUTO_COMMIT" default:"true"`
 }
 
 // Model represents the LLM model used in the API call.

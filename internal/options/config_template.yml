@@ -59,6 +59,7 @@ auto-coder:
   prompt-prefix: auto-coder
   edit-format: diff
   commit-prefix: auto-coder
+  auto-commit: true
 # {{ index .Help "apis" }}
 apis:
   openai:
