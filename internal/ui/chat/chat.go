@@ -95,11 +95,15 @@ func (c *Chat) Run() error {
 	}
 
 	if term.IsOutputTTY() {
-		switch {
-		case c.GlamOutput != "":
-			fmt.Print(c.GlamOutput)
-		case c.Output != "":
+		if c.config.Raw && c.Output != "" {
 			fmt.Print(c.Output)
+		} else {
+			switch {
+			case c.GlamOutput != "":
+				fmt.Print(c.GlamOutput)
+			case c.Output != "":
+				fmt.Print(c.Output)
+			}
 		}
 		fmt.Println()
 	}

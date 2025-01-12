@@ -22,7 +22,7 @@ var configTemplate string
 
 const (
 	// RecommendedEnvPrefix defines the ENV prefix used by all iam service.
-	RecommendedEnvPrefix = "AI"
+	RecommendedEnvPrefix = "AI_"
 
 	defaultMarkdownFormatText = "Format the response as markdown without enclosing backticks."
 	defaultJSONFormatText     = "Format the response as json without enclosing backticks."
@@ -252,7 +252,7 @@ func EnsureConfig() (Config, error) {
 	}
 	c.Models = ms
 
-	if err := env.ParseWithOptions(&c, env.Options{Prefix: "AI_"}); err != nil {
+	if err := env.ParseWithOptions(&c, env.Options{Prefix: RecommendedEnvPrefix}); err != nil {
 		return c, errbook.Wrap("Could not parse environment into settings file.", err)
 	}
 
