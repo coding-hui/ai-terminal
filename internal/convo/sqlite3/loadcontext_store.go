@@ -2,6 +2,7 @@ package sqlite3
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 
@@ -23,53 +24,114 @@ func newLoadContextStore(db *sqlx.DB) *sqliteLoadContextStore {
 }
 
 func (s *sqliteLoadContextStore) SaveContext(ctx context.Context, lc *convo.LoadContext) error {
-	_, err := s.db.ExecContext(ctx, `
+	res, err := s.db.ExecContext(ctx, s.db.Rebind(`
+		UPDATE load_contexts
+		SET
+			type = ?,
+			url = ?,
+			file_path = ?,
+			content = ?,
+			name = ?,
+			conversation_id = ?,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE
+			id = ?
+	`), lc.Type, lc.URL, lc.FilePath, lc.Content, lc.Name, lc.ConversationID, lc.ID)
+	if err != nil {
+		return fmt.Errorf("SaveContext: %w", err)
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("SaveContext: %w", err)
+	}
+
+	if rows > 0 {
+		return nil
+	}
+
+	resp, err := s.db.ExecContext(ctx, s.db.Rebind(`
 		INSERT INTO load_contexts (
-			id, type, url, file_path, content, name, conversation_id
+			type, url, file_path, content, name, conversation_id
 		) VALUES (
-			?, ?, ?, ?, ?, ?, ?
-		) ON CONFLICT(id) DO UPDATE SET
-			type = excluded.type,
-			url = excluded.url,
-			file_path = excluded.file_path,
-			content = excluded.content,
-			name = excluded.name,
-			conversation_id = excluded.conversation_id
-	`, lc.ID, lc.Type, lc.URL, lc.FilePath, lc.Content, lc.Name, lc.ConversationID)
-	return err
+			?, ?, ?, ?, ?, ?
+		)
+	`), lc.Type, lc.URL, lc.FilePath, lc.Content, lc.Name, lc.ConversationID)
+	if err != nil {
+		return fmt.Errorf("SaveContext: %w", err)
+	}
+
+	lastInsertId, err := resp.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("SaveContext: %w", err)
+	}
+	lc.ID = uint64(lastInsertId)
+
+	return nil
 }
 
 func (s *sqliteLoadContextStore) GetContext(ctx context.Context, id uint64) (*convo.LoadContext, error) {
 	var lc convo.LoadContext
-	err := s.db.GetContext(ctx, &lc, `
+	err := s.db.GetContext(ctx, &lc, s.db.Rebind(`
 		SELECT id, type, url, file_path, content, name, conversation_id, updated_at
 		FROM load_contexts WHERE id = ?
-	`, id)
+	`), id)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", errLoadContextNotFound, err)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("%w: %v", errLoadContextNotFound, err)
+		}
+		return nil, fmt.Errorf("GetContext: %w", err)
 	}
 	return &lc, nil
 }
 
 func (s *sqliteLoadContextStore) ListContextsByteConvoID(ctx context.Context, conversationID string) ([]convo.LoadContext, error) {
 	var contexts []convo.LoadContext
-	err := s.db.SelectContext(ctx, &contexts, `
+	if err := s.db.SelectContext(ctx, &contexts, s.db.Rebind(`
 		SELECT id, type, url, file_path, content, name, conversation_id, updated_at
 		FROM load_contexts WHERE conversation_id = ?
-	`, conversationID)
-	return contexts, err
+	`), conversationID); err != nil {
+		return nil, fmt.Errorf("ListContextsByteConvoID: %w", err)
+	}
+	return contexts, nil
 }
 
 func (s *sqliteLoadContextStore) DeleteContexts(ctx context.Context, id uint64) error {
-	_, err := s.db.ExecContext(ctx, `
+	res, err := s.db.ExecContext(ctx, s.db.Rebind(`
 		DELETE FROM load_contexts WHERE id = ?
-	`, id)
-	return err
+	`), id)
+	if err != nil {
+		return fmt.Errorf("DeleteContexts: %w", err)
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("DeleteContexts: %w", err)
+	}
+
+	if rows == 0 {
+		return fmt.Errorf("DeleteContexts: no rows affected")
+	}
+
+	return nil
 }
 
 func (s *sqliteLoadContextStore) CleanContexts(ctx context.Context, conversationID string) error {
-	_, err := s.db.ExecContext(ctx, `
+	res, err := s.db.ExecContext(ctx, s.db.Rebind(`
 		DELETE FROM load_contexts WHERE conversation_id = ?
-	`, conversationID)
-	return err
+	`), conversationID)
+	if err != nil {
+		return fmt.Errorf("CleanContexts: %w", err)
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("CleanContexts: %w", err)
+	}
+
+	if rows == 0 {
+		return fmt.Errorf("CleanContexts: no rows affected")
+	}
+
+	return nil
 }

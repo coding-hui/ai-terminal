@@ -20,7 +20,6 @@ func TestLoadContextStore(t *testing.T) {
 
 	t.Run("SaveContext and GetContext LoadContext", func(t *testing.T) {
 		lc := &convo.LoadContext{
-			ID:             uint64(1),
 			Type:           "file",
 			URL:            "",
 			FilePath:       "/path/to/file",
