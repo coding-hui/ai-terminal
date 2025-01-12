@@ -39,7 +39,11 @@ func FetchRemoteContent(url string) (string, error) {
 	if err != nil {
 		return "", errbook.Wrap("Failed to fetch remote content", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			fmt.Printf("warning: failed to close response body: %v\n", err)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("unexpected status code: %d", resp.StatusCode)
