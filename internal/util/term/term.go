@@ -37,3 +37,41 @@ var IsInputTTY = sync.OnceValue(func() bool {
 var IsOutputTTY = sync.OnceValue(func() bool {
 	return isatty.IsTerminal(os.Stdout.Fd())
 })
+// Copyright (c) 2023-2024 coding-hui. All rights reserved.
+// Use of this source code is governed by a MIT style
+// license that can be found in the LICENSE file.
+
+package term
+
+import (
+	"regexp"
+	"strings"
+)
+
+// SanitizeFilename cleans up a filename to make it safe for use in file systems
+// by removing or replacing invalid characters.
+func SanitizeFilename(filename string) string {
+	// Remove any path components
+	filename = strings.ReplaceAll(filename, "/", "_")
+	filename = strings.ReplaceAll(filename, "\\", "_")
+	
+	// Remove other potentially problematic characters
+	reg := regexp.MustCompile(`[<>:"|?*]`)
+	filename = reg.ReplaceAllString(filename, "_")
+	
+	// Trim spaces and dots from start/end
+	filename = strings.TrimSpace(filename)
+	filename = strings.Trim(filename, ".")
+	
+	// Ensure filename is not empty
+	if filename == "" {
+		filename = "unnamed"
+	}
+	
+	// Limit length to 255 characters (common filesystem limit)
+	if len(filename) > 255 {
+		filename = filename[:255]
+	}
+	
+	return filename
+}
