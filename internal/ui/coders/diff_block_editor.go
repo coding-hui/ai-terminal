@@ -125,7 +125,7 @@ func (e *EditBlockCoder) applyEdit(_ context.Context, block PartialCodeBlock) er
 	}
 
 	if !fileExists {
-		if ok := console.WaitForUserConfirm(console.Yes, "Whether to create the %s file? (Y/n)", block.Path); !ok {
+		if ok := console.WaitForUserConfirm(console.Yes, "Whether to create the %s file? (Y/n)", block.Path); ok {
 			if err := fileutil.WriteFile(absPath, []byte("")); err != nil {
 				return err
 			}
