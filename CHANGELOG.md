@@ -1,6 +1,24 @@
 # Change Log
 
 
+<a name="v0.13.0"></a>
+## [v0.13.0] - 2025-01-18
+### Bug Fixes
+- ensure `CacheWriteToID` is checked before appending assistant messages
+
+### Code Refactoring
+- refactor `llm` package to `ai` and simplify engine configuration
+- reorder message assignment after invalidation check in `SetMessages`
+- remove unused code and imports
+- refactor chat commands to simplify logic and improve error handling
+- use format string for `confirmTitle` in `WaitForUserConfirm`
+- refactor message loading logic and tests
+
+### Features
+- refactor `AutoCoder` to support context-based code generation
+- refactor conversation and context management logic
+
+
 <a name="v0.12.1"></a>
 ## [v0.12.1] - 2025-01-18
 ### Bug Fixes
@@ -297,7 +315,8 @@
 - add ask cmd
 
 
-[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.12.1...HEAD
+[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.13.0...HEAD
+[v0.13.0]: https://github.com/coding-hui/ai-terminal/compare/v0.12.1...v0.13.0
 [v0.12.1]: https://github.com/coding-hui/ai-terminal/compare/v0.12.0...v0.12.1
 [v0.12.0]: https://github.com/coding-hui/ai-terminal/compare/v0.1.11...v0.12.0
 [v0.1.11]: https://github.com/coding-hui/ai-terminal/compare/v0.1.10...v0.1.11
