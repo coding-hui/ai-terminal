@@ -1,6 +1,41 @@
 # Change Log
 
 
+<a name="v0.12.1"></a>
+## [v0.12.1] - 2025-01-18
+### Bug Fixes
+- enhance error handling in `ListContextsByteConvoID` with descriptive wrapping
+- improve HTTP error message with status code details
+- improve progress bar edge case handling and validation
+- fix file creation confirmation logic
+
+### Code Refactoring
+- remove unused code and simplify function parameters
+- remove unused `cfg` parameter from `postRunHook`
+- replace manual HTML decoding with `html.UnescapeString`
+- refactor completion methods to use context and consistent naming
+- refactor stream completion return type and error handling
+- remove lowercase conversion of `commitPrefix`
+- refactor load package into context command structure
+- refactor SQL error handling and auto-increment logic
+- refactor conversation store handling in Engine struct
+- refactor `ChatID` to `ConversationID` for consistency
+- remove `ChatStream` function from LLM engine
+- refactor completion methods to use `llms.PromptValue`
+- refactor imports and update cache path configuration
+
+### Features
+- replace history command with convo command and add subcommands
+- refactor chat history storage and enhance conversation handling
+- add context support to `Persistent` and `Invalidate` methods
+- add context management commands and improve cleanup functionality
+- add context support and debug utilities for conversation handling
+- integrate conversation store and streamline file handling
+- refactor conversation package and add SQLite context storage
+- Support sqlite to save session records
+- improve URL handling and content fetching logic
+
+
 <a name="v0.12.0"></a>
 ## [v0.12.0] - 2025-01-12
 ### Bug Fixes
@@ -23,6 +58,7 @@
 - refactor error handling and improve config error messaging
 
 ### Features
+- refactor and enhance chat system with new features and bug fixes
 - add language support to commit command
 - add support for commit message language configuration
 - add support for conventional commit prefixes
@@ -261,7 +297,8 @@
 - add ask cmd
 
 
-[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.12.1...HEAD
+[v0.12.1]: https://github.com/coding-hui/ai-terminal/compare/v0.12.0...v0.12.1
 [v0.12.0]: https://github.com/coding-hui/ai-terminal/compare/v0.1.11...v0.12.0
 [v0.1.11]: https://github.com/coding-hui/ai-terminal/compare/v0.1.10...v0.1.11
 [v0.1.10]: https://github.com/coding-hui/ai-terminal/compare/0.1.10...v0.1.10
