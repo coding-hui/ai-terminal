@@ -100,7 +100,7 @@ func NewLLMEngine(mode EngineMode, cfg *options.Config) (*Engine, error) {
 
 	chatHistory, err := convo.GetConversationStore(cfg)
 	if err != nil {
-		return nil, errbook.Wrap("Failed to get chat history store.", err)
+		return nil, errbook.Wrap("Failed to get chat convo store.", err)
 	}
 
 	return &Engine{
@@ -194,7 +194,7 @@ func (e *Engine) CreateStreamCompletion(ctx context.Context, messages []llms.Cha
 	for _, v := range messages {
 		err := e.convoStore.AddMessage(ctx, e.config.CacheWriteToID, v)
 		if err != nil {
-			errbook.HandleError(errbook.Wrap("Failed to add user chat input message to history", err))
+			errbook.HandleError(errbook.Wrap("Failed to add user chat input message to convo", err))
 		}
 	}
 
@@ -253,7 +253,7 @@ func (e *Engine) callOptions(streamingFunc ...func(ctx context.Context, chunk []
 func (e *Engine) setupChatContext(ctx context.Context, messages *[]llms.ChatMessage) error {
 	store := e.convoStore
 	if store == nil {
-		return errbook.New("no chat history store found")
+		return errbook.New("no chat convo store found")
 	}
 
 	if !e.config.NoCache && e.config.CacheReadFromID != "" {
@@ -274,7 +274,7 @@ func (e *Engine) setupChatContext(ctx context.Context, messages *[]llms.ChatMess
 func (e *Engine) appendAssistantMessage(content string) {
 	if e.convoStore != nil {
 		if err := e.convoStore.AddAIMessage(context.Background(), e.config.ConversationID, content); err != nil {
-			errbook.HandleError(errbook.Wrap("failed to add assistant chat output message to history", err))
+			errbook.HandleError(errbook.Wrap("failed to add assistant chat output message to convo", err))
 		}
 	}
 }
@@ -302,7 +302,7 @@ func (e *Engine) prepareCompletionMessages() []llms.MessageContent {
 	if e.convoStore != nil {
 		history, err := e.convoStore.Messages(context.Background(), e.config.ConversationID)
 		if err != nil {
-			errbook.HandleError(errbook.Wrap("failed to get chat history", err))
+			errbook.HandleError(errbook.Wrap("failed to get chat convo", err))
 		}
 		messages = append(messages, slices.Map(history, convert)...)
 	}

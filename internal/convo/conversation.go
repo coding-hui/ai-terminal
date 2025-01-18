@@ -51,7 +51,7 @@ type LoadContext struct {
 	UpdatedAt time.Time `db:"updated_at" json:"updatedAt"`
 }
 
-// Conversation represents a chat convo with metadata and history.
+// Conversation represents a chat convo with metadata and convo.
 // It tracks the convo ID, title, last update time, and optional model info.
 type Conversation struct {
 	// ID is the unique identifier for the convo
@@ -86,12 +86,12 @@ type ChatMessageHistory interface {
 	InvalidateMessages(ctx context.Context, convoID string) error
 }
 
-// Store is the interface for chat history convo store.
+// Store is the interface for chat convo convo store.
 type Store interface {
 	ChatMessageHistory
 	LoadContextStore
 
-	// LatestConversation returns the last message in the chat history.
+	// LatestConversation returns the last message in the chat convo.
 	LatestConversation(ctx context.Context) (*Conversation, error)
 	// GetConversation retrieves a convo from the store
 	GetConversation(ctx context.Context, convoID string) (*Conversation, error)

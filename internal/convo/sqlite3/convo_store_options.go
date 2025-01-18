@@ -40,7 +40,7 @@ CREATE INDEX IF NOT EXISTS idx_loadctx_convo ON load_contexts (conversation_id);
 `
 
 // SqliteChatMessageHistoryOption is a function for creating new
-// chat message history with other than the default values.
+// chat message convo with other than the default values.
 type SqliteChatMessageHistoryOption func(m *SqliteStore)
 
 // WithDataPath is an option for NewSqliteChatMessageHistory for
@@ -76,7 +76,7 @@ func WithDBAddress(addr string) SqliteChatMessageHistoryOption {
 }
 
 // WithConversation is an option for NewSqliteChatMessageHistory for
-// setting a session name or ConvoID for the history.
+// setting a session name or ConvoID for the convo.
 func WithConversation(convoID string) SqliteChatMessageHistoryOption {
 	return func(m *SqliteStore) {
 		m.ConvoID = convoID

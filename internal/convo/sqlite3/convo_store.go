@@ -55,14 +55,14 @@ type SqliteStore struct {
 	*sqliteLoadContextStore
 }
 
-// Statically assert that SqliteStore implement the chat message history interface.
+// Statically assert that SqliteStore implement the chat message convo interface.
 var _ convo.Store = &SqliteStore{}
 
 func NewSqliteStore(options ...SqliteChatMessageHistoryOption) *SqliteStore {
 	return applyChatOptions(options...)
 }
 
-// LatestConversation returns the last message in the chat history.
+// LatestConversation returns the last message in the chat convo.
 func (h *SqliteStore) LatestConversation(ctx context.Context) (*convo.Conversation, error) {
 	var convo convo.Conversation
 	err := h.DB.Get(&convo, `

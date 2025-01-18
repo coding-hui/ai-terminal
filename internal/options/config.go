@@ -10,7 +10,9 @@ import (
 	_ "embed"
 
 	"github.com/adrg/xdg"
+	"github.com/caarlos0/duration"
 	"github.com/caarlos0/env/v9"
+	"github.com/charmbracelet/x/exp/strings"
 	"gopkg.in/yaml.v3"
 
 	"github.com/coding-hui/ai-terminal/internal/errbook"
@@ -28,49 +30,50 @@ const (
 	defaultJSONFormatText     = "Format the response as json without enclosing backticks."
 )
 
-var help = map[string]string{
-	"api":             "OpenAI compatible REST API (openai, localai, deepseek).",
-	"apis":            "Aliases and endpoints for OpenAI compatible REST API.",
-	"http-proxy":      "HTTP proxy to use for API requests.",
-	"model":           "Default model (gpt-3.5-turbo, gpt-4, ggml-gpt4all-j...).",
-	"ask-model":       "Ask which model to use with an interactive prompt.",
-	"max-input-chars": "Default character limit on input to model.",
-	"format":          "Ask for the response to be formatted as markdown unless otherwise set.",
-	"format-text":     "Text to append when using the -f flag.",
-	"role":            "System role to use.",
-	"roles":           "List of predefined system messages that can be used as roles.",
-	"list-roles":      "List the roles defined in your configuration file",
-	"prompt":          "Include the prompt from the arguments and stdin, truncate stdin to specified number of lines.",
-	"prompt-args":     "Include the prompt from the arguments in the response.",
-	"raw":             "Render output as raw text when connected to a TTY.",
-	"quiet":           "Quiet mode (hide the spinner while loading and stderr messages for success).",
-	"help":            "Show help and exit.",
-	"version":         "Show version and exit.",
-	"max-retries":     "Maximum number of times to retry API calls.",
-	"no-limit":        "Turn off the client-side limit on the size of the input into the model.",
-	"word-wrap":       "Wrap formatted output at specific width (default is 80)",
-	"max-tokens":      "Maximum number of tokens in response.",
-	"temp":            "Temperature (randomness) of results, from 0.0 to 2.0.",
-	"stop":            "Up to 4 sequences where the API will stop generating further tokens.",
-	"topp":            "TopP, an alternative to temperature that narrows response, from 0.0 to 1.0.",
-	"topk":            "TopK, only sample from the top K options for each subsequent token.",
-	"fanciness":       "Your desired level of fanciness.",
-	"loading-text":    "Text to show while generating.",
-	"settings":        "Open settings in your $EDITOR.",
-	"dirs":            "Print the directories in which mods store its data.",
-	"reset-settings":  "Backup your old settings file and reset everything to the defaults.",
-	"continue":        "Continue from the last response or a given save title.",
-	"continue-last":   "Continue from the last response.",
-	"no-cache":        "Disables caching of the prompt/response.",
-	"title":           "Saves the current conversation with the given title.",
-	"list":            "Lists saved conversations.",
-	"delete":          "Deletes a saved conversation with the given title or ID.",
-	"show":            "Show a saved conversation with the given title or ID.",
-	"theme":           "Theme to use in the forms. Valid units are: 'charm', 'catppuccin', 'dracula', and 'base16'",
-	"show-last":       "Show the last saved conversation.",
-	"datastore":       "Configure the datastore to use.",
-	"auto-coder":      "Configure the auto coder to use.",
-	"auto-commit":     "Automatically commit code changes after generation.",
+var Help = map[string]string{
+	"api":                 "OpenAI compatible REST API (openai, localai, deepseek).",
+	"apis":                "Aliases and endpoints for OpenAI compatible REST API.",
+	"http-proxy":          "HTTP proxy to use for API requests.",
+	"model":               "Default model (gpt-3.5-turbo, gpt-4, ggml-gpt4all-j...).",
+	"ask-model":           "Ask which model to use with an interactive prompt.",
+	"max-input-chars":     "Default character limit on input to model.",
+	"format":              "Ask for the response to be formatted as markdown unless otherwise set.",
+	"format-text":         "Text to append when using the -f flag.",
+	"role":                "System role to use.",
+	"roles":               "List of predefined system messages that can be used as roles.",
+	"list-roles":          "List the roles defined in your configuration file",
+	"prompt":              "Include the prompt from the arguments and stdin, truncate stdin to specified number of lines.",
+	"prompt-args":         "Include the prompt from the arguments in the response.",
+	"raw":                 "Render output as raw text when connected to a TTY.",
+	"quiet":               "Quiet mode (hide the spinner while loading and stderr messages for success).",
+	"help":                "Show help and exit.",
+	"version":             "Show version and exit.",
+	"max-retries":         "Maximum number of times to retry API calls.",
+	"no-limit":            "Turn off the client-side limit on the size of the input into the model.",
+	"word-wrap":           "Wrap formatted output at specific width (default is 80)",
+	"max-tokens":          "Maximum number of tokens in response.",
+	"temp":                "Temperature (randomness) of results, from 0.0 to 2.0.",
+	"stop":                "Up to 4 sequences where the API will stop generating further tokens.",
+	"topp":                "TopP, an alternative to temperature that narrows response, from 0.0 to 1.0.",
+	"topk":                "TopK, only sample from the top K options for each subsequent token.",
+	"fanciness":           "Your desired level of fanciness.",
+	"loading-text":        "Text to show while generating.",
+	"settings":            "Open settings in your $EDITOR.",
+	"dirs":                "Print the directories in which mods store its data.",
+	"reset-settings":      "Backup your old settings file and reset everything to the defaults.",
+	"continue":            "Continue from the last response or a given save title.",
+	"continue-last":       "Continue from the last response.",
+	"no-cache":            "Disables caching of the prompt/response.",
+	"title":               "Saves the current conversation with the given title.",
+	"ls-convo":            "Lists saved conversations.",
+	"rm-convo":            "Deletes a saved conversation with the given title or ID.",
+	"rm-convo-older-than": "Deletes all saved conversations older than the specified duration. Valid units are: " + strings.EnglishJoin(duration.ValidUnits(), true) + ".",
+	"show-convo":          "Show a saved conversation with the given title or ID.",
+	"theme":               "Theme to use in the forms. Valid units are: 'charm', 'catppuccin', 'dracula', and 'base16'",
+	"show-last":           "Show the last saved conversation.",
+	"datastore":           "Configure the datastore to use.",
+	"auto-coder":          "Configure the auto coder to use.",
+	"auto-commit":         "Automatically commit code changes after generation.",
 }
 
 // Config is a structure used to configure a AI.
@@ -314,7 +317,7 @@ func createConfigFile(path string) error {
 		Help   map[string]string
 	}{
 		Config: DefaultConfig(),
-		Help:   help,
+		Help:   Help,
 	}
 	if err := tmpl.Execute(f, m); err != nil {
 		return errbook.Wrap("Could not render template.", err)

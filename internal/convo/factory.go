@@ -18,9 +18,9 @@ var (
 )
 
 type Factory interface {
-	// Type unique type of the history store
+	// Type unique type of the convo store
 	Type() string
-	// Create relevant history store by type
+	// Create relevant convo store by type
 	Create(options *options.Config) (Store, error)
 }
 
@@ -33,12 +33,12 @@ func GetConversationStore(cfg *options.Config) (Store, error) {
 		// Create new store if it doesn't exist
 		factory, ok := conversationStoreFactories[dsType]
 		if !ok {
-			return nil, fmt.Errorf("chat history store %s is not supported", dsType)
+			return nil, fmt.Errorf("chat convo store %s is not supported", dsType)
 		}
 
 		newStore, err := factory.Create(cfg)
 		if err != nil {
-			return nil, errbook.Wrap("Failed to create chat history store: "+dsType, err)
+			return nil, errbook.Wrap("Failed to create chat convo store: "+dsType, err)
 		}
 
 		lock.Lock()

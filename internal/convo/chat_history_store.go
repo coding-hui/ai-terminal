@@ -28,12 +28,12 @@ func NewSimpleChatHistoryStore(dir string) *SimpleChatHistoryStore {
 	}
 }
 
-// AddAIMessage adds an AIMessage to the chat message history.
+// AddAIMessage adds an AIMessage to the chat message convo.
 func (h *SimpleChatHistoryStore) AddAIMessage(ctx context.Context, convoID, message string) error {
 	return h.AddMessage(ctx, convoID, llms.AIChatMessage{Content: message})
 }
 
-// AddUserMessage adds a user to the chat message history.
+// AddUserMessage adds a user to the chat message convo.
 func (h *SimpleChatHistoryStore) AddUserMessage(ctx context.Context, convoID, message string) error {
 	return h.AddMessage(ctx, convoID, llms.HumanChatMessage{Content: message})
 }
