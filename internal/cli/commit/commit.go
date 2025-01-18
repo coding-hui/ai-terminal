@@ -181,7 +181,7 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 
 	// If prefix is specified, use it directly
 	if o.commitPrefix != "" {
-		vars[prompt.SummarizePrefixKey] = strings.ToLower(o.commitPrefix)
+		vars[prompt.SummarizePrefixKey] = o.commitPrefix
 	} else {
 		// Otherwise generate prefix from LLM
 		err = o.summarizePrefix(llmEngine, vars)
