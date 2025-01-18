@@ -136,7 +136,7 @@ func runHelp(cmd *cobra.Command, _ []string) {
 	_ = cmd.Help()
 }
 
-func postRunHook(cfg *options.Config) error {
+func postRunHook(_ *options.Config) error {
 	if err := flushProfiling(); err != nil {
 		return err
 	}
