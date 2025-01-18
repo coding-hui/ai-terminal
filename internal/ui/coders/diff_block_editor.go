@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"html"
 	"math"
 	"os"
 	"path/filepath"
@@ -243,8 +244,7 @@ func (e *EditBlockCoder) Execute(ctx context.Context, messages []llms.ChatMessag
 }
 
 func findOriginalUpdateBlocks(content string, fence []string) ([]PartialCodeBlock, error) {
-	content = strings.ReplaceAll(content, "&gt;", ">")
-	content = strings.ReplaceAll(content, "&lt;", "<")
+	content = html.UnescapeString(content)
 	edits := findAllCodeBlocks(content, fence)
 	result := make([]PartialCodeBlock, 0, len(edits))
 
