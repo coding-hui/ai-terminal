@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/coding-hui/ai-terminal/internal/convo"
+	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/ui/console"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
@@ -54,8 +55,13 @@ func (o *clean) Run() error {
 		return err
 	}
 
+	conversation, err := convo.GetCurrentConversationID(context.Background(), o.cfg, o.convoStore)
+	if err != nil {
+		return errbook.Wrap("failed to get current conversation", err)
+	}
+
 	// Clean all contexts for current conversation
-	count, err := o.convoStore.CleanContexts(context.Background(), o.cfg.ConversationID)
+	count, err := o.convoStore.CleanContexts(context.Background(), conversation.ReadID)
 	if err != nil {
 		return err
 	}

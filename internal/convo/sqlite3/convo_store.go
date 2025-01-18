@@ -34,7 +34,7 @@ func (s *sqliteStoreFactor) Type() string {
 func (s *sqliteStoreFactor) Create(options *options.Config) (convo.Store, error) {
 	return NewSqliteStore(
 		WithDataPath(filepath.Join(options.DataStore.CachePath, "conversations")),
-		WithConversation(options.ConversationID),
+		WithConversation(options.CacheWriteToID),
 		WithDBAddress(filepath.Join(options.DataStore.CachePath, "convo.db")),
 	), nil
 }

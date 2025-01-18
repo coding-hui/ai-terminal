@@ -51,8 +51,13 @@ func (o *list) Run() error {
 		return errbook.Wrap("failed to initialize conversation store", err)
 	}
 
+	conversation, err := convo.GetCurrentConversationID(context.Background(), o.cfg, o.convoStore)
+	if err != nil {
+		return errbook.Wrap("failed to get current conversation", err)
+	}
+
 	// Get contexts for current conversation
-	ctxs, err := o.convoStore.ListContextsByteConvoID(context.Background(), o.cfg.ConversationID)
+	ctxs, err := o.convoStore.ListContextsByteConvoID(context.Background(), conversation.ReadID)
 	if err != nil {
 		return errbook.Wrap("failed to list contexts", err)
 	}

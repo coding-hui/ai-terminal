@@ -145,7 +145,11 @@ func (c *Chat) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return c, c.quit
 		}
 		c.state = requestState
-		cmds = append(cmds, c.startCompletionCmd(msg.Messages), c.awaitChatCompletedCmd())
+		if c.config.Show != "" || c.config.ShowLast {
+			cmds = append(cmds, c.readFromCacheCmd())
+		} else {
+			cmds = append(cmds, c.startCompletionCmd(msg.Messages), c.awaitChatCompletedCmd())
+		}
 
 	case llm.StreamCompletionOutput:
 		if msg.GetContent() != "" {
@@ -289,6 +293,24 @@ func (c *Chat) startCliCmd() tea.Cmd {
 			return err
 		}
 		return details
+	}
+}
+
+func (c *Chat) readFromCacheCmd() tea.Cmd {
+	return func() tea.Msg {
+		convoStore := c.engine.GetConvoStore()
+		messages, err := convoStore.Messages(context.Background(), c.config.CacheReadFromID)
+		if err != nil {
+			return err
+		}
+		lastContent := ""
+		if len(messages) > 0 {
+			lastContent = messages[len(messages)-1].GetContent()
+		}
+		return llm.StreamCompletionOutput{
+			Content: lastContent,
+			Last:    true,
+		}
 	}
 }
 

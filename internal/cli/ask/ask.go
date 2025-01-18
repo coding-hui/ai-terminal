@@ -69,7 +69,7 @@ func NewCmdASK(ioStreams genericclioptions.IOStreams, cfg *options.Config) *cobr
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.Run(args)
+			return o.Run()
 		},
 		PostRunE: func(c *cobra.Command, args []string) error {
 			if o.tempPromptFile != "" {
@@ -94,7 +94,7 @@ func (o *Options) Validate() error {
 }
 
 // Run executes ask command.
-func (o *Options) Run(_ []string) error {
+func (o *Options) Run() error {
 	runMode := ui.CliMode
 	if o.cfg.Interactive {
 		runMode = ui.ReplMode
@@ -128,13 +128,6 @@ func (o *Options) preparePrompts(args []string) error {
 	}
 
 	o.pipe = term.ReadPipeInput()
-	if len(o.prompts) == 0 && len(o.pipe) == 0 && !o.cfg.Interactive {
-		prompt, err := o.getEditorPrompt()
-		if err != nil {
-			return err
-		}
-		o.prompts = append(o.prompts, prompt)
-	}
 
 	return nil
 }
