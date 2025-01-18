@@ -14,9 +14,9 @@ import (
 
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
 
+	"github.com/coding-hui/ai-terminal/internal/ai"
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/git"
-	"github.com/coding-hui/ai-terminal/internal/llm"
 	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/prompt"
 	"github.com/coding-hui/ai-terminal/internal/runner"
@@ -140,7 +140,7 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 		o.userPrompt = strings.TrimSpace(strings.Join(args, " "))
 	}
 
-	llmEngine, err := llm.NewLLMEngine(llm.ChatEngineMode, o.cfg)
+	llmEngine, err := ai.NewLLMEngine(ai.WithConfig(o.cfg))
 	if err != nil {
 		return err
 	}
@@ -239,7 +239,7 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 }
 
 // codeReview summary code review message from diff datas
-func (o *Options) codeReview(engine *llm.Engine, vars map[string]any) error {
+func (o *Options) codeReview(engine *ai.Engine, vars map[string]any) error {
 	console.RenderStep("Analyzing code changes...")
 
 	p, err := prompt.GetPromptStringByTemplateName(prompt.SummarizeFileDiffTemplate, vars)
@@ -258,7 +258,7 @@ func (o *Options) codeReview(engine *llm.Engine, vars map[string]any) error {
 	return nil
 }
 
-func (o *Options) summarizeTitle(engine *llm.Engine, vars map[string]any) error {
+func (o *Options) summarizeTitle(engine *ai.Engine, vars map[string]any) error {
 	console.RenderStep("Generating commit title...")
 
 	p, err := prompt.GetPromptStringByTemplateName(prompt.SummarizeTitleTemplate, vars)
@@ -278,7 +278,7 @@ func (o *Options) summarizeTitle(engine *llm.Engine, vars map[string]any) error 
 	return nil
 }
 
-func (o *Options) summarizePrefix(engine *llm.Engine, vars map[string]any) error {
+func (o *Options) summarizePrefix(engine *ai.Engine, vars map[string]any) error {
 	console.RenderStep("Determining commit type...")
 
 	p, err := prompt.GetPromptStringByTemplateName(prompt.ConventionalCommitTemplate, vars)
@@ -296,7 +296,7 @@ func (o *Options) summarizePrefix(engine *llm.Engine, vars map[string]any) error
 	return nil
 }
 
-func (o *Options) generateCommitMsg(engine *llm.Engine, vars map[string]any) (string, error) {
+func (o *Options) generateCommitMsg(engine *ai.Engine, vars map[string]any) (string, error) {
 	var err error
 	var commitPromptVal llms.PromptValue
 	if o.templateFile != "" {

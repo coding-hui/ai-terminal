@@ -1,12 +1,12 @@
-package llm
+package ai
 
 import "github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
 
 type EngineMode int
 
 const (
-	ExecEngineMode EngineMode = iota
-	ChatEngineMode
+	ChatEngineMode EngineMode = iota
+	ExecEngineMode
 )
 
 func (m EngineMode) String() string {
@@ -40,7 +40,7 @@ type CompletionInput struct {
 	Messages []llms.ChatMessage
 }
 
-// StreamCompletionOutput a tea.Msg that wraps the content returned from llm.
+// StreamCompletionOutput a tea.Msg that wraps the content returned from ai.
 type StreamCompletionOutput struct {
 	Content    string
 	Last       bool

@@ -75,6 +75,7 @@ var Help = map[string]string{
 	"datastore":           "Configure the datastore to use.",
 	"auto-coder":          "Configure the auto coder to use.",
 	"auto-commit":         "Automatically commit code changes after generation.",
+	"verbose":             "Verbose mode. 0: no verbose, 1: debug verbose",
 }
 
 // Config is a structure used to configure a AI.
@@ -98,6 +99,7 @@ type Config struct {
 	LoadingText   string     `yaml:"loading-text" env:"LOADING_TEXT"`
 	FormatText    FormatText `yaml:"format-text"`
 	FormatAs      string     `yaml:"format-as" env:"FORMAT_AS"`
+	Verbose       int        `yaml:"verbose" env:"VERBOSE"`
 	APIs          APIs       `yaml:"apis"`
 	DataStore     DataStore  `yaml:"datastore"`
 	AutoCoder     AutoCoder  `yaml:"auto-coder"`

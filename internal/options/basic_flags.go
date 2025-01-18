@@ -35,6 +35,7 @@ func AddBasicFlags(flags *pflag.FlagSet, cfg *Config) {
 	flags.StringVarP(&cfg.Continue, "continue", "c", "", console.StdoutStyles().FlagDesc.Render(Help["continue"]))
 	flags.BoolVarP(&cfg.ContinueLast, "continue-last", "C", false, console.StdoutStyles().FlagDesc.Render(Help["continue-last"]))
 	flags.StringVarP(&cfg.Title, "title", "T", cfg.Title, console.StdoutStyles().FlagDesc.Render(Help["title"]))
+	flags.IntVarP(&cfg.Verbose, "verbose", "v", cfg.Verbose, console.StdoutStyles().FlagDesc.Render(Help["verbose"]))
 	//flags.StringVarP(&cfg.Role, "role", "R", cfg.Role, console.StdoutStyles().FlagDesc.Render(Help["role"]))
 	//flags.BoolVar(&cfg.ListRoles, "list-roles", cfg.ListRoles, console.StdoutStyles().FlagDesc.Render(Help["list-roles"]))
 	//flags.StringVar(&cfg.Theme, "theme", "charm", console.StdoutStyles().FlagDesc.Render(Help["theme"]))

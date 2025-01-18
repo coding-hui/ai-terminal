@@ -8,8 +8,8 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
+	"github.com/coding-hui/ai-terminal/internal/ai"
 	"github.com/coding-hui/ai-terminal/internal/git"
-	"github.com/coding-hui/ai-terminal/internal/llm"
 	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/prompt"
 	"github.com/coding-hui/ai-terminal/internal/runner"
@@ -22,13 +22,15 @@ type Options struct {
 	commitAmend bool
 	commitLang  string
 
+	cfg *options.Config
 	genericclioptions.IOStreams
 }
 
 // NewCmdCommit returns a cobra command for commit msg.
-func NewCmdCommit(ioStreams genericclioptions.IOStreams) *cobra.Command {
+func NewCmdCommit(ioStreams genericclioptions.IOStreams, cfg *options.Config) *cobra.Command {
 	ops := &Options{
 		IOStreams: ioStreams,
+		cfg:       cfg,
 	}
 
 	reviewCmd := &cobra.Command{
@@ -51,7 +53,7 @@ func (o *Options) reviewCode(cmd *cobra.Command, args []string) error {
 		return errors.New("git command not found on your system's PATH. Please install Git and try again")
 	}
 
-	llmEngine, err := llm.NewLLMEngine(llm.ChatEngineMode, options.NewConfig())
+	llmEngine, err := ai.NewLLMEngine(ai.WithConfig(o.cfg))
 	if err != nil {
 		return err
 	}

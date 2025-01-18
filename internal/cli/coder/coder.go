@@ -6,10 +6,10 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/coding-hui/ai-terminal/internal/ai"
 	"github.com/coding-hui/ai-terminal/internal/convo"
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/git"
-	"github.com/coding-hui/ai-terminal/internal/llm"
 	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/ui/coders"
 )
@@ -43,9 +43,9 @@ func (o *Options) run(_ *cobra.Command, args []string) error {
 		return errbook.Wrap("Could not get git root", err)
 	}
 
-	engine, err := llm.NewLLMEngine(llm.ChatEngineMode, o.cfg)
+	engine, err := ai.NewLLMEngine(ai.WithConfig(o.cfg))
 	if err != nil {
-		return errbook.Wrap("Could not initialized llm engine", err)
+		return errbook.Wrap("Could not initialized ai engine", err)
 	}
 
 	store, err := convo.GetConversationStore(o.cfg)

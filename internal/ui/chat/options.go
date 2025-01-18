@@ -7,7 +7,7 @@ import (
 
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
 
-	"github.com/coding-hui/ai-terminal/internal/llm"
+	"github.com/coding-hui/ai-terminal/internal/ai"
 	"github.com/coding-hui/ai-terminal/internal/ui"
 	"github.com/coding-hui/ai-terminal/internal/ui/console"
 )
@@ -19,7 +19,7 @@ type Options struct {
 	renderer   *lipgloss.Renderer
 	wordWrap   int
 
-	engine *llm.Engine
+	engine *ai.Engine
 
 	content  string
 	messages []llms.ChatMessage
@@ -33,7 +33,7 @@ func WithContext(ctx context.Context) Option {
 	}
 }
 
-func WithEngine(engine *llm.Engine) Option {
+func WithEngine(engine *ai.Engine) Option {
 	return func(o *Options) {
 		o.engine = engine
 	}

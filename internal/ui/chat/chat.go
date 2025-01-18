@@ -15,9 +15,9 @@ import (
 
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
 
+	"github.com/coding-hui/ai-terminal/internal/ai"
 	"github.com/coding-hui/ai-terminal/internal/convo"
 	"github.com/coding-hui/ai-terminal/internal/errbook"
-	"github.com/coding-hui/ai-terminal/internal/llm"
 	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/ui/console"
 	"github.com/coding-hui/ai-terminal/internal/util/term"
@@ -42,7 +42,7 @@ type Chat struct {
 	state  state
 	opts   *Options
 	config *options.Config
-	engine *llm.Engine
+	engine *ai.Engine
 
 	anim         tea.Model
 	renderer     *lipgloss.Renderer
@@ -140,7 +140,7 @@ func (c *Chat) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		c.state = configLoadedState
 		cmds = append(cmds, c.readStdinCmd)
 
-	case llm.CompletionInput:
+	case ai.CompletionInput:
 		if len(msg.Messages) == 0 {
 			return c, c.quit
 		}
@@ -151,7 +151,7 @@ func (c *Chat) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, c.startCompletionCmd(msg.Messages), c.awaitChatCompletedCmd())
 		}
 
-	case llm.StreamCompletionOutput:
+	case ai.StreamCompletionOutput:
 		if msg.GetContent() != "" {
 			c.appendToOutput(msg.GetContent())
 			c.state = responseState
@@ -307,7 +307,7 @@ func (c *Chat) readFromCacheCmd() tea.Cmd {
 		if len(messages) > 0 {
 			lastContent = messages[len(messages)-1].GetContent()
 		}
-		return llm.StreamCompletionOutput{
+		return ai.StreamCompletionOutput{
 			Content: lastContent,
 			Last:    true,
 		}
@@ -325,7 +325,7 @@ func (c *Chat) readStdinCmd() tea.Msg {
 			Content: c.opts.content,
 		})
 	}
-	return llm.CompletionInput{
+	return ai.CompletionInput{
 		Messages: messages,
 	}
 }

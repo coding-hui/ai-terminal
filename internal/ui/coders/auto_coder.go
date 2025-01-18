@@ -7,10 +7,10 @@ import (
 
 	"github.com/coding-hui/common/version"
 
+	"github.com/coding-hui/ai-terminal/internal/ai"
 	"github.com/coding-hui/ai-terminal/internal/convo"
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/git"
-	"github.com/coding-hui/ai-terminal/internal/llm"
 	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/ui/console"
 )
@@ -19,7 +19,7 @@ type AutoCoder struct {
 	codeBasePath, prompt string
 	repo                 *git.Command
 	loadedContexts       []*convo.LoadContext
-	engine               *llm.Engine
+	engine               *ai.Engine
 	store                convo.Store
 
 	versionInfo version.Info
@@ -117,7 +117,7 @@ func (a *AutoCoder) printWelcome() {
 	}
 
 	console.Render("Configuration:")
-	console.Render("  • Model: %s", a.cfg.Model)
+	console.Render("  • model: %s", a.cfg.Model)
 	console.Render("  • Format: %s", a.cfg.AutoCoder.EditFormat)
 	console.Render("")
 	console.Render("Recommended Workflow:")

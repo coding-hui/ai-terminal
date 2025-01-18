@@ -1,9 +1,9 @@
 package coders
 
 import (
+	"github.com/coding-hui/ai-terminal/internal/ai"
 	"github.com/coding-hui/ai-terminal/internal/convo"
 	"github.com/coding-hui/ai-terminal/internal/git"
-	"github.com/coding-hui/ai-terminal/internal/llm"
 	"github.com/coding-hui/ai-terminal/internal/options"
 
 	"github.com/coding-hui/common/version"
@@ -17,7 +17,7 @@ func WithConfig(cfg *options.Config) AutoCoderOption {
 	}
 }
 
-func WithEngine(engine *llm.Engine) AutoCoderOption {
+func WithEngine(engine *ai.Engine) AutoCoderOption {
 	return func(a *AutoCoder) {
 		a.engine = engine
 	}

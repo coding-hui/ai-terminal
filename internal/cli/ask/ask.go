@@ -10,8 +10,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/coding-hui/ai-terminal/internal/ai"
 	"github.com/coding-hui/ai-terminal/internal/errbook"
-	"github.com/coding-hui/ai-terminal/internal/llm"
 	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/ui"
 	"github.com/coding-hui/ai-terminal/internal/ui/chat"
@@ -94,7 +94,7 @@ func (o *Options) Run() error {
 		runMode = ui.ReplMode
 	}
 
-	engine, err := llm.NewLLMEngine(llm.ChatEngineMode, o.cfg)
+	engine, err := ai.NewLLMEngine(ai.WithConfig(o.cfg))
 	if err != nil {
 		return err
 	}

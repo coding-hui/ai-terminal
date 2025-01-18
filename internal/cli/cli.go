@@ -102,7 +102,7 @@ func NewAICommand(in io.Reader, out, errOut io.Writer) *cobra.Command {
 				ask.NewCmdASK(ioStreams, &cfg),
 				convo.NewCmdConversation(ioStreams, &cfg),
 				commit.NewCmdCommit(ioStreams, &cfg),
-				review.NewCmdCommit(ioStreams),
+				review.NewCmdCommit(ioStreams, &cfg),
 				loadctx.NewCmdContext(ioStreams, &cfg),
 			},
 		},

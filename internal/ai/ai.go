@@ -1,4 +1,4 @@
-package llm
+package ai
 
 import (
 	"context"
@@ -25,93 +25,17 @@ const (
 
 type Engine struct {
 	mode    EngineMode
-	config  *options.Config
-	channel chan StreamCompletionOutput
-	pipe    string
 	running bool
+	channel chan StreamCompletionOutput
 
 	convoStore convo.Store
+	model      *openai.Model
 
-	Model *openai.Model
+	Config *options.Config
 }
 
-func NewLLMEngine(mode EngineMode, cfg *options.Config) (*Engine, error) {
-	var api options.API
-	mod, ok := cfg.Models[cfg.Model]
-	if !ok {
-		if cfg.API == "" {
-			return nil, errbook.Wrap(
-				fmt.Sprintf(
-					"Model %s is not in the settings file.",
-					console.StderrStyles().InlineCode.Render(cfg.Model),
-				),
-				errbook.NewUserErrorf(
-					"Please specify an API endpoint with %s or configure the model in the settings: %s",
-					console.StderrStyles().InlineCode.Render("--api"),
-					console.StderrStyles().InlineCode.Render("ai -s"),
-				),
-			)
-		}
-		mod.Name = cfg.Model
-		mod.API = cfg.API
-		mod.MaxChars = cfg.MaxInputChars
-	}
-	if cfg.API != "" {
-		mod.API = cfg.API
-	}
-	for _, a := range cfg.APIs {
-		if mod.API == a.Name {
-			api = a
-			break
-		}
-	}
-	if api.Name == "" {
-		eps := make([]string, 0)
-		for _, a := range cfg.APIs {
-			eps = append(eps, console.StderrStyles().InlineCode.Render(a.Name))
-		}
-		return nil, errbook.Wrap(
-			fmt.Sprintf(
-				"The API endpoint %s is not configured.",
-				console.StderrStyles().InlineCode.Render(cfg.API),
-			),
-			errbook.NewUserErrorf(
-				"Your configured API endpoints are: %s",
-				eps,
-			),
-		)
-	}
-
-	key, err := ensureApiKey(api)
-	if err != nil {
-		return nil, err
-	}
-
-	var opts []openai.Option
-	opts = append(opts,
-		openai.WithModel(mod.Name),
-		openai.WithBaseURL(api.BaseURL),
-		openai.WithToken(key),
-	)
-	llm, err := openai.New(opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	chatHistory, err := convo.GetConversationStore(cfg)
-	if err != nil {
-		return nil, errbook.Wrap("Failed to get chat convo store.", err)
-	}
-
-	return &Engine{
-		mode:       mode,
-		config:     cfg,
-		Model:      llm,
-		channel:    make(chan StreamCompletionOutput),
-		pipe:       "",
-		running:    false,
-		convoStore: chatHistory,
-	}, nil
+func NewLLMEngine(ops ...EngineOption) (*Engine, error) {
+	return applyEngineOptions(ops...)
 }
 
 func (e *Engine) SetMode(m EngineMode) {
@@ -120,10 +44,6 @@ func (e *Engine) SetMode(m EngineMode) {
 
 func (e *Engine) GetMode() EngineMode {
 	return e.mode
-}
-
-func (e *Engine) SetPipe(pipe string) {
-	e.pipe = pipe
 }
 
 func (e *Engine) GetChannel() chan StreamCompletionOutput {
@@ -152,7 +72,7 @@ func (e *Engine) CreateCompletion(ctx context.Context, messages []llms.ChatMessa
 		return nil, err
 	}
 
-	rsp, err := e.Model.GenerateContent(ctx, slices.Map(messages, convert), e.callOptions()...)
+	rsp, err := e.model.GenerateContent(ctx, slices.Map(messages, convert), e.callOptions()...)
 	if err != nil {
 		return nil, errbook.Wrap("Failed to create completion.", err)
 	}
@@ -178,7 +98,7 @@ func (e *Engine) CreateStreamCompletion(ctx context.Context, messages []llms.Cha
 	e.running = true
 
 	streamingFunc := func(ctx context.Context, chunk []byte) error {
-		if !e.config.Quiet {
+		if !e.Config.Quiet {
 			e.channel <- StreamCompletionOutput{
 				Content: string(chunk),
 				Last:    false,
@@ -192,14 +112,14 @@ func (e *Engine) CreateStreamCompletion(ctx context.Context, messages []llms.Cha
 	}
 
 	for _, v := range messages {
-		err := e.convoStore.AddMessage(ctx, e.config.CacheWriteToID, v)
+		err := e.convoStore.AddMessage(ctx, e.Config.CacheWriteToID, v)
 		if err != nil {
 			errbook.HandleError(errbook.Wrap("Failed to add user chat input message to convo", err))
 		}
 	}
 
 	messageParts := slices.Map(messages, convert)
-	rsp, err := e.Model.GenerateContent(ctx, messageParts, e.callOptions(streamingFunc)...)
+	rsp, err := e.model.GenerateContent(ctx, messageParts, e.callOptions(streamingFunc)...)
 	if err != nil {
 		e.running = false
 		return nil, errbook.Wrap("Failed to create stream completion.", err)
@@ -214,7 +134,7 @@ func (e *Engine) CreateStreamCompletion(ctx context.Context, messages []llms.Cha
 		}
 	}
 
-	if !e.config.Quiet {
+	if !e.Config.Quiet {
 		e.channel <- StreamCompletionOutput{
 			Content:    "",
 			Last:       true,
@@ -234,17 +154,17 @@ func (e *Engine) CreateStreamCompletion(ctx context.Context, messages []llms.Cha
 
 func (e *Engine) callOptions(streamingFunc ...func(ctx context.Context, chunk []byte) error) []llms.CallOption {
 	var opts []llms.CallOption
-	if e.config.MaxTokens > 0 {
-		opts = append(opts, llms.WithMaxTokens(e.config.MaxTokens))
+	if e.Config.MaxTokens > 0 {
+		opts = append(opts, llms.WithMaxTokens(e.Config.MaxTokens))
 	}
 	if len(streamingFunc) > 0 && streamingFunc[0] != nil {
 		opts = append(opts, llms.WithStreamingFunc(streamingFunc[0]))
 	}
-	opts = append(opts, llms.WithModel(e.config.Model))
-	opts = append(opts, llms.WithMaxLength(e.config.MaxInputChars))
-	opts = append(opts, llms.WithTemperature(e.config.Temperature))
-	opts = append(opts, llms.WithTopP(e.config.TopP))
-	opts = append(opts, llms.WithTopK(e.config.TopK))
+	opts = append(opts, llms.WithModel(e.Config.Model))
+	opts = append(opts, llms.WithMaxLength(e.Config.MaxInputChars))
+	opts = append(opts, llms.WithTemperature(e.Config.Temperature))
+	opts = append(opts, llms.WithTopP(e.Config.TopP))
+	opts = append(opts, llms.WithTopK(e.Config.TopK))
 	opts = append(opts, llms.WithMultiContent(false))
 
 	return opts
@@ -256,8 +176,8 @@ func (e *Engine) setupChatContext(ctx context.Context, messages *[]llms.ChatMess
 		return errbook.New("no chat convo store found")
 	}
 
-	if !e.config.NoCache && e.config.CacheReadFromID != "" {
-		history, err := store.Messages(ctx, e.config.CacheReadFromID)
+	if !e.Config.NoCache && e.Config.CacheReadFromID != "" {
+		history, err := store.Messages(ctx, e.Config.CacheReadFromID)
 		if err != nil {
 			return errbook.Wrap(fmt.Sprintf(
 				"There was a problem reading the cache. Use %s / %s to disable it.",
@@ -272,8 +192,8 @@ func (e *Engine) setupChatContext(ctx context.Context, messages *[]llms.ChatMess
 }
 
 func (e *Engine) appendAssistantMessage(content string) {
-	if e.convoStore != nil && e.config.CacheWriteToID != "" {
-		if err := e.convoStore.AddAIMessage(context.Background(), e.config.CacheWriteToID, content); err != nil {
+	if e.convoStore != nil && e.Config.CacheWriteToID != "" {
+		if err := e.convoStore.AddAIMessage(context.Background(), e.Config.CacheWriteToID, content); err != nil {
 			errbook.HandleError(errbook.Wrap("failed to add assistant chat output message to convo", err))
 		}
 	}
@@ -302,8 +222,8 @@ func ensureApiKey(api options.API) (string, error) {
 		fmt.Sprintf(
 			"%[1]s required; set the environment variable %[1]s or update %[2]s through %[3]s.",
 			console.StderrStyles().InlineCode.Render(api.APIKeyEnv),
-			console.StderrStyles().InlineCode.Render("config.yaml"),
-			console.StderrStyles().InlineCode.Render("ai config"),
+			console.StderrStyles().InlineCode.Render("Config.yaml"),
+			console.StderrStyles().InlineCode.Render("ai Config"),
 		),
 		errbook.NewUserErrorf(
 			"You can grab one at %s.",
