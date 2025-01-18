@@ -17,12 +17,14 @@ var errInvalidID = errors.New("invalid id")
 type SimpleChatHistoryStore struct {
 	dir      string
 	messages map[string][]llms.ChatMessage
+	loaded   map[string]bool // tracks which conversations have been loaded
 }
 
 func NewSimpleChatHistoryStore(dir string) *SimpleChatHistoryStore {
 	return &SimpleChatHistoryStore{
 		dir:      dir,
 		messages: make(map[string][]llms.ChatMessage),
+		loaded:   make(map[string]bool),
 	}
 }
 
@@ -37,24 +39,30 @@ func (h *SimpleChatHistoryStore) AddUserMessage(ctx context.Context, convoID, me
 }
 
 func (h *SimpleChatHistoryStore) AddMessage(_ context.Context, convoID string, message llms.ChatMessage) error {
-	if err := h.load(convoID); err != nil && !errors.Is(err, os.ErrNotExist) {
-		return err
+	if !h.loaded[convoID] {
+		if err := h.load(convoID); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+		h.loaded[convoID] = true
 	}
 	h.messages[convoID] = append(h.messages[convoID], message)
-	return h.persistent(convoID, h.messages[convoID])
+	return nil
 }
 
-func (h *SimpleChatHistoryStore) SetMessages(_ context.Context, convoID string, messages []llms.ChatMessage) error {
+func (h *SimpleChatHistoryStore) SetMessages(ctx context.Context, convoID string, messages []llms.ChatMessage) error {
 	h.messages[convoID] = messages
-	if err := h.invalidate(convoID); err != nil && !errors.Is(err, os.ErrNotExist) {
+	if err := h.Invalidate(ctx, convoID); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
-	return h.persistent(convoID, h.messages[convoID])
+	return h.Persistent(ctx, convoID, h.messages[convoID])
 }
 
 func (h *SimpleChatHistoryStore) Messages(_ context.Context, convoID string) ([]llms.ChatMessage, error) {
-	if err := h.load(convoID); err != nil {
-		return nil, err
+	if !h.loaded[convoID] {
+		if err := h.load(convoID); err != nil {
+			return nil, err
+		}
+		h.loaded[convoID] = true
 	}
 	return h.messages[convoID], nil
 }
@@ -83,7 +91,7 @@ func (h *SimpleChatHistoryStore) load(convoID string) error {
 	return nil
 }
 
-func (h *SimpleChatHistoryStore) persistent(convoID string, messages []llms.ChatMessage) error {
+func (h *SimpleChatHistoryStore) Persistent(_ context.Context, convoID string, messages []llms.ChatMessage) error {
 	if convoID == "" {
 		return fmt.Errorf("write: %w", errInvalidID)
 	}
@@ -107,12 +115,14 @@ func (h *SimpleChatHistoryStore) persistent(convoID string, messages []llms.Chat
 	return nil
 }
 
-func (h *SimpleChatHistoryStore) invalidate(convoID string) error {
+func (h *SimpleChatHistoryStore) Invalidate(_ context.Context, convoID string) error {
 	if convoID == "" {
 		return fmt.Errorf("delete: %w", errInvalidID)
 	}
 	if err := os.Remove(filepath.Join(h.dir, convoID+cacheExt)); err != nil {
 		return fmt.Errorf("delete: %w", err)
 	}
+	delete(h.messages, convoID)
+	delete(h.loaded, convoID)
 	return nil
 }
