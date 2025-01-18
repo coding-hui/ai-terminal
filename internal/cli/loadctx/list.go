@@ -54,6 +54,7 @@ func (o *list) Run() error {
 	// Get contexts for current conversation
 	ctxs, err := o.convoStore.ListContextsByteConvoID(context.Background(), o.cfg.ConversationID)
 	if err != nil {
+		return errbook.Wrap("failed to list contexts", err)
 	}
 
 	if len(ctxs) == 0 {
