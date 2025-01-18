@@ -1,7 +1,9 @@
 package chat
 
 import (
+	"context"
 	"fmt"
+	"os"
 	"strings"
 	"sync"
 	"unicode"
@@ -10,9 +12,11 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/exp/ordered"
 
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
 
+	"github.com/coding-hui/ai-terminal/internal/convo"
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/llm"
 	"github.com/coding-hui/ai-terminal/internal/options"
@@ -108,6 +112,14 @@ func (c *Chat) Run() error {
 		fmt.Println()
 	}
 
+	if c.config.Show != "" || c.config.ShowLast {
+		return nil
+	}
+
+	if c.config.CacheWriteToID != "" {
+		return saveConversation(c)
+	}
+
 	return nil
 }
 
@@ -123,18 +135,25 @@ func (c *Chat) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case ui.CacheDetailsMsg:
+		c.config.CacheWriteToID = msg.WriteID
+		c.config.CacheWriteToTitle = msg.Title
+		c.config.CacheReadFromID = msg.ReadID
+		c.config.Model = msg.Model
+
 		if !c.config.Quiet {
 			c.anim = console.NewAnim(c.config.Fanciness, c.config.LoadingText, c.renderer, c.styles)
 			cmds = append(cmds, c.anim.Init())
 		}
 		c.state = configLoadedState
 		cmds = append(cmds, c.readStdinCmd)
+
 	case llm.CompletionInput:
 		if len(msg.Messages) == 0 {
 			return c, c.quit
 		}
 		c.state = requestState
 		cmds = append(cmds, c.startCompletionCmd(msg.Messages), c.awaitChatCompletedCmd())
+
 	case llm.StreamCompletionOutput:
 		if msg.GetContent() != "" {
 			c.appendToOutput(msg.GetContent())
@@ -145,15 +164,18 @@ func (c *Chat) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return c, c.quit
 		}
 		cmds = append(cmds, c.awaitChatCompletedCmd())
+
 	case errbook.AiError:
 		c.Error = &msg
 		c.state = errorState
 		return c, c.quit
+
 	case tea.WindowSizeMsg:
 		c.width, c.height = msg.Width, msg.Height
 		c.glamViewport.Width = c.width
 		c.glamViewport.Height = c.height
 		return c, nil
+
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyCtrlC:
@@ -161,11 +183,13 @@ func (c *Chat) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return c, c.quit
 		}
 	}
+
 	if !c.config.Quiet && (c.state == configLoadedState || c.state == requestState) {
 		var cmd tea.Cmd
 		c.anim, cmd = c.anim.Update(msg)
 		cmds = append(cmds, cmd)
 	}
+
 	if c.viewportNeeded() {
 		// Only respond to keypresses when the viewport (i.e. the content) is
 		// taller than the window.
@@ -251,7 +275,7 @@ func (c *Chat) quit() tea.Msg {
 
 func (c *Chat) startCompletionCmd(messages []llms.ChatMessage) tea.Cmd {
 	return func() tea.Msg {
-		return c.engine.CreateStreamCompletion(messages)
+		return c.engine.CreateStreamCompletion(context.Background(), messages)
 	}
 }
 
@@ -263,11 +287,49 @@ func (c *Chat) awaitChatCompletedCmd() tea.Cmd {
 
 func (c *Chat) startCliCmd() tea.Cmd {
 	return func() tea.Msg {
+		continueLast := c.config.ContinueLast || (c.config.Continue != "" && c.config.Title == "")
+		readID := ordered.First(c.config.Continue, c.config.Show)
+		writeID := ordered.First(c.config.Title, c.config.Continue)
+		title := writeID
+		model := c.config.Model
+
+		if readID != "" || continueLast || c.config.ShowLast {
+			found, err := c.engine.GetConvoStore().GetConversation(context.Background(), readID)
+			if err != nil {
+				return errbook.Wrap("Couldn't find conversation.", err)
+			}
+			if found != nil {
+				readID = found.ID
+				if found.Model != nil {
+					model = *found.Model
+				}
+			}
+		}
+
+		// if we are continuing last, update the existing conversation
+		if continueLast {
+			writeID = readID
+		}
+
+		if writeID == "" {
+			writeID = convo.NewConversationID()
+		}
+
+		if !convo.MatchSha1(writeID) {
+			found, err := c.engine.GetConvoStore().GetConversation(context.Background(), writeID)
+			if err != nil {
+				// its a new conversation with a title
+				writeID = convo.NewConversationID()
+			} else {
+				writeID = found.ID
+			}
+		}
+
 		return ui.CacheDetailsMsg{
-			WriteID: "",
-			Title:   "",
-			ReadID:  "",
-			Model:   "",
+			Title:   title,
+			Model:   model,
+			WriteID: writeID,
+			ReadID:  readID,
 		}
 	}
 }
@@ -286,4 +348,80 @@ func (c *Chat) readStdinCmd() tea.Msg {
 	return llm.CompletionInput{
 		Messages: messages,
 	}
+}
+
+func saveConversation(chat *Chat) error {
+	if chat.config.NoCache {
+		if !chat.config.Quiet {
+			fmt.Fprintf(
+				os.Stderr,
+				"\nConversation was not saved because %s or %s is set.\n",
+				console.StderrStyles().InlineCode.Render("--no-cache"),
+				console.StderrStyles().InlineCode.Render("NO_CACHE"),
+			)
+		}
+		return nil
+	}
+
+	ctx := context.Background()
+	convoStore := chat.engine.GetConvoStore()
+	writeToID := chat.config.CacheWriteToID
+	writeToTitle := strings.TrimSpace(chat.config.CacheWriteToTitle)
+
+	if convo.MatchSha1(writeToTitle) || writeToTitle == "" {
+		messages, err := convoStore.Messages(ctx, writeToID)
+		if err != nil {
+			return err
+		}
+		writeToTitle = firstLine(lastPrompt(messages))
+	}
+
+	if writeToTitle == "" {
+		writeToTitle = writeToID[:convo.Sha1short]
+	}
+
+	if err := convoStore.PersistentMessages(ctx, writeToID); err != nil {
+		return errbook.Wrap(fmt.Sprintf(
+			"There was a problem writing %s to the cache. Use %s / %s to disable it.",
+			chat.config.CacheWriteToID,
+			console.StderrStyles().InlineCode.Render("--no-cache"),
+			console.StderrStyles().InlineCode.Render("NO_CACHE"),
+		), err)
+	}
+
+	if err := convoStore.SaveConversation(ctx, writeToID, writeToTitle, chat.config.Model); err != nil {
+		return errbook.Wrap(fmt.Sprintf(
+			"There was a problem writing %s to the cache. Use %s / %s to disable it.",
+			chat.config.CacheWriteToID,
+			console.StderrStyles().InlineCode.Render("--no-cache"),
+			console.StderrStyles().InlineCode.Render("NO_CACHE"),
+		), err)
+	}
+
+	if !chat.config.Quiet {
+		fmt.Fprintln(
+			os.Stderr,
+			"\nConversation saved:",
+			console.StderrStyles().InlineCode.Render(chat.config.CacheWriteToID[:convo.Sha1short]),
+			console.StderrStyles().Comment.Render(writeToTitle),
+		)
+	}
+
+	return nil
+}
+
+func lastPrompt(messages []llms.ChatMessage) string {
+	var result string
+	for _, msg := range messages {
+		if msg.GetType() != llms.ChatMessageTypeHuman {
+			continue
+		}
+		result = msg.GetContent()
+	}
+	return result
+}
+
+func firstLine(s string) string {
+	first, _, _ := strings.Cut(s, "\n")
+	return first
 }

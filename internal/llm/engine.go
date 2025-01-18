@@ -132,6 +132,10 @@ func (e *Engine) GetChannel() chan StreamCompletionOutput {
 	return e.channel
 }
 
+func (e *Engine) GetConvoStore() convo.Store {
+	return e.convoStore
+}
+
 func (e *Engine) Interrupt() {
 	e.channel <- StreamCompletionOutput{
 		content:    "[Interrupt]",
@@ -169,9 +173,7 @@ func (e *Engine) CreateCompletion(messages []llms.ChatMessage) (*EngineExecOutpu
 	return &output, nil
 }
 
-func (e *Engine) CreateStreamCompletion(messages []llms.ChatMessage) tea.Msg {
-	ctx := context.Background()
-
+func (e *Engine) CreateStreamCompletion(ctx context.Context, messages []llms.ChatMessage) tea.Msg {
 	e.running = true
 
 	streamingFunc := func(ctx context.Context, chunk []byte) error {
@@ -182,6 +184,17 @@ func (e *Engine) CreateStreamCompletion(messages []llms.ChatMessage) tea.Msg {
 			}
 		}
 		return nil
+	}
+
+	if err := e.setupChatContext(ctx, &messages); err != nil {
+		return err
+	}
+
+	for _, v := range messages {
+		err := e.convoStore.AddMessage(ctx, e.config.CacheWriteToID, v)
+		if err != nil {
+			errbook.HandleError(errbook.Wrap("Failed to add user chat input message to history", err))
+		}
 	}
 
 	messageParts := slices.Map(messages, convert)
@@ -235,16 +248,25 @@ func (e *Engine) callOptions(streamingFunc ...func(ctx context.Context, chunk []
 	return opts
 }
 
-func (e *Engine) appendUserMessage(content string) {
-	if len(strings.TrimSpace(content)) == 0 {
-		errbook.HandleError(errbook.New("empty input is not allowed."))
-		return
+func (e *Engine) setupChatContext(ctx context.Context, messages *[]llms.ChatMessage) error {
+	store := e.convoStore
+	if store == nil {
+		return errbook.New("no chat history store found")
 	}
-	if e.convoStore != nil {
-		if err := e.convoStore.AddUserMessage(context.Background(), e.config.ConversationID, content); err != nil {
-			errbook.HandleError(errbook.Wrap("failed to add user chat input message to history", err))
+
+	if !e.config.NoCache && e.config.CacheReadFromID != "" {
+		history, err := store.Messages(ctx, e.config.CacheReadFromID)
+		if err != nil {
+			return errbook.Wrap(fmt.Sprintf(
+				"There was a problem reading the cache. Use %s / %s to disable it.",
+				console.StderrStyles().InlineCode.Render("--no-cache"),
+				console.StderrStyles().InlineCode.Render("NO_CACHE"),
+			), err)
 		}
+		*messages = append(*messages, history...)
 	}
+
+	return nil
 }
 
 func (e *Engine) appendAssistantMessage(content string) {

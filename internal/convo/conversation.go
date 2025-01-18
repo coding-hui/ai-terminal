@@ -80,10 +80,10 @@ type ChatMessageHistory interface {
 	SetMessages(ctx context.Context, convoID string, messages []llms.ChatMessage) error
 	// Messages retrieves all messages from the store
 	Messages(ctx context.Context, convoID string) ([]llms.ChatMessage, error)
-	// Persistent saves messages to persistent storage
-	Persistent(ctx context.Context, convoID string, messages []llms.ChatMessage) error
-	// Invalidate removes messages from persistent storage
-	Invalidate(ctx context.Context, convoID string) error
+	// PersistentMessages saves messages to persistent storage
+	PersistentMessages(ctx context.Context, convoID string) error
+	// InvalidateMessages removes messages from persistent storage
+	InvalidateMessages(ctx context.Context, convoID string) error
 }
 
 // Store is the interface for chat history convo store.

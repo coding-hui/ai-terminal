@@ -6,7 +6,6 @@
 package cli
 
 import (
-	"context"
 	"flag"
 	"io"
 	"os"
@@ -28,7 +27,6 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/cli/manpage"
 	"github.com/coding-hui/ai-terminal/internal/cli/review"
 	"github.com/coding-hui/ai-terminal/internal/cli/version"
-	"github.com/coding-hui/ai-terminal/internal/convo"
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/util/debug"
@@ -142,14 +140,5 @@ func postRunHook(cfg *options.Config) error {
 	if err := flushProfiling(); err != nil {
 		return err
 	}
-
-	convoStore, _ := convo.GetConversationStore(cfg)
-	if !cfg.NoCache && convoStore != nil {
-		err := convoStore.SaveConversation(context.Background(), cfg.ConversationID, "convo", cfg.Model)
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
 }

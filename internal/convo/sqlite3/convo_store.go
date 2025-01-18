@@ -33,7 +33,7 @@ func (s *sqliteStoreFactor) Type() string {
 
 func (s *sqliteStoreFactor) Create(options *options.Config) (convo.Store, error) {
 	return NewSqliteStore(
-		WithDataPath(options.DataStore.CachePath),
+		WithDataPath(filepath.Join(options.DataStore.CachePath, "conversations")),
 		WithConversation(options.ConversationID),
 		WithDBAddress(filepath.Join(options.DataStore.CachePath, "convo.db")),
 	), nil

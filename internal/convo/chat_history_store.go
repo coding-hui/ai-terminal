@@ -51,15 +51,15 @@ func (h *SimpleChatHistoryStore) AddMessage(_ context.Context, convoID string, m
 
 func (h *SimpleChatHistoryStore) SetMessages(ctx context.Context, convoID string, messages []llms.ChatMessage) error {
 	h.messages[convoID] = messages
-	if err := h.Invalidate(ctx, convoID); err != nil && !errors.Is(err, os.ErrNotExist) {
+	if err := h.InvalidateMessages(ctx, convoID); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
-	return h.Persistent(ctx, convoID, h.messages[convoID])
+	return h.PersistentMessages(ctx, convoID)
 }
 
 func (h *SimpleChatHistoryStore) Messages(_ context.Context, convoID string) ([]llms.ChatMessage, error) {
 	if !h.loaded[convoID] {
-		if err := h.load(convoID); err != nil {
+		if err := h.load(convoID); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return nil, err
 		}
 		h.loaded[convoID] = true
@@ -91,9 +91,14 @@ func (h *SimpleChatHistoryStore) load(convoID string) error {
 	return nil
 }
 
-func (h *SimpleChatHistoryStore) Persistent(_ context.Context, convoID string, messages []llms.ChatMessage) error {
+func (h *SimpleChatHistoryStore) PersistentMessages(_ context.Context, convoID string) error {
 	if convoID == "" {
 		return fmt.Errorf("write: %w", errInvalidID)
+	}
+
+	// Ensure directory exists
+	if err := os.MkdirAll(h.dir, 0755); err != nil {
+		return fmt.Errorf("create directory: %w", err)
 	}
 
 	file, err := os.Create(filepath.Join(h.dir, convoID+cacheExt))
@@ -103,7 +108,7 @@ func (h *SimpleChatHistoryStore) Persistent(_ context.Context, convoID string, m
 	defer file.Close() //nolint:errcheck
 
 	var rawMessages []llms.ChatMessageModel
-	for _, v := range messages {
+	for _, v := range h.messages[convoID] {
 		if v != nil {
 			rawMessages = append(rawMessages, llms.ConvertChatMessageToModel(v))
 		}
@@ -115,7 +120,7 @@ func (h *SimpleChatHistoryStore) Persistent(_ context.Context, convoID string, m
 	return nil
 }
 
-func (h *SimpleChatHistoryStore) Invalidate(_ context.Context, convoID string) error {
+func (h *SimpleChatHistoryStore) InvalidateMessages(_ context.Context, convoID string) error {
 	if convoID == "" {
 		return fmt.Errorf("delete: %w", errInvalidID)
 	}

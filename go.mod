@@ -14,6 +14,7 @@ require (
 	github.com/charmbracelet/bubbletea v1.2.5-0.20241205214244-9306010a31ee
 	github.com/charmbracelet/glamour v0.8.0
 	github.com/charmbracelet/lipgloss v1.0.0
+	github.com/charmbracelet/x/exp/ordered v0.1.0
 	github.com/coding-hui/common v0.8.7
 	github.com/coding-hui/go-prompt v0.2.8
 	github.com/coding-hui/wecoding-sdk-go v0.8.7

@@ -107,6 +107,13 @@ type Config struct {
 	System       *system.Analysis
 	Interactive  bool
 	PromptFile   string
+	ContinueLast bool
+	Continue     string
+	Title        string
+	Show         string
+	ShowLast     bool
+
+	CacheReadFromID, CacheWriteToID, CacheWriteToTitle string
 }
 
 // AutoCoder is the configuration for the auto coder.
