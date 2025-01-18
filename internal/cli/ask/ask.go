@@ -13,17 +13,11 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/llm"
 	"github.com/coding-hui/ai-terminal/internal/options"
-	"github.com/coding-hui/ai-terminal/internal/runner"
-	"github.com/coding-hui/ai-terminal/internal/system"
 	"github.com/coding-hui/ai-terminal/internal/ui"
 	"github.com/coding-hui/ai-terminal/internal/ui/chat"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 	"github.com/coding-hui/ai-terminal/internal/util/templates"
 	"github.com/coding-hui/ai-terminal/internal/util/term"
-)
-
-const (
-	promptInstructions = `👉  Write your prompt below, then save and exit to send it to AI.`
 )
 
 var askExample = templates.Examples(`
@@ -130,40 +124,4 @@ func (o *Options) preparePrompts(args []string) error {
 	o.pipe = term.ReadPipeInput()
 
 	return nil
-}
-
-func (o *Options) getEditorPrompt() (string, error) {
-	safePrefix := term.SanitizeFilename("ai_prompt_")
-	tempFile, err := os.CreateTemp(os.TempDir(), safePrefix+"*.txt")
-	if err != nil {
-		return "", errbook.Wrap("Failed to create temporary file.", err)
-	}
-
-	filename := tempFile.Name()
-	o.tempPromptFile = filename
-	err = os.WriteFile(filename, []byte(promptInstructions), 0644)
-	if err != nil {
-		return "", errbook.Wrap("Failed to write instructions to temporary file.", err)
-	}
-
-	editor := system.Analyse().GetEditor()
-	editorCmd := runner.PrepareEditSettingsCommand(editor, filename)
-	editorCmd.Stdin, editorCmd.Stdout, editorCmd.Stderr = o.In, o.Out, o.ErrOut
-	err = editorCmd.Start()
-	if err != nil {
-		return "", errbook.Wrap("Error opening editor.", err)
-	}
-	_ = editorCmd.Wait()
-
-	bytes, err := os.ReadFile(filename)
-	if err != nil {
-		return "", errbook.Wrap("Error reading temporary file.", err)
-	}
-
-	prompt := string(bytes)
-
-	prompt = strings.TrimPrefix(prompt, strings.TrimSpace(promptInstructions))
-	prompt = strings.TrimSpace(prompt)
-
-	return prompt, nil
 }
