@@ -94,6 +94,13 @@ Here are some examples of how to use AI-Terminal, grouped by functionality:
   ```
   This command starts the auto-coding feature, which allows you to interactively generate code based on prompts.
 
+- **Generate Code with Context:**
+  ```sh
+  ai ctx load /path/to/context_file
+  ai coder "implement feature xxx"
+  ```
+  Load context files first to provide additional information for code generation.
+
 #### Code Review
 
 - **Review Code Changes:**

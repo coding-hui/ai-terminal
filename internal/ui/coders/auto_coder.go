@@ -2,7 +2,8 @@ package coders
 
 import (
 	"context"
-	"path/filepath"
+	"fmt"
+	"strings"
 
 	"github.com/coding-hui/common/version"
 
@@ -15,14 +16,18 @@ import (
 )
 
 type AutoCoder struct {
-	codeBasePath   string
-	repo           *git.Command
-	loadedContexts []*convo.LoadContext
-	engine         *llm.Engine
-	store          convo.Store
+	codeBasePath, prompt string
+	repo                 *git.Command
+	loadedContexts       []*convo.LoadContext
+	engine               *llm.Engine
+	store                convo.Store
 
 	versionInfo version.Info
 	cfg         *options.Config
+}
+
+func NewAutoCoder(opts ...AutoCoderOption) *AutoCoder {
+	return applyAutoCoderOptions(opts...)
 }
 
 // saveContext persists a load context to the store
@@ -34,32 +39,6 @@ func (a *AutoCoder) saveContext(ctx context.Context, lc *convo.LoadContext) erro
 // deleteContext removes a load context from the store
 func (a *AutoCoder) deleteContext(ctx context.Context, id uint64) error {
 	return a.store.DeleteContexts(ctx, id)
-}
-
-func NewAutoCoder(cfg *options.Config) (*AutoCoder, error) {
-	repo := git.New()
-	root, _ := repo.GitDir()
-
-	engine, err := llm.NewLLMEngine(llm.ChatEngineMode, cfg)
-	if err != nil {
-		return nil, errbook.Wrap("Could not initialized llm engine", err)
-	}
-
-	// Initialize conversation store
-	store, err := convo.GetConversationStore(cfg)
-	if err != nil {
-		return nil, errbook.Wrap("Could not initialize conversation store", err)
-	}
-
-	return &AutoCoder{
-		codeBasePath:   filepath.Dir(root),
-		repo:           repo,
-		cfg:            cfg,
-		engine:         engine,
-		store:          store,
-		versionInfo:    version.Get(),
-		loadedContexts: []*convo.LoadContext{},
-	}, nil
 }
 
 func (a *AutoCoder) loadExistingContexts() error {
@@ -89,7 +68,10 @@ func (a *AutoCoder) loadExistingContexts() error {
 }
 
 func (a *AutoCoder) Run() error {
-	a.printWelcome()
+	codingCmd := strings.TrimSpace(a.prompt) != ""
+	if !codingCmd {
+		a.printWelcome()
+	}
 
 	// Load any existing contexts from previous session
 	if err := a.loadExistingContexts(); err != nil {
@@ -97,6 +79,12 @@ func (a *AutoCoder) Run() error {
 	}
 
 	cmdExecutor := NewCommandExecutor(a)
+
+	if codingCmd {
+		cmdExecutor.Executor(fmt.Sprintf("/coding %s", a.prompt))
+		return nil
+	}
+
 	cmdCompleter := NewCommandCompleter(a.repo)
 	p := console.NewPrompt(
 		a.cfg.AutoCoder.PromptPrefix,

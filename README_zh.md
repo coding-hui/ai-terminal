@@ -89,6 +89,13 @@ ai completion powershell -h
   ```
   这个命令启动自动编码功能，允许你根据提示交互式地生成代码。
 
+- **带上下文生成代码：**
+  ```sh
+  ai ctx load /path/to/context_file
+  ai coder "实现功能xxx"
+  ```
+  先加载上下文文件为代码生成提供额外信息。
+
 #### 代码审查
 
 - **审查代码更改：**

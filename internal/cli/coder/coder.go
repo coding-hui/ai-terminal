@@ -2,13 +2,20 @@ package coder
 
 import (
 	"github.com/spf13/cobra"
+	"path/filepath"
+	"strings"
 
+	"github.com/coding-hui/ai-terminal/internal/convo"
+	"github.com/coding-hui/ai-terminal/internal/errbook"
+	"github.com/coding-hui/ai-terminal/internal/git"
+	"github.com/coding-hui/ai-terminal/internal/llm"
 	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/ui/coders"
 )
 
 type Options struct {
-	cfg *options.Config
+	cfg    *options.Config
+	prompt string
 }
 
 func NewCmdCoder(cfg *options.Config) *cobra.Command {
@@ -19,14 +26,40 @@ func NewCmdCoder(cfg *options.Config) *cobra.Command {
 		RunE:  ops.run,
 	}
 
+	cmd.Flags().StringVarP(&ops.prompt, "prompt", "p", "", "Prompt to generate code.")
+
 	return cmd
 }
 
-func (o *Options) run(cmd *cobra.Command, args []string) error {
-	autoCoder, err := coders.NewAutoCoder(o.cfg)
-	if err != nil {
-		return err
+func (o *Options) run(_ *cobra.Command, args []string) error {
+	if len(args) > 0 {
+		o.prompt = strings.Join(args, " ") + "\n" + o.prompt
 	}
+
+	repo := git.New()
+	root, err := repo.GitDir()
+	if err != nil {
+		return errbook.Wrap("Could not get git root", err)
+	}
+
+	engine, err := llm.NewLLMEngine(llm.ChatEngineMode, o.cfg)
+	if err != nil {
+		return errbook.Wrap("Could not initialized llm engine", err)
+	}
+
+	store, err := convo.GetConversationStore(o.cfg)
+	if err != nil {
+		return errbook.Wrap("Could not initialize conversation store", err)
+	}
+
+	autoCoder := coders.NewAutoCoder(
+		coders.WithConfig(o.cfg),
+		coders.WithEngine(engine),
+		coders.WithRepo(repo),
+		coders.WithCodeBasePath(filepath.Dir(root)),
+		coders.WithStore(store),
+		coders.WithPrompt(o.prompt),
+	)
 
 	return autoCoder.Run()
 }
