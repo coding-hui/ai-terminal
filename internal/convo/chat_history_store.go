@@ -123,7 +123,7 @@ func (h *SimpleChatHistoryStore) InvalidateMessages(_ context.Context, convoID s
 	if convoID == "" {
 		return fmt.Errorf("delete: %w", errInvalidID)
 	}
-	if err := os.Remove(filepath.Join(h.dir, convoID+cacheExt)); err != nil {
+	if err := os.Remove(filepath.Join(h.dir, convoID+cacheExt)); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("delete: %w", err)
 	}
 	delete(h.messages, convoID)

@@ -4,7 +4,12 @@ import (
 	"context"
 	"time"
 
+	"github.com/charmbracelet/x/exp/ordered"
+
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
+
+	"github.com/coding-hui/ai-terminal/internal/errbook"
+	"github.com/coding-hui/ai-terminal/internal/options"
 )
 
 // ContentType defines the type of content being loaded into the convo.
@@ -67,6 +72,14 @@ type Conversation struct {
 	Model *string `db:"model" json:"model"`
 }
 
+// CacheDetailsMsg contains details about a cached conversation
+type CacheDetailsMsg struct {
+	WriteID string // ID to write cache to
+	ReadID  string // ID to read cache from
+	Title   string // Title of the conversation
+	Model   string // Model used for the conversation
+}
+
 type ChatMessageHistory interface {
 	// AddAIMessage is a convenience method for adding an AI message string to
 	// the store.
@@ -121,4 +134,53 @@ type LoadContextStore interface {
 	DeleteContexts(ctx context.Context, id uint64) error
 	// CleanContexts removes all load contexts for a convo and returns the count deleted
 	CleanContexts(ctx context.Context, conversationID string) (int64, error)
+}
+
+// GetCurrentConversationID handles the logic for determining the current conversation ID
+// based on config parameters and existing conversations
+func GetCurrentConversationID(ctx context.Context, cfg *options.Config, store Store) (CacheDetailsMsg, error) {
+	continueLast := cfg.ContinueLast || (cfg.Continue != "" && cfg.Title == "")
+	readID := ordered.First(cfg.Continue, cfg.Show)
+	writeID := ordered.First(cfg.Title, cfg.Continue)
+	title := writeID
+	model := cfg.Model
+
+	if readID != "" || continueLast || cfg.ShowLast {
+		found, err := store.GetConversation(ctx, readID)
+		if err != nil {
+			return CacheDetailsMsg{}, errbook.Wrap("Couldn't find conversation.", err)
+		}
+		if found != nil {
+			readID = found.ID
+			if found.Model != nil {
+				model = *found.Model
+			}
+		}
+	}
+
+	// if we are continuing last, update the existing conversation
+	if continueLast {
+		writeID = readID
+	}
+
+	if writeID == "" {
+		writeID = NewConversationID()
+	}
+
+	if !MatchSha1(writeID) {
+		found, err := store.GetConversation(ctx, writeID)
+		if err != nil {
+			// its a new conversation with a title
+			writeID = NewConversationID()
+		} else {
+			writeID = found.ID
+		}
+	}
+
+	return CacheDetailsMsg{
+		Title:   title,
+		Model:   model,
+		WriteID: writeID,
+		ReadID:  readID,
+	}, nil
 }

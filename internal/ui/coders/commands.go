@@ -16,6 +16,7 @@ import (
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
 
 	"github.com/coding-hui/ai-terminal/internal/cli/commit"
+	"github.com/coding-hui/ai-terminal/internal/convo"
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/prompt"
 	"github.com/coding-hui/ai-terminal/internal/ui/chat"
@@ -184,11 +185,32 @@ func (c *CommandExecutor) addFiles(_ context.Context, files ...string) (err erro
 			}
 		}
 
-		if _, ok := c.coder.absFileNames[absPath]; ok {
-			return errbook.New("File [%s] already exists", absPath)
+		// Check if file already loaded
+		for _, lc := range c.coder.loadedContexts {
+			if lc.FilePath == absPath || lc.URL == absPath {
+				return errbook.New("File [%s] already exists", absPath)
+			}
 		}
 
-		c.coder.absFileNames[absPath] = struct{}{}
+		// Create new LoadContext
+		lc := &convo.LoadContext{
+			Type:    convo.ContentTypeFile,
+			URL:     absPath,
+			Content: "", // Will be loaded on demand
+			Name:    filepath.Base(absPath),
+		}
+		if rest.IsValidURL(absPath) {
+			lc.Type = convo.ContentTypeURL
+		} else {
+			lc.FilePath = absPath
+		}
+
+		c.coder.loadedContexts = append(c.coder.loadedContexts, lc)
+
+		// Persist the new context
+		if err := c.coder.saveContext(context.Background(), lc); err != nil {
+			return errbook.Wrap("Failed to persist file context", err)
+		}
 
 		console.Render("Added [%s]", absPath)
 	}
@@ -198,17 +220,21 @@ func (c *CommandExecutor) addFiles(_ context.Context, files ...string) (err erro
 
 // listFiles List all files that have been added to the chat
 func (c *CommandExecutor) listFiles(_ context.Context, _ ...string) error {
-	if len(c.coder.absFileNames) <= 0 {
+	if len(c.coder.loadedContexts) <= 0 {
 		console.Render("No files added in chat currently")
 		return nil
 	}
 	no := 1
-	for file := range c.coder.absFileNames {
-		relPath, err := filepath.Rel(c.coder.codeBasePath, file)
+	for _, lc := range c.coder.loadedContexts {
+		path := lc.FilePath
+		if lc.Type == convo.ContentTypeURL {
+			path = lc.URL
+		}
+		relPath, err := filepath.Rel(c.coder.codeBasePath, path)
 		if err != nil {
 			return errbook.Wrap("Failed to get relative path", err)
 		}
-		console.Render("%d.%s", no, relPath)
+		console.Render("%d.%s (%s)", no, relPath, lc.Type)
 		no++
 	}
 
@@ -233,11 +259,22 @@ func (c *CommandExecutor) removeFiles(_ context.Context, files ...string) error 
 			if err != nil {
 				return errbook.Wrap("Failed to get abs path", err)
 			}
-			if _, ok := c.coder.absFileNames[abs]; ok {
-				deleteCount++
-				delete(c.coder.absFileNames, abs)
-				console.Render("Removed file [%s]", abs)
+
+			// Remove matching contexts
+			newContexts := make([]*convo.LoadContext, 0, len(c.coder.loadedContexts))
+			for _, lc := range c.coder.loadedContexts {
+				if lc.FilePath == abs || lc.URL == abs {
+					deleteCount++
+					// Remove from persistence store
+					if err := c.coder.deleteContext(context.Background(), lc.ID); err != nil {
+						return errbook.Wrap("Failed to delete file context", err)
+					}
+					console.Render("Removed file [%s]", abs)
+					continue
+				}
+				newContexts = append(newContexts, lc)
 			}
+			c.coder.loadedContexts = newContexts
 		}
 	}
 
@@ -245,15 +282,21 @@ func (c *CommandExecutor) removeFiles(_ context.Context, files ...string) error 
 }
 
 func (c *CommandExecutor) dropFiles(_ context.Context, _ ...string) error {
-	dropCount := len(c.coder.absFileNames)
-	c.coder.absFileNames = map[string]struct{}{}
+	dropCount := len(c.coder.loadedContexts)
+
+	// Clean all contexts from persistence store
+	if _, err := c.coder.store.CleanContexts(context.Background(), c.coder.cfg.CacheWriteToID); err != nil {
+		return errbook.Wrap("Failed to clean file contexts", err)
+	}
+
+	c.coder.loadedContexts = []*convo.LoadContext{}
 	console.Render("Dropped %d files", dropCount)
 
 	return nil
 }
 
 func (c *CommandExecutor) coding(ctx context.Context, args ...string) error {
-	if len(c.coder.absFileNames) == 0 {
+	if len(c.coder.loadedContexts) == 0 {
 		return errbook.New("No files added. Please use /add to add files first")
 	}
 
@@ -295,7 +338,7 @@ func (c *CommandExecutor) coding(ctx context.Context, args ...string) error {
 
 func (c *CommandExecutor) undo(ctx context.Context, _ ...string) error {
 	// First check if there are any files in the chat
-	if len(c.coder.absFileNames) == 0 {
+	if len(c.coder.loadedContexts) == 0 {
 		return errbook.New("No files added. Please use /add to add files first")
 	}
 
@@ -387,9 +430,11 @@ func (c *CommandExecutor) help(_ context.Context, _ ...string) error {
 
 func (c *CommandExecutor) diff(_ context.Context, _ ...string) error {
 	// Stage all added files
-	filesToStage := make([]string, 0, len(c.coder.absFileNames))
-	for file := range c.coder.absFileNames {
-		filesToStage = append(filesToStage, file)
+	filesToStage := make([]string, 0, len(c.coder.loadedContexts))
+	for _, lc := range c.coder.loadedContexts {
+		if lc.Type == convo.ContentTypeFile {
+			filesToStage = append(filesToStage, lc.FilePath)
+		}
 	}
 
 	// Add files to git staging area
@@ -435,9 +480,13 @@ func (c *CommandExecutor) prepareAskCompletionMessages(userInput string) ([]llms
 
 func (c *CommandExecutor) getAddedFileContent() (string, error) {
 	addedFiles := ""
-	if len(c.coder.absFileNames) > 0 {
-		for file := range c.coder.absFileNames {
-			content, err := c.formatFileContent(file)
+	if len(c.coder.loadedContexts) > 0 {
+		for _, lc := range c.coder.loadedContexts {
+			filePath := lc.FilePath
+			if lc.Type == convo.ContentTypeURL {
+				filePath = lc.URL
+			}
+			content, err := c.formatFileContent(filePath)
 			if err != nil {
 				return "", err
 			}

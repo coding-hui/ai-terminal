@@ -12,7 +12,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/x/exp/ordered"
 
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
 
@@ -20,7 +19,6 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/llm"
 	"github.com/coding-hui/ai-terminal/internal/options"
-	"github.com/coding-hui/ai-terminal/internal/ui"
 	"github.com/coding-hui/ai-terminal/internal/ui/console"
 	"github.com/coding-hui/ai-terminal/internal/util/term"
 )
@@ -129,7 +127,7 @@ func (c *Chat) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	)
 
 	switch msg := msg.(type) {
-	case ui.CacheDetailsMsg:
+	case convo.CacheDetailsMsg:
 		c.config.CacheWriteToID = msg.WriteID
 		c.config.CacheWriteToTitle = msg.Title
 		c.config.CacheReadFromID = msg.ReadID
@@ -286,50 +284,11 @@ func (c *Chat) awaitChatCompletedCmd() tea.Cmd {
 
 func (c *Chat) startCliCmd() tea.Cmd {
 	return func() tea.Msg {
-		continueLast := c.config.ContinueLast || (c.config.Continue != "" && c.config.Title == "")
-		readID := ordered.First(c.config.Continue, c.config.Show)
-		writeID := ordered.First(c.config.Title, c.config.Continue)
-		title := writeID
-		model := c.config.Model
-
-		if readID != "" || continueLast || c.config.ShowLast {
-			found, err := c.engine.GetConvoStore().GetConversation(context.Background(), readID)
-			if err != nil {
-				return errbook.Wrap("Couldn't find conversation.", err)
-			}
-			if found != nil {
-				readID = found.ID
-				if found.Model != nil {
-					model = *found.Model
-				}
-			}
+		details, err := convo.GetCurrentConversationID(context.Background(), c.config, c.engine.GetConvoStore())
+		if err != nil {
+			return err
 		}
-
-		// if we are continuing last, update the existing conversation
-		if continueLast {
-			writeID = readID
-		}
-
-		if writeID == "" {
-			writeID = convo.NewConversationID()
-		}
-
-		if !convo.MatchSha1(writeID) {
-			found, err := c.engine.GetConvoStore().GetConversation(context.Background(), writeID)
-			if err != nil {
-				// its a new conversation with a title
-				writeID = convo.NewConversationID()
-			} else {
-				writeID = found.ID
-			}
-		}
-
-		return ui.CacheDetailsMsg{
-			Title:   title,
-			Model:   model,
-			WriteID: writeID,
-			ReadID:  readID,
-		}
+		return details
 	}
 }
 

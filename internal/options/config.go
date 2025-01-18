@@ -68,6 +68,7 @@ var Help = map[string]string{
 	"ls-convo":            "Lists saved conversations.",
 	"rm-convo":            "Deletes a saved conversation with the given title or ID.",
 	"rm-convo-older-than": "Deletes all saved conversations older than the specified duration. Valid units are: " + strings.EnglishJoin(duration.ValidUnits(), true) + ".",
+	"rm-all-convo":        "Deletes all saved conversations.",
 	"show-convo":          "Show a saved conversation with the given title or ID.",
 	"theme":               "Theme to use in the forms. Valid units are: 'charm', 'catppuccin', 'dracula', and 'base16'",
 	"show-last":           "Show the last saved conversation.",

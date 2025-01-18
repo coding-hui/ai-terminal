@@ -6,6 +6,7 @@ package loadctx
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -23,8 +24,9 @@ import (
 // load is a struct to support load command
 type load struct {
 	genericclioptions.IOStreams
-	cfg        *options.Config
-	convoStore convo.Store
+	cfg                 *options.Config
+	convoStore          convo.Store
+	currentConversation convo.CacheDetailsMsg
 }
 
 // newLoad returns initialized load
@@ -65,10 +67,27 @@ func (o *load) Run(args []string) (err error) {
 		return errbook.Wrap("Failed to initialize conversation store", err)
 	}
 
+	// Get current conversation ID
+	details, err := convo.GetCurrentConversationID(context.Background(), o.cfg, o.convoStore)
+	if err != nil {
+		return errbook.Wrap("Failed to get current conversation ID", err)
+	}
+	o.currentConversation = details
+
 	for _, path := range args {
 		if err = o.loadPath(path); err != nil {
 			return err
 		}
+	}
+
+	err = o.convoStore.SaveConversation(
+		context.Background(),
+		o.currentConversation.WriteID,
+		fmt.Sprintf("load-contexts-%s", o.currentConversation.WriteID[:convo.Sha1short]),
+		o.currentConversation.Model,
+	)
+	if err != nil {
+		return errbook.Wrap("Failed to save conversation", err)
 	}
 
 	return nil
@@ -103,9 +122,10 @@ func (o *load) saveContent(sourcePath, content string, contentType convo.Content
 
 	// Generate safe filename
 	filename := term.SanitizeFilename(sourcePath)
-	cachePath := filepath.Join(cacheDir, filename)
+	cachePath := sourcePath
 
 	if contentType != convo.ContentTypeFile {
+		cachePath = filepath.Join(cacheDir, filename)
 		// Save content to cache
 		if err := os.WriteFile(cachePath, []byte(content), 0644); err != nil {
 			return errbook.Wrap("Failed to save content", err)
@@ -113,7 +133,7 @@ func (o *load) saveContent(sourcePath, content string, contentType convo.Content
 	}
 
 	err := o.convoStore.SaveContext(context.Background(), &convo.LoadContext{
-		ConversationID: o.cfg.ConversationID,
+		ConversationID: o.currentConversation.WriteID,
 		Name:           filename,
 		Type:           contentType,
 		URL:            sourcePath,
@@ -124,7 +144,8 @@ func (o *load) saveContent(sourcePath, content string, contentType convo.Content
 		return errbook.Wrap("Failed to save load content", err)
 	}
 
-	console.Render("Successfully loaded and cached [%s]", filename)
+	// save to conversation
+	console.Render("Saved content [%s] to conversation [%s]", cachePath, o.currentConversation.WriteID[:convo.Sha1short])
 
 	return nil
 }

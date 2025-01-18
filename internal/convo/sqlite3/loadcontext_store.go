@@ -129,9 +129,5 @@ func (s *sqliteLoadContextStore) CleanContexts(ctx context.Context, conversation
 		return 0, fmt.Errorf("CleanContexts: %w", err)
 	}
 
-	if rows == 0 {
-		return 0, fmt.Errorf("CleanContexts: no rows affected")
-	}
-
 	return rows, nil
 }

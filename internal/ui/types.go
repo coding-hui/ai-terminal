@@ -78,11 +78,3 @@ func (m RunMode) String() string {
 		return "repl"
 	}
 }
-
-// CacheDetailsMsg contains information about cached data
-type CacheDetailsMsg struct {
-	WriteID string // ID for writing to cache
-	Title   string // Title of the cached item
-	ReadID  string // ID for reading from cache
-	Model   string // Model associated with the cache
-}
