@@ -1,6 +1,7 @@
 package commit
 
 import (
+	"context"
 	"fmt"
 	"html"
 	"os"
@@ -246,7 +247,7 @@ func (o *Options) codeReview(engine *llm.Engine, vars map[string]any) error {
 		return err
 	}
 
-	resp, err := engine.CreateCompletion(p.Messages())
+	resp, err := engine.CreateCompletion(context.Background(), p.Messages())
 	if err != nil {
 		return err
 	}
@@ -265,7 +266,7 @@ func (o *Options) summarizeTitle(engine *llm.Engine, vars map[string]any) error 
 		return err
 	}
 
-	resp, err := engine.CreateCompletion(p.Messages())
+	resp, err := engine.CreateCompletion(context.Background(), p.Messages())
 	if err != nil {
 		return err
 	}
@@ -285,7 +286,7 @@ func (o *Options) summarizePrefix(engine *llm.Engine, vars map[string]any) error
 		return err
 	}
 
-	resp, err := engine.CreateCompletion(p.Messages())
+	resp, err := engine.CreateCompletion(context.Background(), p.Messages())
 	if err != nil {
 		return err
 	}
@@ -330,7 +331,7 @@ func (o *Options) generateCommitMsg(engine *llm.Engine, vars map[string]any) (st
 			return "", err
 		}
 
-		resp, err := engine.CreateCompletion(translationPrompt.Messages())
+		resp, err := engine.CreateCompletion(context.Background(), translationPrompt.Messages())
 		if err != nil {
 			return "", err
 		}

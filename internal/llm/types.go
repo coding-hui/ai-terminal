@@ -17,26 +17,22 @@ func (m EngineMode) String() string {
 	}
 }
 
-type SummaryContentOutput struct {
-	Content string `json:"content"`
-}
-
-type EngineExecOutput struct {
+type CompletionOutput struct {
 	Command     string `json:"cmd"`
 	Explanation string `json:"exp"`
 	Executable  bool   `json:"exec"`
 }
 
-func (eo EngineExecOutput) GetCommand() string {
-	return eo.Command
+func (c CompletionOutput) GetCommand() string {
+	return c.Command
 }
 
-func (eo EngineExecOutput) GetExplanation() string {
-	return eo.Explanation
+func (c CompletionOutput) GetExplanation() string {
+	return c.Explanation
 }
 
-func (eo EngineExecOutput) IsExecutable() bool {
-	return eo.Executable
+func (c CompletionOutput) IsExecutable() bool {
+	return c.Executable
 }
 
 // CompletionInput is a tea.Msg that wraps the content read from stdin.
@@ -46,32 +42,24 @@ type CompletionInput struct {
 
 // StreamCompletionOutput a tea.Msg that wraps the content returned from llm.
 type StreamCompletionOutput struct {
-	content    string
-	last       bool
-	interrupt  bool
-	executable bool
+	Content    string
+	Last       bool
+	Interrupt  bool
+	Executable bool
 }
 
-func (co StreamCompletionOutput) GetContent() string {
-	return co.content
+func (c StreamCompletionOutput) GetContent() string {
+	return c.Content
 }
 
-func (co StreamCompletionOutput) IsLast() bool {
-	return co.last
+func (c StreamCompletionOutput) IsLast() bool {
+	return c.Last
 }
 
-func (co StreamCompletionOutput) IsInterrupt() bool {
-	return co.interrupt
+func (c StreamCompletionOutput) IsInterrupt() bool {
+	return c.Interrupt
 }
 
-func (co StreamCompletionOutput) IsExecutable() bool {
-	return co.executable
-}
-
-type EngineLoggingCallbackOutput struct {
-	content string
-}
-
-func (ec EngineLoggingCallbackOutput) GetContent() string {
-	return ec.content
+func (c StreamCompletionOutput) IsExecutable() bool {
+	return c.Executable
 }

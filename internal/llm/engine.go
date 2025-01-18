@@ -20,8 +20,7 @@ import (
 )
 
 const (
-	noExec        = "[noexec]"
-	defaultChatID = "temp_session"
+	noExec = "[noexec]"
 )
 
 type Engine struct {
@@ -137,19 +136,21 @@ func (e *Engine) GetConvoStore() convo.Store {
 
 func (e *Engine) Interrupt() {
 	e.channel <- StreamCompletionOutput{
-		content:    "[Interrupt]",
-		last:       true,
-		interrupt:  true,
-		executable: false,
+		Content:    "[Interrupt]",
+		Last:       true,
+		Interrupt:  true,
+		Executable: false,
 	}
 
 	e.running = false
 }
 
-func (e *Engine) CreateCompletion(messages []llms.ChatMessage) (*EngineExecOutput, error) {
-	ctx := context.Background()
-
+func (e *Engine) CreateCompletion(ctx context.Context, messages []llms.ChatMessage) (*CompletionOutput, error) {
 	e.running = true
+
+	if err := e.setupChatContext(ctx, &messages); err != nil {
+		return nil, err
+	}
 
 	rsp, err := e.Model.GenerateContent(ctx, slices.Map(messages, convert), e.callOptions()...)
 	if err != nil {
@@ -157,12 +158,13 @@ func (e *Engine) CreateCompletion(messages []llms.ChatMessage) (*EngineExecOutpu
 	}
 
 	content := rsp.Choices[0].Content
+
 	e.appendAssistantMessage(content)
 
-	var output EngineExecOutput
+	var output CompletionOutput
 	err = json.Unmarshal([]byte(content), &output)
 	if err != nil {
-		output = EngineExecOutput{
+		output = CompletionOutput{
 			Command:     "",
 			Explanation: content,
 			Executable:  false,
@@ -178,8 +180,8 @@ func (e *Engine) CreateStreamCompletion(ctx context.Context, messages []llms.Cha
 	streamingFunc := func(ctx context.Context, chunk []byte) error {
 		if !e.config.Quiet {
 			e.channel <- StreamCompletionOutput{
-				content: string(chunk),
-				last:    false,
+				Content: string(chunk),
+				Last:    false,
 			}
 		}
 		return nil
@@ -214,18 +216,19 @@ func (e *Engine) CreateStreamCompletion(ctx context.Context, messages []llms.Cha
 
 	if !e.config.Quiet {
 		e.channel <- StreamCompletionOutput{
-			content:    "",
-			last:       true,
-			executable: executable,
+			Content:    "",
+			Last:       true,
+			Executable: executable,
 		}
 	}
 	e.running = false
+
 	e.appendAssistantMessage(output)
 
 	return &StreamCompletionOutput{
-		content:    output,
-		last:       true,
-		executable: executable,
+		Content:    output,
+		Last:       true,
+		Executable: executable,
 	}, nil
 }
 

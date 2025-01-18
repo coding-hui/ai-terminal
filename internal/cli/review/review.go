@@ -1,6 +1,7 @@
 package review
 
 import (
+	"context"
 	"errors"
 	"strings"
 
@@ -74,7 +75,7 @@ func (o *Options) reviewCode(cmd *cobra.Command, args []string) error {
 
 	// Get summarize comment from diff datas
 	color.Cyan("We are trying to review code changes")
-	reviewResp, err := llmEngine.CreateCompletion(reviewPrompt.Messages())
+	reviewResp, err := llmEngine.CreateCompletion(context.Background(), reviewPrompt.Messages())
 	if err != nil {
 		return err
 	}
@@ -92,7 +93,7 @@ func (o *Options) reviewCode(cmd *cobra.Command, args []string) error {
 		}
 
 		color.Cyan("we are trying to translate code review to " + o.commitLang + " language")
-		translationResp, err := llmEngine.CreateCompletion(translationPrompt.Messages())
+		translationResp, err := llmEngine.CreateCompletion(context.Background(), translationPrompt.Messages())
 		if err != nil {
 			return err
 		}
