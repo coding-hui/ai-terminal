@@ -142,7 +142,8 @@ func TestSqliteChatMessageHistory(t *testing.T) {
 	})
 
 	t.Run("Get messages from non-existent conversation", func(t *testing.T) {
-		_, err := h.Messages(ctx, "nonexistent")
-		assert.Error(t, err)
+		messages, err := h.Messages(ctx, "nonexistent")
+		assert.NoError(t, err)
+		assert.Len(t, messages, 0)
 	})
 }
