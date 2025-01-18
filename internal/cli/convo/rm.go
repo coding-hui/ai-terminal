@@ -119,7 +119,7 @@ func (r *rm) deleteConversationOlderThan(store convo.Store, deleteAll bool) erro
 		if !deleteAll {
 			confirmTitle = fmt.Sprintf("Delete conversations older than %s?", r.DeleteOlderThan)
 		}
-		confirm := console.WaitForUserConfirm(console.Yes, confirmTitle)
+		confirm := console.WaitForUserConfirm(console.Yes, "%s", confirmTitle)
 		if !confirm {
 			return errbook.NewUserErrorf("Aborted by user.")
 		}
