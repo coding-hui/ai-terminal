@@ -13,15 +13,6 @@ import (
 func TestStore(t *testing.T) {
 	convoID := NewConversationID()
 
-	t.Run("read", func(t *testing.T) {
-		store := NewSimpleChatHistoryStore("/Users/bytedance/Codes/ai-terminal/bin/conversations/")
-		err := store.load("3b7e9fb1ae86660c32cef53346a3230f4bfc8797")
-		require.NoError(t, err)
-		messages, err := store.Messages(context.Background(), "3b7e9fb1ae86660c32cef53346a3230f4bfc8797")
-		require.NoError(t, err)
-		require.Len(t, messages, 1)
-	})
-
 	t.Run("read non-existent", func(t *testing.T) {
 		store := NewSimpleChatHistoryStore(t.TempDir())
 		err := store.load("super-fake")
@@ -64,7 +55,11 @@ func TestStore(t *testing.T) {
 		}
 		require.NoError(t, store.SetMessages(context.Background(), convoID, messages))
 		require.NoError(t, store.load(convoID))
-		require.ElementsMatch(t, messages, store.messages[convoID])
+
+		out, err := store.Messages(context.Background(), convoID)
+		require.NoError(t, err)
+		require.ElementsMatch(t, messages, out)
+
 		defer func() {
 			_ = store.InvalidateMessages(context.Background(), convoID)
 		}()
