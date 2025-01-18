@@ -1,9 +1,10 @@
 package coder
 
 import (
-	"github.com/spf13/cobra"
 	"path/filepath"
 	"strings"
+
+	"github.com/spf13/cobra"
 
 	"github.com/coding-hui/ai-terminal/internal/convo"
 	"github.com/coding-hui/ai-terminal/internal/errbook"
