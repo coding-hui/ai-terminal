@@ -88,11 +88,22 @@ Here are some examples of how to use AI-Terminal, grouped by functionality:
 
 #### Code Generation
 
-- **Auto-generate Code:**
+- **Interactive Code Generation:**
   ```sh
   ai coder
   ```
-  This command starts the auto-coding feature, which allows you to interactively generate code based on prompts.
+  Starts interactive mode for generating code based on prompts.
+
+- **CLI-based Code Generation:**
+  ```sh
+  ai ctx load /path/to/context_file
+  ai coder -c session_id -p "improve comments and add unit tests"
+  ```
+  Load context files and specify session ID for batch processing. Supports:
+  - Code improvement
+  - Comment enhancement
+  - Unit test generation
+  - Code refactoring
 
 - **Generate Code with Context:**
   ```sh
