@@ -27,7 +27,7 @@ func Assert(cond bool, msg interface{}) {
 	if enableAssert {
 		panic(msg)
 	}
-	writeWithSync(2, "[ASSERT] "+toString(msg))
+	writeWithSync("[ASSERT] " + toString(msg))
 }
 
 func toString(v interface{}) string {
@@ -51,5 +51,5 @@ func AssertNoError(err error) {
 	if enableAssert {
 		panic(err)
 	}
-	writeWithSync(2, "[ASSERT] "+err.Error())
+	writeWithSync("[ASSERT] " + err.Error())
 }

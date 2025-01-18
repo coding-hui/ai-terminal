@@ -49,7 +49,7 @@ func (o *ls) Run(ioStreams genericclioptions.IOStreams, cfg *options.Config) err
 	}
 
 	if len(conversations) == 0 {
-		fmt.Fprintln(ioStreams.ErrOut, "No conversations found.")
+		_, _ = fmt.Fprintln(ioStreams.ErrOut, "No conversations found.")
 		return nil
 	}
 

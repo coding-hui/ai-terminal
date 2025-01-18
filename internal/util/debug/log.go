@@ -8,6 +8,7 @@ import (
 )
 
 const (
+	callDepth    = 2
 	envEnableLog = "GO_PROMPT_ENABLE_LOG"
 	logFileName  = "ai-terminal.log"
 )
@@ -37,26 +38,24 @@ func Teardown() {
 	_ = logfile.Close()
 }
 
-func writeWithSync(calldepth int, msg string) {
-	calldepth++
+func writeWithSync(msg string) {
 	if logfile == nil {
 		return
 	}
-	_ = logger.Output(calldepth, msg)
+	_ = logger.Output(callDepth, msg)
 	_ = logfile.Sync() // immediately write msg
 }
 
 // Log to output message
 func Log(msg string) {
-	calldepth := 2
-	writeWithSync(calldepth, msg)
+	writeWithSync(msg)
 }
 
 func Trace(s string, args ...interface{}) string {
-	writeWithSync(2, fmt.Sprintln("\n\n------------entering:", s, args))
+	writeWithSync(fmt.Sprintln("\n\n------------entering:", s, args))
 	return s
 }
 
 func Un(s string) {
-	writeWithSync(2, fmt.Sprintln("------------ leaving:", s))
+	writeWithSync(fmt.Sprintln("------------ leaving:", s))
 }

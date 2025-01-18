@@ -320,7 +320,7 @@ func (o *Options) generateCommitMsg(engine *llm.Engine, vars map[string]any) (st
 		}
 	}
 
-	var commitMsg string
+	commitMsg := commitPromptVal.String()
 	if o.commitLang != prompt.DefaultLanguage {
 		console.RenderStep("Translating commit message to %s...", o.commitLang)
 		translationPrompt, err := prompt.GetPromptStringByTemplateName(prompt.TranslationTemplate, map[string]any{
@@ -339,8 +339,7 @@ func (o *Options) generateCommitMsg(engine *llm.Engine, vars map[string]any) (st
 	}
 
 	// unescape html entities in commit message
-	commitMsg = html.UnescapeString(commitPromptVal.String())
-	commitMsg = strings.TrimSpace(commitPromptVal.String())
+	commitMsg = strings.TrimSpace(html.UnescapeString(commitMsg))
 
 	// Output simplified commit summary
 	lines := strings.Split(commitPromptVal.String(), "\n")

@@ -10,11 +10,10 @@ import (
 	"io"
 	"os"
 	"slices"
-	"time"
+
+	"github.com/spf13/cobra"
 
 	cliflag "github.com/coding-hui/common/cli/flag"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 
 	"github.com/coding-hui/ai-terminal/internal/cli/ask"
 	"github.com/coding-hui/ai-terminal/internal/cli/coder"
@@ -36,7 +35,7 @@ import (
 	_ "github.com/coding-hui/ai-terminal/internal/convo/sqlite3"
 )
 
-var logFlushFreq = pflag.Duration(options.FlagLogFlushFrequency, 5*time.Second, "Maximum number of seconds between log flushes")
+// var logFlushFreq = pflag.Duration(options.FlagLogFlushFrequency, 5*time.Second, "Maximum number of seconds between log flushes")
 
 // NewDefaultAICommand creates the `ai` command with default arguments.
 func NewDefaultAICommand() *cobra.Command {

@@ -25,10 +25,6 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/util/term"
 )
 
-const (
-	defaultWidth = 120
-)
-
 type state int
 
 const (

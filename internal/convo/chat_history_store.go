@@ -82,7 +82,7 @@ func (h *SimpleChatHistoryStore) load(convoID string) error {
 		return fmt.Errorf("read: %w", err)
 	}
 
-	var messages []llms.ChatMessage
+	messages := make([]llms.ChatMessage, len(rawMessages))
 	for _, v := range rawMessages {
 		messages = append(messages, v.ToChatMessage())
 	}
