@@ -272,7 +272,7 @@ func (e *Engine) setupChatContext(ctx context.Context, messages *[]llms.ChatMess
 }
 
 func (e *Engine) appendAssistantMessage(content string) {
-	if e.convoStore != nil {
+	if e.convoStore != nil && e.config.CacheWriteToID != "" {
 		if err := e.convoStore.AddAIMessage(context.Background(), e.config.CacheWriteToID, content); err != nil {
 			errbook.HandleError(errbook.Wrap("failed to add assistant chat output message to convo", err))
 		}
