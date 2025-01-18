@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/caarlos0/go-shellwords"
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/coding-hui/common/util/slices"
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms/openai"
@@ -173,7 +172,7 @@ func (e *Engine) CreateCompletion(messages []llms.ChatMessage) (*EngineExecOutpu
 	return &output, nil
 }
 
-func (e *Engine) CreateStreamCompletion(ctx context.Context, messages []llms.ChatMessage) tea.Msg {
+func (e *Engine) CreateStreamCompletion(ctx context.Context, messages []llms.ChatMessage) (*StreamCompletionOutput, error) {
 	e.running = true
 
 	streamingFunc := func(ctx context.Context, chunk []byte) error {
@@ -187,7 +186,7 @@ func (e *Engine) CreateStreamCompletion(ctx context.Context, messages []llms.Cha
 	}
 
 	if err := e.setupChatContext(ctx, &messages); err != nil {
-		return err
+		return nil, err
 	}
 
 	for _, v := range messages {
@@ -201,7 +200,7 @@ func (e *Engine) CreateStreamCompletion(ctx context.Context, messages []llms.Cha
 	rsp, err := e.Model.GenerateContent(ctx, messageParts, e.callOptions(streamingFunc)...)
 	if err != nil {
 		e.running = false
-		return errbook.Wrap("Failed to create stream completion.", err)
+		return nil, errbook.Wrap("Failed to create stream completion.", err)
 	}
 
 	executable := false
@@ -227,7 +226,7 @@ func (e *Engine) CreateStreamCompletion(ctx context.Context, messages []llms.Cha
 		content:    output,
 		last:       true,
 		executable: executable,
-	}
+	}, nil
 }
 
 func (e *Engine) callOptions(streamingFunc ...func(ctx context.Context, chunk []byte) error) []llms.CallOption {

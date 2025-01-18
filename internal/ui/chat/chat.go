@@ -109,7 +109,6 @@ func (c *Chat) Run() error {
 				fmt.Print(c.Output)
 			}
 		}
-		fmt.Println()
 	}
 
 	if c.config.Show != "" || c.config.ShowLast {
@@ -275,7 +274,11 @@ func (c *Chat) quit() tea.Msg {
 
 func (c *Chat) startCompletionCmd(messages []llms.ChatMessage) tea.Cmd {
 	return func() tea.Msg {
-		return c.engine.CreateStreamCompletion(context.Background(), messages)
+		output, err := c.engine.CreateStreamCompletion(context.Background(), messages)
+		if err != nil {
+			return err
+		}
+		return output
 	}
 }
 
