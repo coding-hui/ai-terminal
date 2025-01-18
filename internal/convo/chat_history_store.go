@@ -50,10 +50,10 @@ func (h *SimpleChatHistoryStore) AddMessage(_ context.Context, convoID string, m
 }
 
 func (h *SimpleChatHistoryStore) SetMessages(ctx context.Context, convoID string, messages []llms.ChatMessage) error {
-	h.messages[convoID] = messages
 	if err := h.InvalidateMessages(ctx, convoID); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
+	h.messages[convoID] = messages
 	return h.PersistentMessages(ctx, convoID)
 }
 
