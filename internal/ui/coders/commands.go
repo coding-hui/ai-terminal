@@ -296,10 +296,6 @@ func (c *CommandExecutor) dropFiles(_ context.Context, _ ...string) error {
 }
 
 func (c *CommandExecutor) coding(ctx context.Context, args ...string) error {
-	if len(c.coder.loadedContexts) == 0 {
-		return errbook.New("No files added. Please use /add to add files first")
-	}
-
 	addedFiles, err := c.getAddedFileContent()
 	if err != nil {
 		return err
