@@ -33,7 +33,7 @@ func GetConversationStore(cfg *options.Config) (Store, error) {
 		// Create new store if it doesn't exist
 		factory, ok := conversationStoreFactories[dsType]
 		if !ok {
-			return nil, fmt.Errorf("chat convo store %s is not supported", dsType)
+			return nil, fmt.Errorf("chat convo store `%s` is not supported", dsType)
 		}
 
 		newStore, err := factory.Create(cfg)
@@ -60,7 +60,7 @@ func GetConversationStore(cfg *options.Config) (Store, error) {
 		} else {
 			// No conversations exist, generate new ID
 			cfg.ConversationID = NewConversationID()
-			debug.Trace("conversation id not provided, generating new id %s", cfg.ConversationID)
+			debug.Trace("conversation id not provided, generating new id `%s`", cfg.ConversationID)
 		}
 	}
 
