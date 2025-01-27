@@ -296,6 +296,9 @@ apis:
     api-key:
     api-key-env: DEEPSEEK_API_KEY
     models: # https://platform.deepseek.com/api-docs/api/list-models/
+      deepseek-reasoner:
+        aliases: ["ds-r1"]
+        max-input-chars: 384000
       deepseek-chat:
         aliases: ["ds-chat"]
         max-input-chars: 384000
