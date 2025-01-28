@@ -50,11 +50,11 @@ func NewCommandExecutor(coder *AutoCoder) *CommandExecutor {
 }
 
 func (c *CommandExecutor) registryCmds() {
-	supportCommands["add"] = c.addFiles
-	supportCommands["list"] = c.listFiles
-	supportCommands["remove"] = c.removeFiles
-	supportCommands["ask"] = c.askFiles
-	supportCommands["drop"] = c.dropFiles
+	supportCommands["add"] = c.add
+	supportCommands["list"] = c.list
+	supportCommands["remove"] = c.remove
+	supportCommands["ask"] = c.ask
+	supportCommands["drop"] = c.drop
 	supportCommands["coding"] = c.coding
 	supportCommands["commit"] = c.commit
 	supportCommands["undo"] = c.undo
@@ -101,8 +101,8 @@ func (c *CommandExecutor) Executor(input string) {
 	}
 }
 
-// askFiles Ask GPT to edit the files in the chat
-func (c *CommandExecutor) askFiles(ctx context.Context, args ...string) error {
+// ask Ask GPT to edit the files in the chat
+func (c *CommandExecutor) ask(ctx context.Context, args ...string) error {
 	messages, err := c.prepareAskCompletionMessages(strings.Join(args, " "))
 	if err != nil {
 		return errbook.Wrap("Failed to prepare ask completion messages", err)
@@ -117,7 +117,7 @@ func (c *CommandExecutor) askFiles(ctx context.Context, args ...string) error {
 	return chatModel.Run()
 }
 
-// addFiles Add files to the chat so GPT can edit them or review them in detail
+// add Add files to the chat so GPT can edit them or review them in detail
 func (c *CommandExecutor) loadFileContent(path string) (string, error) {
 	// Handle remote URLs
 	if rest.IsValidURL(path) {
@@ -135,7 +135,7 @@ func (c *CommandExecutor) loadFileContent(path string) (string, error) {
 	return string(content), nil
 }
 
-func (c *CommandExecutor) addFiles(_ context.Context, files ...string) (err error) {
+func (c *CommandExecutor) add(_ context.Context, files ...string) (err error) {
 	if len(files) <= 0 {
 		return errbook.New("Please provide at least one file or URL")
 	}
@@ -218,8 +218,8 @@ func (c *CommandExecutor) addFiles(_ context.Context, files ...string) (err erro
 	return nil
 }
 
-// listFiles List all files that have been added to the chat
-func (c *CommandExecutor) listFiles(_ context.Context, _ ...string) error {
+// list List all files that have been added to the chat
+func (c *CommandExecutor) list(_ context.Context, _ ...string) error {
 	if len(c.coder.loadedContexts) <= 0 {
 		console.Render("No files added in chat currently")
 		return nil
@@ -241,8 +241,8 @@ func (c *CommandExecutor) listFiles(_ context.Context, _ ...string) error {
 	return nil
 }
 
-// removeFiles Remove files from the chat so GPT won't edit them or review them in detail
-func (c *CommandExecutor) removeFiles(_ context.Context, files ...string) error {
+// remove Remove files from the chat so GPT won't edit them or review them in detail
+func (c *CommandExecutor) remove(_ context.Context, files ...string) error {
 	if len(files) <= 0 {
 		return errbook.New("Please provide at least one file")
 	}
@@ -281,7 +281,7 @@ func (c *CommandExecutor) removeFiles(_ context.Context, files ...string) error 
 	return nil
 }
 
-func (c *CommandExecutor) dropFiles(_ context.Context, _ ...string) error {
+func (c *CommandExecutor) drop(_ context.Context, _ ...string) error {
 	dropCount := len(c.coder.loadedContexts)
 
 	// Clean all contexts from persistence store
