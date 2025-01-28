@@ -303,7 +303,7 @@ func (c *CommandExecutor) coding(ctx context.Context, args ...string) error {
 
 	openFence, closeFence := c.editor.UpdateCodeFences(ctx, addedFiles)
 
-	console.Render("Selected coder block fences %s %s", openFence, closeFence)
+	console.RenderStep("Selected coder block fences %s %s", openFence, closeFence)
 
 	userInput := strings.Join(args, " ")
 	messages, err := c.editor.FormatMessages(map[string]any{
