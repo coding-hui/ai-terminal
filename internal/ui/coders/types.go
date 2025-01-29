@@ -1,5 +1,9 @@
 package coders
 
+const (
+	FlagVerbose = "verbose"
+)
+
 // PromptMode represents the mode of the prompt.
 type PromptMode int
 

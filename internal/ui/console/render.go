@@ -2,11 +2,15 @@ package console
 
 import (
 	"fmt"
+	"html"
 	"os"
 	"sync"
 
+	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
+
+	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
 )
 
 var StdoutRenderer = sync.OnceValue(func() *lipgloss.Renderer {
@@ -51,4 +55,17 @@ func RenderError(err error, reason string, args ...interface{}) {
 func RenderAppName(appName string, suffix string, args ...interface{}) {
 	appName = MakeGradientText(StdoutStyles().AppName, appName)
 	fmt.Print(appName + " " + fmt.Sprintf(suffix, args...))
+}
+
+func RenderChatMessages(messages []llms.ChatMessage) error {
+	content, err := llms.GetBufferString(messages, "human", "ai")
+	if err != nil {
+		return err
+	}
+	content = html.UnescapeString(content)
+	Render(content)
+	_ = clipboard.WriteAll(content)
+	termenv.Copy(content)
+	PrintConfirmation("COPIED", "Ask prompt content copied to clipboard!")
+	return nil
 }

@@ -44,5 +44,14 @@ func (c CommandCompleter) Complete(d prompt.Document) []prompt.Suggest {
 		return prompt.FilterFuzzy(completions, t, true)
 	}
 
+	// if the input starts with "--", then we use the flag completer
+	if strings.HasPrefix(t, "--") {
+		completions := []prompt.Suggest{
+			{Text: "--verbose"},
+			{Text: "--help"},
+		}
+		return prompt.FilterContains(completions, t, true)
+	}
+
 	return []prompt.Suggest{}
 }

@@ -40,6 +40,7 @@ func getSupportedCommands() []string {
 type CommandExecutor struct {
 	coder  *AutoCoder
 	editor *EditBlockCoder
+	flags  map[string]bool
 }
 
 func NewCommandExecutor(coder *AutoCoder) *CommandExecutor {
@@ -95,8 +96,12 @@ func (c *CommandExecutor) Executor(input string) {
 		return
 	}
 
+	// Parse command arguments
+	filteredArgs := c.parseFlags(args)
+	userQuestion := strings.Join(filteredArgs, " ")
+
 	// Execute the recognized command
-	if err := fn(context.Background(), args...); err != nil {
+	if err := fn(context.Background(), userQuestion); err != nil {
 		console.RenderError(err, "Failed to execute command %s", cmd)
 	}
 }
@@ -106,6 +111,10 @@ func (c *CommandExecutor) ask(ctx context.Context, args ...string) error {
 	messages, err := c.prepareAskCompletionMessages(strings.Join(args, " "))
 	if err != nil {
 		return errbook.Wrap("Failed to prepare ask completion messages", err)
+	}
+
+	if c.flags[FlagVerbose] {
+		return console.RenderChatMessages(messages)
 	}
 
 	chatModel := chat.NewChat(c.coder.cfg,
@@ -317,6 +326,10 @@ func (c *CommandExecutor) coding(ctx context.Context, args ...string) error {
 		return err
 	}
 
+	if c.flags[FlagVerbose] {
+		return console.RenderChatMessages(messages)
+	}
+
 	err = c.editor.Execute(ctx, messages)
 	if err != nil {
 		return err
@@ -515,6 +528,20 @@ func (c *CommandExecutor) formatFileContent(filePath string) (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf("\n%s%s", relPath, wrapFenceWithType(content, filePath)), nil
+}
+
+func (c *CommandExecutor) parseFlags(args []string) (filteredArgs []string) {
+	c.flags = make(map[string]bool)
+
+	for _, arg := range args {
+		if strings.HasPrefix(arg, "--") {
+			c.flags[arg[2:]] = true
+			continue
+		}
+		filteredArgs = append(filteredArgs, arg)
+	}
+
+	return
 }
 
 func extractCmdArgs(input string) (string, []string) {

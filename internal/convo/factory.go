@@ -7,7 +7,6 @@ import (
 
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/options"
-	"github.com/coding-hui/ai-terminal/internal/util/debug"
 )
 
 var (
@@ -60,7 +59,7 @@ func GetConversationStore(cfg *options.Config) (Store, error) {
 		} else {
 			// No conversations exist, generate new ID
 			cfg.ConversationID = NewConversationID()
-			debug.Trace("conversation id not provided, generating new id `%s`", cfg.ConversationID)
+			//debug.Trace("conversation id not provided, generating new id `%s`", cfg.ConversationID)
 		}
 	}
 
