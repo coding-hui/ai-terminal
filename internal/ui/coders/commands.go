@@ -359,7 +359,7 @@ func (c *CommandExecutor) coding(ctx context.Context, args ...string) error {
 		}
 
 		if !found {
-			if console.WaitForUserConfirm(console.Yes, fmt.Sprintf("Do you want to add modified file %s to context?", file)) {
+			if console.WaitForUserConfirm(console.Yes, "Do you want to add modified file %s to context?", file) {
 				if err := c.add(ctx, file); err != nil {
 					console.RenderError(err, "Failed to add file %s to context", file)
 				}
