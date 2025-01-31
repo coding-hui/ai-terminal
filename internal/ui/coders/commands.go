@@ -342,6 +342,31 @@ func (c *CommandExecutor) coding(ctx context.Context, args ...string) error {
 		}
 	}
 
+	// Check for modified/new files and prompt to save to context
+	modifiedFiles, err := c.editor.GetModifiedFiles(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, file := range modifiedFiles {
+		// Check if file is already in loaded contexts
+		found := false
+		for _, lc := range c.coder.loadedContexts {
+			if lc.FilePath == file {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			if console.WaitForUserConfirm(console.Yes, fmt.Sprintf("Do you want to add modified file %s to context?", file)) {
+				if err := c.add(ctx, file); err != nil {
+					console.RenderError(err, "Failed to add file %s to context", file)
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
