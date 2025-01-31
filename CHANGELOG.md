@@ -1,6 +1,19 @@
 # Change Log
 
 
+<a name="v0.13.1"></a>
+## [v0.13.1] - 2025-01-31
+### Code Refactoring
+- refactor `Render` function to use formatted string for `content`
+- refactor coder block fence rendering to use `RenderStep`
+- refactor command handler method names for consistency
+- simplify `coding` function by removing redundant context checks
+
+### Features
+- implement command-line flag handling and completion support
+- add `deepseek-reasoner` model with alias `ds-r1`
+
+
 <a name="v0.13.0"></a>
 ## [v0.13.0] - 2025-01-18
 ### Bug Fixes
@@ -315,7 +328,8 @@
 - add ask cmd
 
 
-[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.13.1...HEAD
+[v0.13.1]: https://github.com/coding-hui/ai-terminal/compare/v0.13.0...v0.13.1
 [v0.13.0]: https://github.com/coding-hui/ai-terminal/compare/v0.12.1...v0.13.0
 [v0.12.1]: https://github.com/coding-hui/ai-terminal/compare/v0.12.0...v0.12.1
 [v0.12.0]: https://github.com/coding-hui/ai-terminal/compare/v0.1.11...v0.12.0
