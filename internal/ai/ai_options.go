@@ -11,27 +11,27 @@ import (
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms/openai"
 )
 
-type EngineOption func(*Engine)
+type Option func(*Engine)
 
-func WithMode(mode EngineMode) EngineOption {
+func WithMode(mode EngineMode) Option {
 	return func(e *Engine) {
 		e.mode = mode
 	}
 }
 
-func WithConfig(cfg *options.Config) EngineOption {
+func WithConfig(cfg *options.Config) Option {
 	return func(e *Engine) {
 		e.Config = cfg
 	}
 }
 
-func WithStore(store convo.Store) EngineOption {
+func WithStore(store convo.Store) Option {
 	return func(a *Engine) {
 		a.convoStore = store
 	}
 }
 
-func applyEngineOptions(engineOpts ...EngineOption) (engine *Engine, err error) {
+func applyOptions(engineOpts ...Option) (engine *Engine, err error) {
 	engine = &Engine{
 		channel: make(chan StreamCompletionOutput),
 		running: false,

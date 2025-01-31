@@ -34,8 +34,8 @@ type Engine struct {
 	Config *options.Config
 }
 
-func New(ops ...EngineOption) (*Engine, error) {
-	return applyEngineOptions(ops...)
+func New(ops ...Option) (*Engine, error) {
+	return applyOptions(ops...)
 }
 
 func (e *Engine) SetMode(m EngineMode) {
