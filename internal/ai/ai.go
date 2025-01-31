@@ -34,7 +34,7 @@ type Engine struct {
 	Config *options.Config
 }
 
-func NewLLMEngine(ops ...EngineOption) (*Engine, error) {
+func New(ops ...EngineOption) (*Engine, error) {
 	return applyEngineOptions(ops...)
 }
 

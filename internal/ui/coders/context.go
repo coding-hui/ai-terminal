@@ -22,7 +22,7 @@ type CoderContext struct {
 func NewCoderContext(cfg *options.Config) (*CoderContext, error) {
 	repo := git.New()
 	root, _ := repo.GitDir()
-	engine, err := ai.NewLLMEngine(ai.WithConfig(cfg))
+	engine, err := ai.New(ai.WithConfig(cfg))
 	if err != nil {
 		return nil, errbook.Wrap("Could not initialized ai engine", err)
 	}

@@ -43,7 +43,7 @@ func (o *Options) run(_ *cobra.Command, args []string) error {
 		return errbook.Wrap("Could not get git root", err)
 	}
 
-	engine, err := ai.NewLLMEngine(ai.WithConfig(o.cfg))
+	engine, err := ai.New(ai.WithConfig(o.cfg))
 	if err != nil {
 		return errbook.Wrap("Could not initialized ai engine", err)
 	}

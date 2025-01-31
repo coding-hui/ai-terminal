@@ -53,7 +53,7 @@ func (o *Options) reviewCode(cmd *cobra.Command, args []string) error {
 		return errors.New("git command not found on your system's PATH. Please install Git and try again")
 	}
 
-	llmEngine, err := ai.NewLLMEngine(ai.WithConfig(o.cfg))
+	llmEngine, err := ai.New(ai.WithConfig(o.cfg))
 	if err != nil {
 		return err
 	}

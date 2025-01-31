@@ -94,7 +94,7 @@ func (o *Options) Run() error {
 		runMode = ui.ReplMode
 	}
 
-	engine, err := ai.NewLLMEngine(ai.WithConfig(o.cfg))
+	engine, err := ai.New(ai.WithConfig(o.cfg))
 	if err != nil {
 		return err
 	}

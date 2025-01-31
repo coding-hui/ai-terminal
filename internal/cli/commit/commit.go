@@ -140,7 +140,7 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 		o.userPrompt = strings.TrimSpace(strings.Join(args, " "))
 	}
 
-	llmEngine, err := ai.NewLLMEngine(ai.WithConfig(o.cfg))
+	llmEngine, err := ai.New(ai.WithConfig(o.cfg))
 	if err != nil {
 		return err
 	}
