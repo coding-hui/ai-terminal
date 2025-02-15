@@ -440,16 +440,17 @@ func (c *CommandExecutor) help(_ context.Context, _ string) error {
 		cmd  string
 		desc string
 	}{
-		{"/add <file patterns>", "Add files to the chat"},
-		{"/list", "List all added files"},
-		{"/remove <file patterns>", "Remove files from chat"},
-		{"/ask <question>", "Ask about the code"},
-		{"/drop", "Remove all files from chat"},
-		{"/coding <instructions>", "Code with AI assistance"},
-		{"/commit", "Commit changes"},
-		{"/undo", "Undo last changes"},
-		{"/diff", "Show changes in added files"},
-		{"/apply <edit blocks>", "Apply AI-generated edit blocks to files"},
+		{"/add <file patterns/URLs>", "Add local files or URLs to chat context"},
+		{"/list", "List files in chat context"},
+		{"/remove <patterns>", "Remove files from context"},
+		{"/ask <question>", "Ask about code in context"},
+		{"/drop", "Clear all files from context"},
+		{"/coding <instructions>", "Code with AI (use for details)"},
+		{"/commit", "Commit changes to version control"},
+		{"/undo", "Revert last code changes"},
+		{"/diff", "Show diffs of context files"},
+		{"/apply <edit blocks>", "Apply AI-generated code edits"},
+		{"/coding-model <model> <api>", "Set AI model and API endpoint"},
 		{"/exit", "Exit the terminal"},
 		{"/help", "Show this help message"},
 	}
