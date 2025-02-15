@@ -63,7 +63,7 @@ func RenderAppName(appName string, suffix string, args ...interface{}) {
 }
 
 func RenderChatMessages(messages []llms.ChatMessage) error {
-	content, err := llms.GetBufferString(messages, "human", "ai")
+	content, err := llms.GetBufferString(messages, "", "human", "ai")
 	if err != nil {
 		return err
 	}
