@@ -26,7 +26,7 @@ import (
 )
 
 // supportCommands maps command names to their handler functions
-var supportCommands = map[string]func(context.Context, ...string) error{}
+var supportCommands = map[string]func(context.Context, string) error{}
 
 // getSupportedCommands returns a list of all supported command names
 func getSupportedCommands() []string {
@@ -62,6 +62,7 @@ func (c *CommandExecutor) registryCmds() {
 	supportCommands["exit"] = c.exit
 	supportCommands["diff"] = c.diff
 	supportCommands["apply"] = c.apply
+	supportCommands["coding-model"] = c.setCodingModel
 	supportCommands["help"] = c.help
 }
 
@@ -98,8 +99,8 @@ func (c *CommandExecutor) Executor(input string) {
 	}
 
 	// Parse command arguments
-	filteredArgs := c.parseFlags(args)
-	userInput := strings.Join(filteredArgs, " ")
+	filteredInput := c.parseFlags(args)
+	userInput := strings.Join(filteredInput, " ")
 
 	// Execute the recognized command
 	if err := fn(context.Background(), userInput); err != nil {
@@ -108,8 +109,8 @@ func (c *CommandExecutor) Executor(input string) {
 }
 
 // ask Ask GPT to edit the files in the chat
-func (c *CommandExecutor) ask(ctx context.Context, args ...string) error {
-	messages, err := c.prepareAskCompletionMessages(strings.Join(args, " "))
+func (c *CommandExecutor) ask(ctx context.Context, input string) error {
+	messages, err := c.prepareAskCompletionMessages(input)
 	if err != nil {
 		return errbook.Wrap("Failed to prepare ask completion messages", err)
 	}
@@ -145,8 +146,9 @@ func (c *CommandExecutor) loadFileContent(path string) (string, error) {
 	return string(content), nil
 }
 
-func (c *CommandExecutor) add(_ context.Context, files ...string) (err error) {
-	if len(files) <= 0 {
+func (c *CommandExecutor) add(_ context.Context, input string) (err error) {
+	files := strings.Fields(input)
+	if len(files) == 0 {
 		return errbook.New("Please provide at least one file or URL")
 	}
 
@@ -229,7 +231,7 @@ func (c *CommandExecutor) add(_ context.Context, files ...string) (err error) {
 }
 
 // list List all files that have been added to the chat
-func (c *CommandExecutor) list(_ context.Context, _ ...string) error {
+func (c *CommandExecutor) list(_ context.Context, _ string) error {
 	if len(c.coder.loadedContexts) <= 0 {
 		console.Render("No files added in chat currently")
 		return nil
@@ -251,9 +253,10 @@ func (c *CommandExecutor) list(_ context.Context, _ ...string) error {
 	return nil
 }
 
-// remove Remove files from the chat so GPT won't edit them or review them in detail
-func (c *CommandExecutor) remove(_ context.Context, files ...string) error {
-	if len(files) <= 0 {
+// remove files from the chat so GPT won't edit them or review them in detail
+func (c *CommandExecutor) remove(_ context.Context, input string) error {
+	files := strings.Fields(input)
+	if len(files) == 0 {
 		return errbook.New("Please provide at least one file")
 	}
 
@@ -291,7 +294,7 @@ func (c *CommandExecutor) remove(_ context.Context, files ...string) error {
 	return nil
 }
 
-func (c *CommandExecutor) drop(_ context.Context, _ ...string) error {
+func (c *CommandExecutor) drop(_ context.Context, _ string) error {
 	dropCount := len(c.coder.loadedContexts)
 
 	// Clean all contexts from persistence store
@@ -305,7 +308,7 @@ func (c *CommandExecutor) drop(_ context.Context, _ ...string) error {
 	return nil
 }
 
-func (c *CommandExecutor) coding(ctx context.Context, args ...string) error {
+func (c *CommandExecutor) coding(ctx context.Context, input string) error {
 	addedFiles, err := c.getAddedFileContent()
 	if err != nil {
 		return err
@@ -314,10 +317,8 @@ func (c *CommandExecutor) coding(ctx context.Context, args ...string) error {
 	openFence, closeFence := c.editor.UpdateCodeFences(ctx, addedFiles)
 
 	console.RenderStep("Selected coder block fences %s %s", openFence, closeFence)
-
-	userInput := strings.Join(args, " ")
 	messages, err := c.editor.FormatMessages(map[string]any{
-		userQuestionKey: userInput,
+		userQuestionKey: input,
 		addedFilesKey:   addedFiles,
 		openFenceKey:    openFence,
 		closeFenceKey:   closeFence,
@@ -338,7 +339,7 @@ func (c *CommandExecutor) coding(ctx context.Context, args ...string) error {
 
 	// Auto-commit if enabled in config
 	if c.coder.cfg.AutoCoder.AutoCommit {
-		if err := c.commit(ctx); err != nil {
+		if err := c.commit(ctx, ""); err != nil {
 			return errbook.Wrap("Failed to auto-commit changes", err)
 		}
 	}
@@ -371,7 +372,7 @@ func (c *CommandExecutor) coding(ctx context.Context, args ...string) error {
 	return nil
 }
 
-func (c *CommandExecutor) undo(ctx context.Context, _ ...string) error {
+func (c *CommandExecutor) undo(ctx context.Context, _ string) error {
 	// First check if there are any files in the chat
 	if len(c.coder.loadedContexts) == 0 {
 		return errbook.New("No files added. Please use /add to add files first")
@@ -399,7 +400,7 @@ func (c *CommandExecutor) undo(ctx context.Context, _ ...string) error {
 	return nil
 }
 
-func (c *CommandExecutor) commit(ctx context.Context, _ ...string) error {
+func (c *CommandExecutor) commit(ctx context.Context, _ string) error {
 	// Get the list of files that were modified by the coding CommandExecutor
 	modifiedFiles, err := c.editor.GetModifiedFiles(ctx)
 	if err != nil {
@@ -432,7 +433,7 @@ func (c *CommandExecutor) commit(ctx context.Context, _ ...string) error {
 	return nil
 }
 
-func (c *CommandExecutor) help(_ context.Context, _ ...string) error {
+func (c *CommandExecutor) help(_ context.Context, _ string) error {
 	console.Render("Available commands:")
 
 	commands := []struct {
@@ -464,7 +465,7 @@ func (c *CommandExecutor) help(_ context.Context, _ ...string) error {
 	return nil
 }
 
-func (c *CommandExecutor) diff(_ context.Context, _ ...string) error {
+func (c *CommandExecutor) diff(_ context.Context, _ string) error {
 	// Stage all added files
 	filesToStage := make([]string, 0, len(c.coder.loadedContexts))
 	for _, lc := range c.coder.loadedContexts {
@@ -490,12 +491,10 @@ func (c *CommandExecutor) diff(_ context.Context, _ ...string) error {
 	return nil
 }
 
-func (c *CommandExecutor) apply(ctx context.Context, args ...string) error {
-	if len(args) == 0 {
+func (c *CommandExecutor) apply(ctx context.Context, codes string) error {
+	if codes == "" {
 		return errbook.New("Please provide edit blocks to apply")
 	}
-
-	codes := strings.Join(args, "\n")
 	openFence, closeFence := chooseExistingFence(codes)
 
 	console.Render("Selected coder block fences %s %s", openFence, closeFence)
@@ -522,7 +521,7 @@ func (c *CommandExecutor) apply(ctx context.Context, args ...string) error {
 	return nil
 }
 
-func (c *CommandExecutor) exit(_ context.Context, _ ...string) error {
+func (c *CommandExecutor) exit(_ context.Context, _ string) error {
 	fmt.Println("Bye!")
 	os.Exit(0)
 
@@ -587,6 +586,34 @@ func (c *CommandExecutor) formatFileContent(filePath string) (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf("\n%s%s", relPath, wrapFenceWithType(content, filePath)), nil
+}
+
+func (c *CommandExecutor) setCodingModel(_ context.Context, input string) error {
+	args := strings.Fields(input)
+	if len(args) < 2 {
+		return errbook.New("Please provide both model and api parameters")
+	}
+
+	model := args[0]
+	api := args[1]
+
+	// Validate the model exists
+	if _, err := c.coder.cfg.GetModel(model); err != nil {
+		return errbook.Wrap("Invalid model", err)
+	}
+
+	// Validate the API exists
+	if _, err := c.coder.cfg.GetAPI(api); err != nil {
+		return errbook.Wrap("Invalid API", err)
+	}
+
+	// Update config
+	c.coder.cfg.AutoCoder.CodingModel = model
+	c.coder.cfg.API = api
+
+	console.Render("Updated coding model to %s using API %s", model, api)
+
+	return nil
 }
 
 func (c *CommandExecutor) parseFlags(args []string) (filteredArgs []string) {
