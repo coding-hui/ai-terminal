@@ -47,6 +47,8 @@ loading-text: Generating
 theme: charm
 # {{ index .Help "max-input-chars" }}
 max-input-chars: 12250
+# {{ index .Help "show-token-usage" }}
+show-token-usage: true
 # {{ index .Help "max-tokens" }}
 # max-tokens: 100
 # {{ index .Help "datastore" }}

@@ -21,6 +21,8 @@ type CompletionOutput struct {
 	Command     string `json:"cmd"`
 	Explanation string `json:"exp"`
 	Executable  bool   `json:"exec"`
+
+	Usage llms.Usage `json:"usage"`
 }
 
 func (c CompletionOutput) GetCommand() string {
@@ -46,6 +48,8 @@ type StreamCompletionOutput struct {
 	Last       bool
 	Interrupt  bool
 	Executable bool
+
+	Usage llms.Usage `json:"usage"`
 }
 
 func (c StreamCompletionOutput) GetContent() string {
@@ -62,4 +66,8 @@ func (c StreamCompletionOutput) IsInterrupt() bool {
 
 func (c StreamCompletionOutput) IsExecutable() bool {
 	return c.Executable
+}
+
+func (c StreamCompletionOutput) GetUsage() llms.Usage {
+	return c.Usage
 }

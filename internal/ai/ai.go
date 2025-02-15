@@ -2,7 +2,6 @@ package ai
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -77,17 +76,14 @@ func (e *Engine) CreateCompletion(ctx context.Context, messages []llms.ChatMessa
 
 	e.appendAssistantMessage(content)
 
-	var output CompletionOutput
-	err = json.Unmarshal([]byte(content), &output)
-	if err != nil {
-		output = CompletionOutput{
-			Command:     "",
-			Explanation: content,
-			Executable:  false,
-		}
-	}
+	e.running = false
 
-	return &output, nil
+	return &CompletionOutput{
+		Command:     "",
+		Explanation: content,
+		Executable:  false,
+		Usage:       rsp.Usage,
+	}, nil
 }
 
 func (e *Engine) CreateStreamCompletion(ctx context.Context, messages []llms.ChatMessage) (*StreamCompletionOutput, error) {
@@ -135,6 +131,7 @@ func (e *Engine) CreateStreamCompletion(ctx context.Context, messages []llms.Cha
 			Content:    "",
 			Last:       true,
 			Executable: executable,
+			Usage:      rsp.Usage,
 		}
 	}
 	e.running = false
@@ -145,6 +142,7 @@ func (e *Engine) CreateStreamCompletion(ctx context.Context, messages []llms.Cha
 		Content:    output,
 		Last:       true,
 		Executable: executable,
+		Usage:      rsp.Usage,
 	}, nil
 }
 

@@ -38,6 +38,7 @@ type Chat struct {
 	Error      *errbook.AiError
 	Output     string
 	GlamOutput string
+	TokenUsage llms.Usage
 
 	state  state
 	opts   *Options
@@ -82,7 +83,7 @@ func NewChat(cfg *options.Config, opts ...Option) *Chat {
 	}
 }
 
-// Run starts the chat.
+// Run starts the c.
 func (c *Chat) Run() error {
 	if _, err := tea.NewProgram(c).Run(); err != nil {
 		return errbook.Wrap("Couldn't start Bubble Tea program.", err)
@@ -110,7 +111,7 @@ func (c *Chat) Run() error {
 	}
 
 	if c.config.CacheWriteToID != "" {
-		return saveConversation(c)
+		return c.saveConversation()
 	}
 
 	return nil
@@ -158,6 +159,7 @@ func (c *Chat) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		if msg.IsLast() {
 			c.state = doneState
+			c.TokenUsage = msg.GetUsage()
 			return c, c.quit
 		}
 		cmds = append(cmds, c.awaitChatCompletedCmd())
@@ -330,9 +332,20 @@ func (c *Chat) readStdinCmd() tea.Msg {
 	}
 }
 
-func saveConversation(chat *Chat) error {
-	if chat.config.NoCache {
-		if !chat.config.Quiet {
+func (c *Chat) renderMarkdown(raw string) string {
+	if c.config.Raw {
+		return raw
+	}
+	rendered, err := c.glam.Render(raw)
+	if err != nil {
+		return raw
+	}
+	return rendered
+}
+
+func (c *Chat) saveConversation() error {
+	if c.config.NoCache {
+		if !c.config.Quiet {
 			fmt.Fprintf(
 				os.Stderr,
 				"\nConversation was not saved because %s or %s is set.\n",
@@ -344,9 +357,9 @@ func saveConversation(chat *Chat) error {
 	}
 
 	ctx := context.Background()
-	convoStore := chat.engine.GetConvoStore()
-	writeToID := chat.config.CacheWriteToID
-	writeToTitle := strings.TrimSpace(chat.config.CacheWriteToTitle)
+	convoStore := c.engine.GetConvoStore()
+	writeToID := c.config.CacheWriteToID
+	writeToTitle := strings.TrimSpace(c.config.CacheWriteToTitle)
 
 	if convo.MatchSha1(writeToTitle) || writeToTitle == "" {
 		messages, err := convoStore.Messages(ctx, writeToID)
@@ -363,28 +376,32 @@ func saveConversation(chat *Chat) error {
 	if err := convoStore.PersistentMessages(ctx, writeToID); err != nil {
 		return errbook.Wrap(fmt.Sprintf(
 			"There was a problem writing %s to the cache. Use %s / %s to disable it.",
-			chat.config.CacheWriteToID,
+			c.config.CacheWriteToID,
 			console.StderrStyles().InlineCode.Render("--no-cache"),
 			console.StderrStyles().InlineCode.Render("NO_CACHE"),
 		), err)
 	}
 
-	if err := convoStore.SaveConversation(ctx, writeToID, writeToTitle, chat.config.Model); err != nil {
+	if err := convoStore.SaveConversation(ctx, writeToID, writeToTitle, c.config.Model); err != nil {
 		return errbook.Wrap(fmt.Sprintf(
 			"There was a problem writing %s to the cache. Use %s / %s to disable it.",
-			chat.config.CacheWriteToID,
+			c.config.CacheWriteToID,
 			console.StderrStyles().InlineCode.Render("--no-cache"),
 			console.StderrStyles().InlineCode.Render("NO_CACHE"),
 		), err)
 	}
 
-	if !chat.config.Quiet {
-		fmt.Fprintln(
-			os.Stderr,
-			"\nConversation saved:",
-			console.StderrStyles().InlineCode.Render(chat.config.CacheWriteToID[:convo.Sha1short]),
-			console.StderrStyles().Comment.Render(writeToTitle),
-		)
+	if !c.config.Quiet {
+		content := fmt.Sprintf("\n**Conversation successfully saved:** `%s` `%s`\n", c.config.CacheWriteToID[:convo.Sha1short], writeToTitle)
+		if c.config.ShowTokenUsages {
+			content += fmt.Sprintf("\nFirst Token: `%.3fs` | Avg: `%.3f/s` | Total: `%.3fs` | Tokens: `%d`",
+				c.TokenUsage.FirstTokenTime.Seconds(),
+				c.TokenUsage.AverageTokensPerSecond,
+				c.TokenUsage.TotalTime.Seconds(),
+				c.TokenUsage.TotalTokens,
+			)
+		}
+		_, _ = fmt.Fprint(os.Stderr, c.renderMarkdown(content))
 	}
 
 	return nil

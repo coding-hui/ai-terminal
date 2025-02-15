@@ -80,34 +80,36 @@ var Help = map[string]string{
 	"datastore":           "Configure the datastore to use.",
 	"auto-coder":          "Configure the auto coder to use.",
 	"auto-commit":         "Automatically commit code changes after generation.",
+	"show-token-usage":    "Show token usage in the response.",
 	"verbose":             "Verbose mode. 0: no verbose, 1: debug verbose",
 }
 
 // Config is a structure used to configure a AI.
 // Its members are sorted roughly in order of importance for composers.
 type Config struct {
-	Model         string     `yaml:"default-model" env:"MODEL"`
-	API           string     `yaml:"default-api" env:"API"`
-	Raw           bool       `yaml:"raw" env:"RAW"`
-	Quiet         bool       `yaml:"quiet" env:"QUIET"`
-	MaxTokens     int        `yaml:"max-tokens" env:"MAX_TOKENS"`
-	MaxInputChars int        `yaml:"max-input-chars" env:"MAX_INPUT_CHARS"`
-	Temperature   float64    `yaml:"temp" env:"TEMP"`
-	Stop          []string   `yaml:"stop" env:"STOP"`
-	TopP          float64    `yaml:"topp" env:"TOPP"`
-	TopK          int        `yaml:"topk" env:"TOPK"`
-	NoLimit       bool       `yaml:"no-limit" env:"NO_LIMIT"`
-	NoCache       bool       `yaml:"no-cache" env:"NO_CACHE"`
-	MaxRetries    int        `yaml:"max-retries" env:"MAX_RETRIES"`
-	WordWrap      int        `yaml:"word-wrap" env:"WORD_WRAP"`
-	Fanciness     uint       `yaml:"fanciness" env:"FANCINESS"`
-	LoadingText   string     `yaml:"loading-text" env:"LOADING_TEXT"`
-	FormatText    FormatText `yaml:"format-text"`
-	FormatAs      string     `yaml:"format-as" env:"FORMAT_AS"`
-	Verbose       int        `yaml:"verbose" env:"VERBOSE"`
-	APIs          APIs       `yaml:"apis"`
-	DataStore     DataStore  `yaml:"datastore"`
-	AutoCoder     AutoCoder  `yaml:"auto-coder"`
+	Model           string     `yaml:"default-model" env:"MODEL"`
+	API             string     `yaml:"default-api" env:"API"`
+	Raw             bool       `yaml:"raw" env:"RAW"`
+	Quiet           bool       `yaml:"quiet" env:"QUIET"`
+	MaxTokens       int        `yaml:"max-tokens" env:"MAX_TOKENS"`
+	MaxInputChars   int        `yaml:"max-input-chars" env:"MAX_INPUT_CHARS"`
+	Temperature     float64    `yaml:"temp" env:"TEMP"`
+	Stop            []string   `yaml:"stop" env:"STOP"`
+	TopP            float64    `yaml:"topp" env:"TOPP"`
+	TopK            int        `yaml:"topk" env:"TOPK"`
+	NoLimit         bool       `yaml:"no-limit" env:"NO_LIMIT"`
+	NoCache         bool       `yaml:"no-cache" env:"NO_CACHE"`
+	MaxRetries      int        `yaml:"max-retries" env:"MAX_RETRIES"`
+	WordWrap        int        `yaml:"word-wrap" env:"WORD_WRAP"`
+	Fanciness       uint       `yaml:"fanciness" env:"FANCINESS"`
+	LoadingText     string     `yaml:"loading-text" env:"LOADING_TEXT"`
+	FormatText      FormatText `yaml:"format-text"`
+	FormatAs        string     `yaml:"format-as" env:"FORMAT_AS"`
+	Verbose         int        `yaml:"verbose" env:"VERBOSE"`
+	APIs            APIs       `yaml:"apis"`
+	DataStore       DataStore  `yaml:"datastore"`
+	AutoCoder       AutoCoder  `yaml:"auto-coder"`
+	ShowTokenUsages bool       `yaml:"show-token-usage" env:"SHOW_TOKEN_USAGES"`
 
 	DefaultPromptMode string `yaml:"default-prompt-mode,omitempty"`
 	ConversationID    string `yaml:"convo-id,omitempty"`
