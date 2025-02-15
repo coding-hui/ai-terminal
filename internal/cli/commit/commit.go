@@ -389,12 +389,11 @@ func (o *Options) printTokenUsage() {
 
 	// Helper to calculate and display step metrics
 	printStepMetrics := func(name string, usage llms.Usage) {
-		avgTime := float64(usage.TotalTokens) / usage.TotalTime.Seconds()
 		console.Render("  %s: %d tokens | %.3fs | %.1f tokens/s",
 			name,
 			usage.TotalTokens,
 			usage.TotalTime.Seconds(),
-			avgTime,
+			usage.AverageTokensPerSecond,
 		)
 	}
 
