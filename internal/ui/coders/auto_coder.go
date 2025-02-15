@@ -117,7 +117,7 @@ func (a *AutoCoder) printWelcome() {
 	}
 
 	console.Render("Configuration:")
-	console.Render("  • model: %s", a.cfg.Model)
+	console.Render("  • model: %s", strings.Join(a.cfg.CurrentModel.Aliases, ","))
 	console.Render("  • Format: %s", a.cfg.AutoCoder.EditFormat)
 	console.Render("")
 	console.Render("Recommended Workflow:")

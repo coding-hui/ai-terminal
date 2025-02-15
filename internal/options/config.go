@@ -4,19 +4,24 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"text/template"
+	"time"
 
 	_ "embed"
 
 	"github.com/adrg/xdg"
 	"github.com/caarlos0/duration"
 	"github.com/caarlos0/env/v9"
-	"github.com/charmbracelet/x/exp/strings"
+	"github.com/caarlos0/go-shellwords"
+	str "github.com/charmbracelet/x/exp/strings"
 	"gopkg.in/yaml.v3"
 
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/system"
+	"github.com/coding-hui/ai-terminal/internal/ui/console"
 )
 
 //go:embed config_template.yml
@@ -67,7 +72,7 @@ var Help = map[string]string{
 	"title":               "Saves the current conversation with the given title.",
 	"ls-convo":            "Lists saved conversations.",
 	"rm-convo":            "Deletes a saved conversation with the given title or ID.",
-	"rm-convo-older-than": "Deletes all saved conversations older than the specified duration. Valid units are: " + strings.EnglishJoin(duration.ValidUnits(), true) + ".",
+	"rm-convo-older-than": "Deletes all saved conversations older than the specified duration. Valid units are: " + str.EnglishJoin(duration.ValidUnits(), true) + ".",
 	"rm-all-convo":        "Deletes all saved conversations.",
 	"show-convo":          "Show a saved conversation with the given title or ID.",
 	"theme":               "Theme to use in the forms. Valid units are: 'charm', 'catppuccin', 'dracula', and 'base16'",
@@ -108,6 +113,8 @@ type Config struct {
 	ConversationID    string `yaml:"convo-id,omitempty"`
 	Ai                Ai     `yaml:"ai"`
 
+	CurrentModel Model
+	CurrentAPI   API
 	Models       map[string]Model
 	SettingsPath string
 	System       *system.Analysis
@@ -124,12 +131,12 @@ type Config struct {
 
 // AutoCoder is the configuration for the auto coder.
 type AutoCoder struct {
-	PromptPrefix   string `yaml:"prompt-prefix" env:"PROMPT_PREFIX"`
-	EditFormat     string `yaml:"edit-format" env:"EDIT_FORMAT"`
-	CommitPrefix   string `yaml:"commit-prefix" env:"COMMIT_PREFIX"`
-	AutoCommit     bool   `yaml:"auto-commit" env:"AUTO_COMMIT" default:"true"`
-	DesignModel    string `yaml:"design-model" env:"DESIGN_MODEL"`
-	CodingModel    string `yaml:"coding-model" env:"CODING_MODEL"`
+	PromptPrefix string `yaml:"prompt-prefix" env:"PROMPT_PREFIX"`
+	EditFormat   string `yaml:"edit-format" env:"EDIT_FORMAT"`
+	CommitPrefix string `yaml:"commit-prefix" env:"COMMIT_PREFIX"`
+	AutoCommit   bool   `yaml:"auto-commit" env:"AUTO_COMMIT" default:"true"`
+	DesignModel  string `yaml:"design-model" env:"DESIGN_MODEL"`
+	CodingModel  string `yaml:"coding-model" env:"CODING_MODEL"`
 }
 
 // Model represents the LLM model used in the API call.
@@ -143,14 +150,17 @@ type Model struct {
 
 // API represents an API endpoint and its models.
 type API struct {
-	Name      string
-	APIKey    string           `yaml:"api-key"`
-	APIKeyEnv string           `yaml:"api-key-env"`
-	APIKeyCmd string           `yaml:"api-key-cmd"`
-	Version   string           `yaml:"version"`
-	BaseURL   string           `yaml:"base-url"`
-	Models    map[string]Model `yaml:"models"`
-	User      string           `yaml:"user"`
+	Name       string
+	APIKey     string           `yaml:"api-key"`
+	APIKeyEnv  string           `yaml:"api-key-env"`
+	APIKeyCmd  string           `yaml:"api-key-cmd"`
+	Version    string           `yaml:"version"`
+	BaseURL    string           `yaml:"base-url"`
+	Region     string           `yaml:"region"`
+	RetryTimes int              `yaml:"retry-times"`
+	Timeout    time.Duration    `yaml:"timeout"`
+	Models     map[string]Model `yaml:"models"`
+	User       string           `yaml:"user"`
 }
 
 // APIs is a type alias to allow custom YAML decoding.
@@ -219,11 +229,69 @@ const (
 	MarkdownOutputFormat OutputFormat = "markdown"
 )
 
-// NewConfig returns a Config struct with the default values.
-func NewConfig() *Config {
-	return &Config{
-		System: system.Analyse(),
+func (o OutputFormat) String() string {
+	return string(o)
+}
+
+func (c *Config) GetModel(name string) (model Model, err error) {
+	mod, ok := c.Models[name]
+	if !ok {
+		if c.API == "" {
+			return model, errbook.Wrap(
+				fmt.Sprintf(
+					"model %s is not in the settings file.",
+					console.StderrStyles().InlineCode.Render(c.Model),
+				),
+				errbook.NewUserErrorf(
+					"Please specify an API endpoint with %s or configure the model in the settings: %s",
+					console.StderrStyles().InlineCode.Render("--api"),
+					console.StderrStyles().InlineCode.Render("ai -s"),
+				),
+			)
+		}
+		mod.Name = c.Model
+		mod.API = c.API
+		mod.MaxChars = c.MaxInputChars
 	}
+
+	if c.API != "" {
+		mod.API = c.API
+	}
+
+	return mod, nil
+}
+
+func (c *Config) GetAPI(name string) (api API, err error) {
+	for _, a := range c.APIs {
+		if name == a.Name {
+			api = a
+			break
+		}
+	}
+
+	if api.Name == "" {
+		eps := make([]string, 0)
+		for _, a := range c.APIs {
+			eps = append(eps, console.StderrStyles().InlineCode.Render(a.Name))
+		}
+		return api, errbook.Wrap(
+			fmt.Sprintf(
+				"The API endpoint %s is not configured.",
+				console.StderrStyles().InlineCode.Render(c.API),
+			),
+			errbook.NewUserErrorf(
+				"Your configured API endpoints are: %s",
+				eps,
+			),
+		)
+	}
+
+	api.APIKey, err = ensureApiKey(api)
+	if err != nil {
+		return api, err
+	}
+
+	return api, nil
 }
 
 func EnsureConfig() (Config, error) {
@@ -285,6 +353,16 @@ func EnsureConfig() (Config, error) {
 		c.WordWrap = 80
 	}
 
+	c.CurrentModel, err = c.GetModel(c.Model)
+	if err != nil {
+		return c, err
+	}
+
+	c.CurrentAPI, err = c.GetAPI(c.API)
+	if err != nil {
+		return c, err
+	}
+
 	return c, nil
 }
 
@@ -328,4 +406,37 @@ func createConfigFile(path string) error {
 		return errbook.Wrap("Could not render template.", err)
 	}
 	return nil
+}
+
+func ensureApiKey(api API) (string, error) {
+	key := api.APIKey
+	if key == "" && api.APIKeyEnv != "" && api.APIKeyCmd == "" {
+		key = os.Getenv(api.APIKeyEnv)
+	}
+	if key == "" && api.APIKeyCmd != "" {
+		args, err := shellwords.Parse(api.APIKeyCmd)
+		if err != nil {
+			return "", errbook.Wrap("Failed to parse api-key-cmd", err)
+		}
+		out, err := exec.Command(args[0], args[1:]...).CombinedOutput() //nolint:gosec
+		if err != nil {
+			return "", errbook.Wrap("Cannot exec api-key-cmd", err)
+		}
+		key = strings.TrimSpace(string(out))
+	}
+	if key != "" {
+		return key, nil
+	}
+	return "", errbook.Wrap(
+		fmt.Sprintf(
+			"%[1]s required; set the environment variable %[1]s or update %[2]s through %[3]s.",
+			console.StderrStyles().InlineCode.Render(api.APIKeyEnv),
+			console.StderrStyles().InlineCode.Render("Config.yaml"),
+			console.StderrStyles().InlineCode.Render("ai Config"),
+		),
+		errbook.NewUserErrorf(
+			"You can grab one at %s.",
+			console.StderrStyles().Link.Render(api.BaseURL),
+		),
+	)
 }

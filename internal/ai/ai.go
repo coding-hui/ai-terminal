@@ -4,14 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
-	"os/exec"
 	"strings"
 
-	"github.com/caarlos0/go-shellwords"
 	"github.com/coding-hui/common/util/slices"
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
-	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms/openai"
 
 	"github.com/coding-hui/ai-terminal/internal/convo"
 	"github.com/coding-hui/ai-terminal/internal/errbook"
@@ -29,7 +25,7 @@ type Engine struct {
 	channel chan StreamCompletionOutput
 
 	convoStore convo.Store
-	model      *openai.Model
+	model      Model
 
 	Config *options.Config
 }
@@ -160,8 +156,8 @@ func (e *Engine) callOptions(streamingFunc ...func(ctx context.Context, chunk []
 	if len(streamingFunc) > 0 && streamingFunc[0] != nil {
 		opts = append(opts, llms.WithStreamingFunc(streamingFunc[0]))
 	}
-	opts = append(opts, llms.WithModel(e.Config.Model))
-	opts = append(opts, llms.WithMaxLength(e.Config.MaxInputChars))
+	opts = append(opts, llms.WithModel(e.Config.CurrentModel.Name))
+	opts = append(opts, llms.WithMaxLength(e.Config.CurrentModel.MaxChars))
 	opts = append(opts, llms.WithTemperature(e.Config.Temperature))
 	opts = append(opts, llms.WithTopP(e.Config.TopP))
 	opts = append(opts, llms.WithTopK(e.Config.TopK))
@@ -197,39 +193,6 @@ func (e *Engine) appendAssistantMessage(content string) {
 			errbook.HandleError(errbook.Wrap("failed to add assistant chat output message to convo", err))
 		}
 	}
-}
-
-func ensureApiKey(api options.API) (string, error) {
-	key := api.APIKey
-	if key == "" && api.APIKeyEnv != "" && api.APIKeyCmd == "" {
-		key = os.Getenv(api.APIKeyEnv)
-	}
-	if key == "" && api.APIKeyCmd != "" {
-		args, err := shellwords.Parse(api.APIKeyCmd)
-		if err != nil {
-			return "", errbook.Wrap("Failed to parse api-key-cmd", err)
-		}
-		out, err := exec.Command(args[0], args[1:]...).CombinedOutput() //nolint:gosec
-		if err != nil {
-			return "", errbook.Wrap("Cannot exec api-key-cmd", err)
-		}
-		key = strings.TrimSpace(string(out))
-	}
-	if key != "" {
-		return key, nil
-	}
-	return "", errbook.Wrap(
-		fmt.Sprintf(
-			"%[1]s required; set the environment variable %[1]s or update %[2]s through %[3]s.",
-			console.StderrStyles().InlineCode.Render(api.APIKeyEnv),
-			console.StderrStyles().InlineCode.Render("Config.yaml"),
-			console.StderrStyles().InlineCode.Render("ai Config"),
-		),
-		errbook.NewUserErrorf(
-			"You can grab one at %s.",
-			console.StderrStyles().Link.Render(api.BaseURL),
-		),
-	)
 }
 
 func convert(msg llms.ChatMessage) llms.MessageContent {

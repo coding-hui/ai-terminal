@@ -30,7 +30,7 @@ func PrepareInteractiveCommand(input string) *exec.Cmd {
 func PrepareEditSettingsCommand(editor, filename string) *exec.Cmd {
 	switch editor {
 	case "vim":
-		return exec.Command("vim", "+normal G$", "+startinsert!", filename)
+		return exec.Command("vim", "+normal G$", filename)
 	case "nano":
 		return exec.Command("nano", "+99999999", filename)
 	default:

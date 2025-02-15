@@ -309,3 +309,31 @@ apis:
       deepseek-code:
         aliases: ["ds-code"]
         max-input-chars: 384000
+  # SILICONCLOUD_API_KEY
+  siliconflow:
+    base-url: https://api.siliconflow.cn/v1
+    api-key:
+    api-key-env: SILICONCLOUD_API_KEY
+    models: # https://cloud.siliconflow.cn/models
+      deepseek-ai/DeepSeek-R1:
+        aliases: ["siliconflow-ds-r1"]
+        max-input-chars: 384000
+      deepseek-ai/DeepSeek-V3:
+        aliases: ["siliconflow-ds-v3"]
+        max-input-chars: 384000
+      Pro/deepseek-ai/DeepSeek-R1:
+        aliases: ["siliconflow-pro-ds-r1"]
+        max-input-chars: 384000
+      Pro/deepseek-ai/DeepSeek-V3:
+        aliases: ["siliconflow-pro-ds-v3"]
+        max-input-chars: 384000
+  ark:
+    base-url: https://ark-cn-beijing.bytedance.net/api/v3
+    api-key:
+    api-key-env: ARK_API_KEY
+    timeout: 1800s
+    retry-times: 3
+    models: # https://cloud.bytedance.net/docs/ark/docs/664afad9e16ff302cb5c0706/66ba2371209f0a027001b815?x-resource-account=public
+      doubao_1_5-pro-32k:
+        aliases: ["doubao-1.5-pro"]
+        max-input-chars: 384000

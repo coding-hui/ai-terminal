@@ -1,14 +1,14 @@
 package ai
 
 import (
-	"fmt"
+	"github.com/volcengine/volcengine-go-sdk/service/arkruntime"
 
 	"github.com/coding-hui/ai-terminal/internal/convo"
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/options"
-	"github.com/coding-hui/ai-terminal/internal/ui/console"
 
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms/openai"
+	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms/volcengine"
 )
 
 type Option func(*Engine)
@@ -53,66 +53,38 @@ func applyOptions(engineOpts ...Option) (engine *Engine, err error) {
 		}
 	}
 
-	var api options.API
-	mod, ok := cfg.Models[cfg.Model]
-	if !ok {
-		if cfg.API == "" {
-			return nil, errbook.Wrap(
-				fmt.Sprintf(
-					"model %s is not in the settings file.",
-					console.StderrStyles().InlineCode.Render(cfg.Model),
-				),
-				errbook.NewUserErrorf(
-					"Please specify an API endpoint with %s or configure the model in the settings: %s",
-					console.StderrStyles().InlineCode.Render("--api"),
-					console.StderrStyles().InlineCode.Render("ai -s"),
-				),
-			)
-		}
-		mod.Name = cfg.Model
-		mod.API = cfg.API
-		mod.MaxChars = cfg.MaxInputChars
+	cfg.CurrentModel, err = cfg.GetModel(cfg.Model)
+	if err != nil {
+		return nil, err
 	}
-	if cfg.API != "" {
-		mod.API = cfg.API
+
+	cfg.CurrentAPI, err = cfg.GetAPI(cfg.API)
+	if err != nil {
+		return nil, err
 	}
-	for _, a := range cfg.APIs {
-		if mod.API == a.Name {
-			api = a
-			break
-		}
-	}
-	if api.Name == "" {
-		eps := make([]string, 0)
-		for _, a := range cfg.APIs {
-			eps = append(eps, console.StderrStyles().InlineCode.Render(a.Name))
-		}
-		return nil, errbook.Wrap(
-			fmt.Sprintf(
-				"The API endpoint %s is not configured.",
-				console.StderrStyles().InlineCode.Render(cfg.API),
-			),
-			errbook.NewUserErrorf(
-				"Your configured API endpoints are: %s",
-				eps,
-			),
+
+	mod, api := cfg.CurrentModel, cfg.CurrentAPI
+	switch api.Name {
+	case ModelTypeARK:
+		engine.model, err = volcengine.NewClientWithApiKey(
+			cfg.CurrentAPI.APIKey,
+			arkruntime.WithBaseUrl(api.BaseURL),
+			arkruntime.WithRegion(api.Region),
+			arkruntime.WithTimeout(api.Timeout),
+			arkruntime.WithRetryTimes(api.RetryTimes),
 		)
-	}
-
-	key, err := ensureApiKey(api)
-	if err != nil {
-		return nil, err
-	}
-
-	var opts []openai.Option
-	opts = append(opts,
-		openai.WithModel(mod.Name),
-		openai.WithBaseURL(api.BaseURL),
-		openai.WithToken(key),
-	)
-	engine.model, err = openai.New(opts...)
-	if err != nil {
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
+	default:
+		engine.model, err = openai.New(
+			openai.WithModel(mod.Name),
+			openai.WithBaseURL(api.BaseURL),
+			openai.WithToken(api.APIKey),
+		)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return engine, nil
