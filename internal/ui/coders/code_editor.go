@@ -34,7 +34,7 @@ type Coder interface {
 	// FormatMessages formats the messages with the provided values and returns the formatted messages.
 	FormatMessages(values map[string]any) ([]llms.ChatMessage, error)
 	// GetEdits retrieves the list of edits made to the code.
-	GetEdits(ctx context.Context, codes string) ([]PartialCodeBlock, error)
+	GetEdits(ctx context.Context, codes string, fences []string) ([]PartialCodeBlock, error)
 	// GetModifiedFiles retrieves the list of files that have been modified.
 	GetModifiedFiles(ctx context.Context) ([]string, error)
 	// UpdateCodeFences updates the code fence for the given code.

@@ -495,7 +495,9 @@ func (c *CommandExecutor) apply(ctx context.Context, args ...string) error {
 	}
 
 	// Parse edit blocks from input
-	edits, err := c.editor.GetEdits(ctx, strings.Join(args, "\n"))
+	codes := strings.Join(args, "\n")
+	openFence, closeFence := chooseExistingFence(codes)
+	edits, err := c.editor.GetEdits(ctx, codes, []string{openFence, closeFence})
 	if err != nil {
 		return errbook.Wrap("Failed to get edits blocks", err)
 	}

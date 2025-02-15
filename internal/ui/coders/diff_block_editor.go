@@ -63,10 +63,15 @@ func (e *EditBlockCoder) FormatMessages(values map[string]any) ([]llms.ChatMessa
 	return formatPrompt(e.Prompt(), values)
 }
 
-func (e *EditBlockCoder) GetEdits(_ context.Context, codes string) ([]PartialCodeBlock, error) {
-	openFence, closeFence := chooseBestFence(codes)
-	if len(e.fence) == 2 {
-		openFence, closeFence = e.fence[0], e.fence[1]
+func (e *EditBlockCoder) GetEdits(_ context.Context, codes string, fences []string) ([]PartialCodeBlock, error) {
+	var openFence, closeFence string
+	if len(codes) <= 0 {
+		openFence, closeFence = chooseBestFence(codes)
+		if len(e.fence) == 2 {
+			openFence, closeFence = e.fence[0], e.fence[1]
+		}
+	} else {
+		openFence, closeFence = fences[0], fences[1]
 	}
 
 	edits, err := findOriginalUpdateBlocks(e.partialResponseContent, []string{openFence, closeFence})
@@ -78,7 +83,8 @@ func (e *EditBlockCoder) GetEdits(_ context.Context, codes string) ([]PartialCod
 }
 
 func (e *EditBlockCoder) GetModifiedFiles(ctx context.Context) ([]string, error) {
-	edits, err := e.GetEdits(ctx, e.partialResponseContent)
+	openFence, closeFence := chooseBestFence(e.partialResponseContent)
+	edits, err := e.GetEdits(ctx, e.partialResponseContent, []string{openFence, closeFence})
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +232,8 @@ func (e *EditBlockCoder) Execute(ctx context.Context, messages []llms.ChatMessag
 		return errbook.NewUserErrorf("Apply edit cancelled!")
 	}
 
-	edits, err := e.GetEdits(ctx, e.partialResponseContent)
+	openFence, closeFence := chooseBestFence(e.partialResponseContent)
+	edits, err := e.GetEdits(ctx, e.partialResponseContent, []string{openFence, closeFence})
 	if err != nil {
 		return err
 	}

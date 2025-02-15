@@ -2,6 +2,7 @@ package coders
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"strings"
 
@@ -14,6 +15,9 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/ui/console"
 )
+
+//go:embed banner.txt
+var banner string
 
 type AutoCoder struct {
 	codeBasePath, prompt string
@@ -100,37 +104,20 @@ func (a *AutoCoder) Run() error {
 }
 
 func (a *AutoCoder) printWelcome() {
-	console.Render("==============================================")
-	console.RenderAppName("AutoCoder", " %s\n", a.versionInfo.GitVersion)
-	console.Render("==============================================")
-	console.Render("Welcome to AutoCoder - Your AI Coding Assistant!")
-	console.Render("")
+	fmt.Println(banner)
+	console.RenderComment("")
+	console.RenderComment("Welcome to AutoCoder - Your AI Coding Assistant! (%s) [Model: %s]\n", a.versionInfo.GitVersion, a.cfg.CurrentModel.Name)
 
 	// Get current conversation info from config
 	if a.cfg.CacheWriteToID != "" {
-		console.Render("Current Session:")
-		console.Render("  • ID: %s", a.cfg.CacheWriteToID)
+		console.RenderComment("Current Session:")
+		console.RenderComment("  • ID: %s", a.cfg.CacheWriteToID)
 		if a.cfg.CacheWriteToTitle != "" {
-			console.Render("  • Title: %s", a.cfg.CacheWriteToTitle)
+			console.RenderComment("  • Title: %s", a.cfg.CacheWriteToTitle)
 		}
-		console.Render("")
+		console.RenderComment("")
 	}
 
-	console.Render("Configuration:")
-	console.Render("  • model: %s", strings.Join(a.cfg.CurrentModel.Aliases, ","))
-	console.Render("  • Format: %s", a.cfg.AutoCoder.EditFormat)
-	console.Render("")
-	console.Render("Recommended Workflow:")
-	console.Render("  1. /add <file> - Add files to work on")
-	console.Render("  2. /coding <request> - Request code changes")
-	console.Render("  3. /ask <question> - Ask questions about code")
-	console.Render("  4. /commit - Commit changes when ready")
-	console.Render("")
-	console.Render("Quick Tips:")
-	console.Render("  • Type your /coding requests directly")
-	console.Render("  • Use `/help` to see all commands")
-	console.Render("  • Use `/exit` or `Ctrl-C` to quit")
-	console.Render("")
 	console.Render("Let's start coding! 🚀")
-	console.Render("==============================================")
+	console.RenderComment("")
 }

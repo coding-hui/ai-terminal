@@ -34,6 +34,11 @@ func Render(format string, args ...interface{}) {
 	fmt.Println(msg)
 }
 
+func RenderComment(format string, args ...interface{}) {
+	msg := StdoutStyles().Comment.Render(fmt.Sprintf(format, args...))
+	fmt.Println(msg)
+}
+
 // RenderStep renders commit process step messages with a prefix
 func RenderStep(format string, args ...interface{}) {
 	msg := StdoutStyles().CommitStep.Render(fmt.Sprintf("➤ "+format, args...))
