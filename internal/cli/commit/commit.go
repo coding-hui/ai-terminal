@@ -42,6 +42,13 @@ type Options struct {
 	genericclioptions.IOStreams
 
 	FilesToAdd []string
+	TokenUsage llms.Usage
+
+	// Step token usages
+	CodeReviewUsage      llms.Usage
+	SummarizeTitleUsage  llms.Usage
+	SummarizePrefixUsage llms.Usage
+	TranslationUsage     llms.Usage
 }
 
 // Option defines a function type for configuring Options
@@ -235,6 +242,11 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 	}
 	color.Yellow(output)
 
+	// Print token usage after commit is done
+	if o.cfg.ShowTokenUsages {
+		defer o.printTokenUsage()
+	}
+
 	return nil
 }
 
@@ -251,6 +263,10 @@ func (o *Options) codeReview(engine *ai.Engine, vars map[string]any) error {
 	if err != nil {
 		return err
 	}
+	o.CodeReviewUsage = resp.Usage
+	o.TokenUsage.TotalTokens += resp.Usage.TotalTokens
+	o.TokenUsage.FirstTokenTime = resp.Usage.FirstTokenTime
+	o.TokenUsage.TotalTime += resp.Usage.TotalTime
 	codeReviewResult := strings.TrimSpace(resp.Explanation)
 	vars[prompt.SummarizePointsKey] = codeReviewResult
 	vars[prompt.SummarizeMessageKey] = codeReviewResult
@@ -270,6 +286,9 @@ func (o *Options) summarizeTitle(engine *ai.Engine, vars map[string]any) error {
 	if err != nil {
 		return err
 	}
+	o.SummarizeTitleUsage = resp.Usage
+	o.TokenUsage.TotalTokens += resp.Usage.TotalTokens
+	o.TokenUsage.TotalTime += resp.Usage.TotalTime
 	summarizeTitle := resp.Explanation
 	summarizeTitle = strings.TrimRight(strings.ToLower(string(summarizeTitle[0]))+summarizeTitle[1:], ".")
 
@@ -290,6 +309,9 @@ func (o *Options) summarizePrefix(engine *ai.Engine, vars map[string]any) error 
 	if err != nil {
 		return err
 	}
+	o.SummarizePrefixUsage = resp.Usage
+	o.TokenUsage.TotalTokens += resp.Usage.TotalTokens
+	o.TokenUsage.TotalTime += resp.Usage.TotalTime
 
 	vars[prompt.SummarizePrefixKey] = strings.ToLower(resp.Explanation)
 
@@ -335,6 +357,9 @@ func (o *Options) generateCommitMsg(engine *ai.Engine, vars map[string]any) (str
 		if err != nil {
 			return "", err
 		}
+		o.TranslationUsage = resp.Usage
+		o.TokenUsage.TotalTokens += resp.Usage.TotalTokens
+		o.TokenUsage.TotalTime += resp.Usage.TotalTime
 		commitMsg = resp.Explanation
 	}
 
@@ -353,4 +378,41 @@ func (o *Options) generateCommitMsg(engine *ai.Engine, vars map[string]any) (str
 	}
 
 	return commitMsg, nil
+}
+
+func (o *Options) printTokenUsage() {
+	if !o.cfg.ShowTokenUsages {
+		return
+	}
+
+	console.Render("\nToken Usage Details:")
+	console.Render(fmt.Sprintf(
+		"  Code Review: %d tokens (%.3fs)",
+		o.CodeReviewUsage.TotalTokens,
+		o.CodeReviewUsage.TotalTime.Seconds(),
+	))
+	console.Render(fmt.Sprintf(
+		"  Summarize Title: %d tokens (%.3fs)",
+		o.SummarizeTitleUsage.TotalTokens,
+		o.SummarizeTitleUsage.TotalTime.Seconds(),
+	))
+	console.Render(fmt.Sprintf(
+		"  Summarize Prefix: %d tokens (%.3fs)",
+		o.SummarizePrefixUsage.TotalTokens,
+		o.SummarizePrefixUsage.TotalTime.Seconds(),
+	))
+	if o.commitLang != prompt.DefaultLanguage {
+		console.Render(fmt.Sprintf(
+			"  Translation: %d tokens (%.3fs)",
+			o.TranslationUsage.TotalTokens,
+			o.TranslationUsage.TotalTime.Seconds(),
+		))
+	}
+	console.Render(fmt.Sprintf(
+		"Total Usage - First: %.3fs | Avg: %.3f/s | Total: %.3fs | Tokens: %d",
+		o.TokenUsage.FirstTokenTime.Seconds(),
+		float64(o.TokenUsage.TotalTokens)/o.TokenUsage.TotalTime.Seconds(),
+		o.TokenUsage.TotalTime.Seconds(),
+		o.TokenUsage.TotalTokens,
+	))
 }
