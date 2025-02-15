@@ -1,6 +1,20 @@
 # Change Log
 
 
+<a name="v0.13.2"></a>
+## [v0.13.2] - 2025-02-15
+### Code Refactoring
+- refactor logging tests and add AI debug data tracking
+- remove redundant `fmt.Sprintf` in user confirmation prompt
+- refactor engine option naming for consistency
+- refactor AI engine initialization to use `New` function
+
+### Features
+- add token usage tracking and configuration options
+- refactor AI engine to support new models and APIs
+- auto add modify file to load context
+
+
 <a name="v0.13.1"></a>
 ## [v0.13.1] - 2025-01-31
 ### Code Refactoring
@@ -328,7 +342,8 @@
 - add ask cmd
 
 
-[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.13.1...HEAD
+[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.13.2...HEAD
+[v0.13.2]: https://github.com/coding-hui/ai-terminal/compare/v0.13.1...v0.13.2
 [v0.13.1]: https://github.com/coding-hui/ai-terminal/compare/v0.13.0...v0.13.1
 [v0.13.0]: https://github.com/coding-hui/ai-terminal/compare/v0.12.1...v0.13.0
 [v0.12.1]: https://github.com/coding-hui/ai-terminal/compare/v0.12.0...v0.12.1
