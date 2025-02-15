@@ -60,6 +60,10 @@ auto-coder:
   edit-format: diff
   commit-prefix: auto-coder
   auto-commit: true
+  # Model for design phase (defaults to main model if empty)
+  design-model: ""
+  # Model for coding phase (defaults to main model if empty)  
+  coding-model: ""
 # {{ index .Help "apis" }}
 apis:
   openai:

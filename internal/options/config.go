@@ -124,10 +124,12 @@ type Config struct {
 
 // AutoCoder is the configuration for the auto coder.
 type AutoCoder struct {
-	PromptPrefix string `yaml:"prompt-prefix" env:"PROMPT_PREFIX"`
-	EditFormat   string `yaml:"edit-format" env:"EDIT_FORMAT"`
-	CommitPrefix string `yaml:"commit-prefix" env:"COMMIT_PREFIX"`
-	AutoCommit   bool   `yaml:"auto-commit" env:"AUTO_COMMIT" default:"true"`
+	PromptPrefix   string `yaml:"prompt-prefix" env:"PROMPT_PREFIX"`
+	EditFormat     string `yaml:"edit-format" env:"EDIT_FORMAT"`
+	CommitPrefix   string `yaml:"commit-prefix" env:"COMMIT_PREFIX"`
+	AutoCommit     bool   `yaml:"auto-commit" env:"AUTO_COMMIT" default:"true"`
+	DesignModel    string `yaml:"design-model" env:"DESIGN_MODEL"`
+	CodingModel    string `yaml:"coding-model" env:"CODING_MODEL"`
 }
 
 // Model represents the LLM model used in the API call.
