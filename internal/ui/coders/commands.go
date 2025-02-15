@@ -98,10 +98,9 @@ func (c *CommandExecutor) Executor(input string) {
 
 	// Parse command arguments
 	filteredArgs := c.parseFlags(args)
-	userQuestion := strings.Join(filteredArgs, " ")
 
 	// Execute the recognized command
-	if err := fn(context.Background(), userQuestion); err != nil {
+	if err := fn(context.Background(), filteredArgs...); err != nil {
 		console.RenderError(err, "Failed to execute command %s", cmd)
 	}
 }
