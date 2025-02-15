@@ -39,30 +39,32 @@ func chooseExistingFence(rawContent string) (open string, close string) {
 			continue
 		}
 
-		// Find the close fence
-		closeIndex := strings.Index(rawContent[openIndex+len(openFence):], closeFence)
+		// Find the close fence after the open fence
+		remainingContent := rawContent[openIndex+len(openFence):]
+		closeIndex := strings.Index(remainingContent, closeFence)
 		if closeIndex == -1 {
 			continue
 		}
-		closeIndex += openIndex + len(openFence)
 
-		// Check if the previous line before the close fence is ">>>>>>> REPLACE"
-		beforeClose := rawContent[:closeIndex]
-		if !strings.HasSuffix(strings.TrimSpace(beforeClose), UPDATED) {
+		// Check if the line before close fence is ">>>>>>> REPLACE"
+		beforeClose := remainingContent[:closeIndex]
+		lastNewline := strings.LastIndex(beforeClose, "\n")
+		if lastNewline == -1 || !strings.HasSuffix(strings.TrimSpace(beforeClose[:lastNewline]), UPDATED) {
 			continue
 		}
 
-		// Check if the next tew line after the open fence is "<<<<<<< SEARCH"
-		afterOpen := rawContent[openIndex+len(openFence) : closeIndex]
-		if !strings.Contains(strings.TrimSpace(afterOpen), HEAD) {
+		// Check if the line after open fence is "<<<<<<< SEARCH"
+		firstNewline := strings.Index(remainingContent, "\n")
+		if firstNewline == -1 || firstNewline > closeIndex {
+			continue
+		}
+		if !strings.HasPrefix(strings.TrimSpace(remainingContent[firstNewline:]), HEAD) {
 			continue
 		}
 
-		// If both conditions are met, return the fence pair
 		return openFence, closeFence
 	}
 
-	// If no matching fence pair is found, return default fence pair
 	return defaultBestFence()
 }
 
