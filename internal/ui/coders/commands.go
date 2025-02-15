@@ -60,8 +60,9 @@ func (c *CommandExecutor) registryCmds() {
 	supportCommands["commit"] = c.commit
 	supportCommands["undo"] = c.undo
 	supportCommands["exit"] = c.exit
-	supportCommands["help"] = c.help
 	supportCommands["diff"] = c.diff
+	supportCommands["apply"] = c.apply
+	supportCommands["help"] = c.help
 }
 
 // isCommand checks if the input string is a command (starts with ! or /)
@@ -446,6 +447,7 @@ func (c *CommandExecutor) help(_ context.Context, _ ...string) error {
 		{"/commit", "Commit changes"},
 		{"/undo", "Undo last changes"},
 		{"/diff", "Show changes in added files"},
+		{"/apply <edit blocks>", "Apply AI-generated edit blocks to files"},
 		{"/exit", "Exit the terminal"},
 		{"/help", "Show this help message"},
 	}
@@ -483,6 +485,33 @@ func (c *CommandExecutor) diff(_ context.Context, _ ...string) error {
 
 	// Process and format the diff
 	fmt.Println(c.coder.repo.FormatDiff(diffOutput))
+
+	return nil
+}
+
+func (c *CommandExecutor) apply(ctx context.Context, args ...string) error {
+	if len(args) == 0 {
+		return errbook.New("Please provide edit blocks to apply")
+	}
+
+	// Parse edit blocks from input
+	edits, err := c.editor.GetEdits(ctx, strings.Join(args, "\n"))
+	if err != nil {
+		return errbook.Wrap("Failed to get edits blocks", err)
+	}
+
+	// Check if any edits were found
+	if len(edits) == 0 {
+		console.Render("No changes were applied - no valid edit blocks found")
+		return nil
+	}
+
+	// Apply the edits
+	if err := c.editor.ApplyEdits(ctx, edits); err != nil {
+		return errbook.Wrap("Failed to apply edits", err)
+	}
+
+	console.Render("Successfully applied %d edit blocks", len(edits))
 
 	return nil
 }
