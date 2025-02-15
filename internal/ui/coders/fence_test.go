@@ -1,6 +1,8 @@
 package coders
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -46,4 +48,59 @@ func TestChooseExistingFence(t *testing.T) {
 			}
 		})
 	}
+}
+
+func BenchmarkChooseExistingFenceLargeStrings(b *testing.B) {
+	largeTestCases := []struct {
+		name  string
+		input string
+	}{
+		{
+			name:  "10k_lines_with_backticks",
+			input: generateLargeString("```go\n", "```\n", 10000),
+		},
+		{
+			name:  "100k_lines_no_fence",
+			input: strings.Repeat("some random text\n<<<<<<< SEARCH\n=======\n>>>>>>> REPLACE\n", 25000),
+		},
+		{
+			name:  "mixed_fences_1mb",
+			input: generateMixedFences(1024 * 1024), // 1MB string
+		},
+	}
+
+	for _, tc := range largeTestCases {
+		b.Run(tc.name, func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				chooseExistingFence(tc.input)
+			}
+		})
+	}
+}
+
+// generateLargeString 帮助函数用于生成包含指定围栏的大字符串
+func generateLargeString(open, close string, lines int) string {
+	var sb strings.Builder
+	sb.WriteString(open + "\n")
+	for i := 0; i < lines; i++ {
+		sb.WriteString(fmt.Sprintf("<<<<<<< SEARCH\nline %d\n=======\nline %d\n>>>>>>> REPLACE\n", i, i))
+	}
+	sb.WriteString(close + "\n")
+	return sb.String()
+}
+
+// generateMixedFences 生成包含多种围栏类型的混合大字符串
+func generateMixedFences(targetLen int) string {
+	var sb strings.Builder
+	fences := []string{"```", "<code>", "<pre>"}
+	i := 0
+	for sb.Len() < targetLen {
+		fence := fences[i%len(fences)]
+		sb.WriteString(fmt.Sprintf("%s\n<<<<<<< SEARCH\ncontent\n=======\ncontent\n>>>>>>> REPLACE\n%s\n",
+			fence, strings.Replace(fence, "<", "</", 1)))
+		i++
+		// 添加随机文本
+		sb.WriteString(strings.Repeat("some random text\n", 100))
+	}
+	return sb.String()[:targetLen]
 }
