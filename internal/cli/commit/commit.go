@@ -386,33 +386,27 @@ func (o *Options) printTokenUsage() {
 	}
 
 	console.Render("\nToken Usage Details:")
-	console.Render(fmt.Sprintf(
-		"  Code Review: %d tokens (%.3fs)",
-		o.CodeReviewUsage.TotalTokens,
-		o.CodeReviewUsage.TotalTime.Seconds(),
-	))
-	console.Render(fmt.Sprintf(
-		"  Summarize Title: %d tokens (%.3fs)",
-		o.SummarizeTitleUsage.TotalTokens,
-		o.SummarizeTitleUsage.TotalTime.Seconds(),
-	))
-	console.Render(fmt.Sprintf(
-		"  Summarize Prefix: %d tokens (%.3fs)",
-		o.SummarizePrefixUsage.TotalTokens,
-		o.SummarizePrefixUsage.TotalTime.Seconds(),
-	))
-	if o.commitLang != prompt.DefaultLanguage {
-		console.Render(fmt.Sprintf(
-			"  Translation: %d tokens (%.3fs)",
-			o.TranslationUsage.TotalTokens,
-			o.TranslationUsage.TotalTime.Seconds(),
-		))
+
+	// Helper to calculate and display step metrics
+	printStepMetrics := func(name string, usage llms.Usage) {
+		avgTime := float64(usage.TotalTokens) / usage.TotalTime.Seconds()
+		console.Render("  %s: %d tokens | %.3fs | %.1f tokens/s",
+			name,
+			usage.TotalTokens,
+			usage.TotalTime.Seconds(),
+			avgTime,
+		)
 	}
-	console.Render(fmt.Sprintf(
-		"Total Usage - First: %.3fs | Avg: %.3f/s | Total: %.3fs | Tokens: %d",
-		o.TokenUsage.FirstTokenTime.Seconds(),
-		float64(o.TokenUsage.TotalTokens)/o.TokenUsage.TotalTime.Seconds(),
-		o.TokenUsage.TotalTime.Seconds(),
+
+	printStepMetrics("Code Review", o.CodeReviewUsage)
+	printStepMetrics("Summarize Title", o.SummarizeTitleUsage)
+	printStepMetrics("Summarize Prefix", o.SummarizePrefixUsage)
+	if o.commitLang != prompt.DefaultLanguage {
+		printStepMetrics("Translation", o.TranslationUsage)
+	}
+
+	console.Render("\nTotal Usage: %d tokens | %.3fs",
 		o.TokenUsage.TotalTokens,
-	))
+		o.TokenUsage.TotalTime.Seconds(),
+	)
 }
