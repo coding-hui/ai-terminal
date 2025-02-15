@@ -74,7 +74,7 @@ func (e *EditBlockCoder) GetEdits(_ context.Context, codes string, fences []stri
 		openFence, closeFence = fences[0], fences[1]
 	}
 
-	edits, err := findOriginalUpdateBlocks(e.partialResponseContent, []string{openFence, closeFence})
+	edits, err := findOriginalUpdateBlocks(codes, []string{openFence, closeFence})
 	if err != nil {
 		return nil, err
 	}
