@@ -112,7 +112,7 @@ func (l *Logger) initialize() error {
 
 	// Read/initialize counter
 	if data, err := os.ReadFile(counterFileName); err == nil {
-		fmt.Sscanf(string(data), "%d", &l.counter)
+		_, _ = fmt.Sscanf(string(data), "%d", &l.counter)
 	}
 
 	// Create log file
