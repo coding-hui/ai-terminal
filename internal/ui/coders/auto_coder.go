@@ -34,13 +34,13 @@ func NewAutoCoder(opts ...AutoCoderOption) *AutoCoder {
 	return applyAutoCoderOptions(opts...)
 }
 
-// saveContext persists a load context to the store
+// saveContext persists the conversation context to the store for future reference
 func (a *AutoCoder) saveContext(ctx context.Context, lc *convo.LoadContext) error {
 	lc.ConversationID = a.cfg.CacheWriteToID
 	return a.store.SaveContext(ctx, lc)
 }
 
-// deleteContext removes a load context from the store
+// deleteContext removes a specific conversation context from the store by its ID
 func (a *AutoCoder) deleteContext(ctx context.Context, id uint64) error {
 	return a.store.DeleteContexts(ctx, id)
 }
@@ -57,13 +57,13 @@ func (a *AutoCoder) loadExistingContexts() error {
 	a.cfg.CacheReadFromID = details.ReadID
 	a.cfg.Model = details.Model
 
-	// Load contexts for this conversation
+	// Load all conversation contexts associated with the current session
 	contexts, err := a.store.ListContextsByteConvoID(context.Background(), details.WriteID)
 	if err != nil {
 		return errbook.Wrap("Failed to load conversation contexts", err)
 	}
 
-	// Convert to pointers and add to loaded contexts
+	// Convert loaded contexts to pointers and store them in the AutoCoder instance
 	for _, ctx := range contexts {
 		a.loadedContexts = append(a.loadedContexts, &ctx)
 	}
@@ -97,7 +97,7 @@ func (a *AutoCoder) Run() error {
 		cmdExecutor.Executor,
 	)
 
-	// start prompt repl loop
+	// Start the interactive REPL (Read-Eval-Print Loop) for command processing
 	p.Run()
 
 	return nil
@@ -120,4 +120,12 @@ func (a *AutoCoder) printWelcome() {
 
 	console.Render("Let's start coding! 🚀")
 	console.RenderComment("")
+}
+
+func (a *AutoCoder) determineBeatCodeFences(rawCode string) (string, string) {
+	if len(a.cfg.AutoCoder.GetDefaultFences()) == 2 {
+		f := a.cfg.AutoCoder.GetDefaultFences()
+		return f[0], f[1]
+	}
+	return chooseBestFence(rawCode)
 }

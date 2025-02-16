@@ -81,6 +81,7 @@ var Help = map[string]string{
 	"auto-coder":          "Configure the auto coder to use.",
 	"auto-commit":         "Automatically commit code changes after generation.",
 	"show-token-usage":    "Show token usage in the response.",
+	"coding-fences":       "Specify the code fences to be used. The value should be a two-part array, such as ['```', '```'].",
 	"verbose":             "Verbose mode. 0: no verbose, 1: debug verbose",
 }
 
@@ -133,12 +134,20 @@ type Config struct {
 
 // AutoCoder is the configuration for the auto coder.
 type AutoCoder struct {
-	PromptPrefix string `yaml:"prompt-prefix" env:"PROMPT_PREFIX"`
-	EditFormat   string `yaml:"edit-format" env:"EDIT_FORMAT"`
-	CommitPrefix string `yaml:"commit-prefix" env:"COMMIT_PREFIX"`
-	AutoCommit   bool   `yaml:"auto-commit" env:"AUTO_COMMIT" default:"true"`
-	DesignModel  string `yaml:"design-model" env:"DESIGN_MODEL"`
-	CodingModel  string `yaml:"coding-model" env:"CODING_MODEL"`
+	PromptPrefix string   `yaml:"prompt-prefix" env:"PROMPT_PREFIX"`
+	EditFormat   string   `yaml:"edit-format" env:"EDIT_FORMAT"`
+	CommitPrefix string   `yaml:"commit-prefix" env:"COMMIT_PREFIX"`
+	AutoCommit   bool     `yaml:"auto-commit" env:"AUTO_COMMIT" default:"true"`
+	DesignModel  string   `yaml:"design-model" env:"DESIGN_MODEL"`
+	CodingModel  string   `yaml:"coding-model" env:"CODING_MODEL"`
+	CodingFences []string `yaml:"coding-fences" env:"CODING_FENCES"`
+}
+
+func (a AutoCoder) GetDefaultFences() []string {
+	if len(a.CodingFences) == 2 {
+		return []string{a.CodingFences[0], a.CodingFences[1]}
+	}
+	return []string{}
 }
 
 // Model represents the LLM model used in the API call.

@@ -15,9 +15,12 @@ var fences = [][]string{
 	{"<sourcecode>", "</sourcecode>"},
 }
 
-func wrapFenceWithType(rawContent, filename string) string {
+func wrapFenceWithType(rawContent, filename string, fences []string) string {
 	fileExt := strings.TrimLeft(filepath.Ext(filename), ".")
-	openFence, closeFence := chooseExistingFence(rawContent)
+	openFence, closeFence := defaultBestFence()
+	if len(fences) == 2 {
+		openFence, closeFence = fences[0], fences[1]
+	}
 	return fmt.Sprintf("\n%s%s\n%s\n%s\n", openFence, fileExt, rawContent, closeFence)
 }
 

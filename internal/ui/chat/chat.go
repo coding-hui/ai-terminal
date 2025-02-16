@@ -1,3 +1,5 @@
+// Package chat implements the terminal-based chat interface for AI interactions.
+// It handles the UI rendering, state management, and communication with the AI engine.
 package chat
 
 import (
@@ -25,42 +27,47 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/util/term"
 )
 
+// state represents the current state of the chat application
 type state int
 
 const (
-	startState state = iota
-	configLoadedState
-	requestState
-	responseState
-	doneState
-	errorState
+	startState state = iota // Initial state when chat starts
+	configLoadedState // State after configuration is loaded
+	requestState // State when making a request to the AI
+	responseState // State when receiving response from the AI
+	doneState // State when chat is completed
+	errorState // State when an error occurs
 )
 
+// Chat represents the main chat application structure
 type Chat struct {
-	Error      *errbook.AiError
-	TokenUsage llms.Usage
+	Error *errbook.AiError // Error encountered during chat
+	TokenUsage llms.Usage // Token usage statistics from the AI
 
-	output     string
-	glamOutput string
+	output string // Raw output from the AI
+	glamOutput string // Formatted output with markdown rendering
 
-	state  state
-	opts   *Options
-	config *options.Config
-	engine *ai.Engine
+	state state // Current state of the chat
+	opts *Options // Chat options
+	config *options.Config // Application configuration
+	engine *ai.Engine // AI engine for processing requests
 
-	anim         tea.Model
-	renderer     *lipgloss.Renderer
-	glam         *glamour.TermRenderer
-	glamViewport viewport.Model
-	styles       console.Styles
-	glamHeight   int
-	width        int
-	height       int
+	anim tea.Model // Animation model for loading states
+	renderer *lipgloss.Renderer // Text renderer for styling
+	glam *glamour.TermRenderer // Markdown renderer
+	glamViewport viewport.Model // Viewport for scrolling content
+	styles console.Styles // Predefined styles for console output
+	glamHeight int // Height of the rendered markdown content
+	width int // Terminal width
+	height int // Terminal height
 
-	content      []string
-	contentMutex *sync.Mutex
+	content []string // Buffered content for non-TTY output
+	contentMutex *sync.Mutex // Mutex for thread-safe content access
 }
 
+// NewChat creates and initializes a new Chat instance
+// cfg: Application configuration
+// opts: Optional parameters for customizing chat behavior
 func NewChat(cfg *options.Config, opts ...Option) *Chat {
 	o := NewOptions(opts...)
 
@@ -86,7 +93,8 @@ func NewChat(cfg *options.Config, opts ...Option) *Chat {
 	}
 }
 
-// Run starts the c.
+// Run starts the chat application and handles the main execution loop
+// Returns error if the program fails to start or encounters an error during execution
 func (c *Chat) Run() error {
 	if _, err := tea.NewProgram(c).Run(); err != nil {
 		return errbook.Wrap("Couldn't start Bubble Tea program.", err)
@@ -129,10 +137,16 @@ func (c *Chat) Run() error {
 	return nil
 }
 
+// Init initializes the chat application and returns the initial command to execute
+// This is part of the Bubble Tea framework's initialization process
 func (c *Chat) Init() tea.Cmd {
 	return c.startCliCmd()
 }
 
+// Update handles state updates and message processing for the chat application
+// msg: The incoming message to process
+// Returns the updated model and commands to execute
+// This is part of the Bubble Tea framework's update loop
 //nolint:golint,gocyclo
 func (c *Chat) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
@@ -213,10 +227,15 @@ func (c *Chat) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return c, tea.Batch(cmds...)
 }
 
+// viewportNeeded checks if a viewport is required based on content height
+// Returns true if the content exceeds the terminal height
 func (c *Chat) viewportNeeded() bool {
 	return c.glamHeight > c.height
 }
 
+// View renders the current state of the chat application
+// Returns the string representation of the current view
+// This is part of the Bubble Tea framework's rendering process
 func (c *Chat) View() string {
 	switch c.state {
 	case errorState:
@@ -255,6 +274,8 @@ func (c *Chat) View() string {
 
 const tabWidth = 4
 
+// appendToOutput adds new content to the chat output and updates the view
+// s: The string content to append to the output
 func (c *Chat) appendToOutput(s string) {
 	c.output += s
 	if !term.IsOutputTTY() || c.config.Raw {
@@ -281,10 +302,15 @@ func (c *Chat) appendToOutput(s string) {
 	}
 }
 
+// quit returns a quit message to terminate the chat application
+// This is part of the Bubble Tea framework's shutdown process
 func (c *Chat) quit() tea.Msg {
 	return tea.Quit()
 }
 
+// startCompletionCmd creates a command to start an AI completion request
+// messages: The chat messages to send to the AI
+// Returns a command that will initiate the completion request
 func (c *Chat) startCompletionCmd(messages []llms.ChatMessage) tea.Cmd {
 	return func() tea.Msg {
 		output, err := c.engine.CreateStreamCompletion(context.Background(), messages)
@@ -295,12 +321,16 @@ func (c *Chat) startCompletionCmd(messages []llms.ChatMessage) tea.Cmd {
 	}
 }
 
+// awaitChatCompletedCmd creates a command to wait for chat completion
+// Returns a command that will wait for the AI response
 func (c *Chat) awaitChatCompletedCmd() tea.Cmd {
 	return func() tea.Msg {
 		return <-c.engine.GetChannel()
 	}
 }
 
+// startCliCmd creates a command to initialize the CLI interface
+// Returns a command that will fetch the current conversation details
 func (c *Chat) startCliCmd() tea.Cmd {
 	return func() tea.Msg {
 		details, err := convo.GetCurrentConversationID(context.Background(), c.config, c.engine.GetConvoStore())
@@ -311,6 +341,8 @@ func (c *Chat) startCliCmd() tea.Cmd {
 	}
 }
 
+// readFromCacheCmd creates a command to read messages from the conversation cache
+// Returns a command that will fetch cached messages
 func (c *Chat) readFromCacheCmd() tea.Cmd {
 	return func() tea.Msg {
 		convoStore := c.engine.GetConvoStore()
@@ -329,7 +361,8 @@ func (c *Chat) readFromCacheCmd() tea.Cmd {
 	}
 }
 
-// readStdinCmd reads from stdin and returns a CompletionInput message.
+// readStdinCmd reads input from stdin and creates a completion input message
+// Returns a CompletionInput message containing the read messages
 func (c *Chat) readStdinCmd() tea.Msg {
 	var messages []llms.ChatMessage
 	if len(c.opts.messages) > 0 {
@@ -345,6 +378,9 @@ func (c *Chat) readStdinCmd() tea.Msg {
 	}
 }
 
+// renderMarkdown renders markdown content for terminal display
+// raw: The raw markdown string to render
+// Returns the rendered string or the original if rendering fails
 func (c *Chat) renderMarkdown(raw string) string {
 	if c.config.Raw {
 		return raw
@@ -356,14 +392,20 @@ func (c *Chat) renderMarkdown(raw string) string {
 	return rendered
 }
 
+// GetOutput returns the unescaped chat output
+// Returns the processed chat output string
 func (c *Chat) GetOutput() string {
 	return html.UnescapeString(c.output)
 }
 
+// GetGlamOutput returns the formatted markdown output
+// Returns the rendered markdown output string
 func (c *Chat) GetGlamOutput() string {
 	return c.glamOutput
 }
 
+// saveConversation saves the current conversation to persistent storage
+// Returns error if the save operation fails
 func (c *Chat) saveConversation() error {
 	if c.config.NoCache {
 		if !c.config.Quiet {
@@ -428,6 +470,9 @@ func (c *Chat) saveConversation() error {
 	return nil
 }
 
+// lastPrompt finds the last human prompt in a list of chat messages
+// messages: The list of chat messages to search
+// Returns the content of the last human message
 func lastPrompt(messages []llms.ChatMessage) string {
 	var result string
 	for _, msg := range messages {
@@ -439,6 +484,9 @@ func lastPrompt(messages []llms.ChatMessage) string {
 	return result
 }
 
+// firstLine extracts the first line from a multi-line string
+// s: The input string to process
+// Returns the first line of the string
 func firstLine(s string) string {
 	first, _, _ := strings.Cut(s, "\n")
 	return first

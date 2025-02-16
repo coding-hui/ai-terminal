@@ -619,7 +619,7 @@ func (c *CommandExecutor) formatFileContent(filePath string) (string, error) {
 		if len(name) > 40 {
 			name = name[:20] + "⋯" + name[len(name)-20:]
 		}
-		return fmt.Sprintf("\n%s%s", filePath, wrapFenceWithType(content, name)), nil
+		return fmt.Sprintf("\n%s%s", filePath, html.UnescapeString(wrapFenceWithType(content, name, c.coder.cfg.AutoCoder.GetDefaultFences()))), nil
 	}
 
 	// For local files, use relative path
@@ -627,7 +627,7 @@ func (c *CommandExecutor) formatFileContent(filePath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("\n%s%s", relPath, html.UnescapeString(wrapFenceWithType(content, filePath))), nil
+	return fmt.Sprintf("\n%s%s", relPath, html.UnescapeString(wrapFenceWithType(content, filePath, c.coder.cfg.AutoCoder.GetDefaultFences()))), nil
 }
 
 func (c *CommandExecutor) switchNewChatModel(_ context.Context, input string) error {

@@ -66,6 +66,10 @@ auto-coder:
   design-model: ""
   # Model for coding phase (defaults to main model if empty)  
   coding-model: ""
+  # {{ index .Help "coding-fences" }}
+  coding-fences:
+    - "```"
+    - "```"
 # {{ index .Help "apis" }}
 apis:
   openai:
