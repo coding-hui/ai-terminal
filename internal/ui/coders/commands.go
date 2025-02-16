@@ -55,6 +55,7 @@ func (c *CommandExecutor) registryCmds() {
 	supportCommands["list"] = c.list
 	supportCommands["remove"] = c.remove
 	supportCommands["ask"] = c.ask
+	supportCommands["design"] = c.design
 	supportCommands["drop"] = c.drop
 	supportCommands["coding"] = c.coding
 	supportCommands["commit"] = c.commit
@@ -62,7 +63,7 @@ func (c *CommandExecutor) registryCmds() {
 	supportCommands["exit"] = c.exit
 	supportCommands["diff"] = c.diff
 	supportCommands["apply"] = c.apply
-	supportCommands["coding-model"] = c.setCodingModel
+	supportCommands["chat-model"] = c.switchNewChatModel
 	supportCommands["help"] = c.help
 }
 
@@ -433,6 +434,25 @@ func (c *CommandExecutor) commit(ctx context.Context, _ string) error {
 	return nil
 }
 
+func (c *CommandExecutor) design(ctx context.Context, input string) error {
+	messages, err := c.prepareDesignCompletionMessages(input)
+	if err != nil {
+		return errbook.Wrap("Failed to prepare design completion messages", err)
+	}
+
+	if c.flags[FlagVerbose] {
+		return console.RenderChatMessages(messages)
+	}
+
+	chatModel := chat.NewChat(c.coder.cfg,
+		chat.WithContext(ctx),
+		chat.WithMessages(messages),
+		chat.WithEngine(c.coder.engine),
+	)
+
+	return chatModel.Run()
+}
+
 func (c *CommandExecutor) help(_ context.Context, _ string) error {
 	console.Render("Available commands:")
 
@@ -445,12 +465,13 @@ func (c *CommandExecutor) help(_ context.Context, _ string) error {
 		{"/remove <patterns>", "Remove files from context"},
 		{"/ask <question>", "Ask about code in context"},
 		{"/drop", "Clear all files from context"},
+		{"/design <requirements>", "Design system architecture and components"},
 		{"/coding <instructions>", "Code with AI (use for details)"},
 		{"/commit", "Commit changes to version control"},
 		{"/undo", "Revert last code changes"},
 		{"/diff", "Show diffs of context files"},
 		{"/apply <edit blocks>", "Apply AI-generated code edits"},
-		{"/coding-model <model> <api>", "Set AI model and API endpoint"},
+		{"/chat-model <model> <api>", "Switch to a new chat mode"},
 		{"/exit", "Exit the terminal"},
 		{"/help", "Show this help message"},
 	}
@@ -529,6 +550,23 @@ func (c *CommandExecutor) exit(_ context.Context, _ string) error {
 	return nil
 }
 
+func (c *CommandExecutor) prepareDesignCompletionMessages(userInput string) ([]llms.ChatMessage, error) {
+	addedFileMessages, err := c.getAddedFileContent()
+	if err != nil {
+		return nil, err
+	}
+
+	messages, err := promptDesign.FormatMessages(map[string]any{
+		addedFilesKey:   addedFileMessages,
+		userQuestionKey: userInput,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return messages, nil
+}
+
 func (c *CommandExecutor) prepareAskCompletionMessages(userInput string) ([]llms.ChatMessage, error) {
 	addedFileMessages, err := c.getAddedFileContent()
 	if err != nil {
@@ -589,7 +627,7 @@ func (c *CommandExecutor) formatFileContent(filePath string) (string, error) {
 	return fmt.Sprintf("\n%s%s", relPath, wrapFenceWithType(content, filePath)), nil
 }
 
-func (c *CommandExecutor) setCodingModel(_ context.Context, input string) error {
+func (c *CommandExecutor) switchNewChatModel(_ context.Context, input string) error {
 	args := strings.Fields(input)
 	if len(args) < 2 {
 		return errbook.New("Please provide both model and api parameters")

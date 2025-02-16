@@ -21,7 +21,7 @@ require (
 	github.com/charmbracelet/x/exp/strings v0.0.0-20250213125511-a0c32e22e4fc
 	github.com/coding-hui/common v0.8.7
 	github.com/coding-hui/go-prompt v0.2.8
-	github.com/coding-hui/wecoding-sdk-go v0.8.14
+	github.com/coding-hui/wecoding-sdk-go v0.8.15
 	github.com/erikgeiser/promptkit v0.9.0
 	github.com/fatih/color v1.18.0
 	github.com/ghodss/yaml v1.0.0

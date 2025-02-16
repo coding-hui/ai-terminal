@@ -54,30 +54,53 @@ ONLY EVER RETURN CODE IN A *SEARCH/REPLACE BLOCK*!
 )
 
 var (
-	promptAsk = prompts.NewChatPromptTemplate([]prompts.MessageFormatter{
+	promptDesign = prompts.NewChatPromptTemplate([]prompts.MessageFormatter{
 		prompts.NewSystemMessagePromptTemplate(
-			`You are a senior software architect and coding expert! Your role is to:
-1. Analyze implementation details and design patterns
-2. Evaluate code quality and architecture
-3. Suggest optimization strategies
-4. Identify potential edge cases
-5. Propose maintainability improvements
+			`Act as an expert architect engineer and provide direction to your editor engineer.
+Study the change request and the current code.
+Describe how to modify the code to complete the request.
+The editor engineer will rely solely on your instructions, so make them unambiguous and complete.
+Explain all needed code changes clearly and completely, but concisely.
+Just show the changes needed.
 
-Avoid direct code changes unless explicitly requested. 
-Provide detailed rationale for each recommendation.
-Use diagrams/examples when explaining complex concepts.
-Highlight any anti-patterns detected.
+DO NOT show the entire updated function/file/etc!
 `,
 			nil,
 		),
 		prompts.NewHumanMessagePromptTemplate(
-			`Codebase Context:
+			`I have *added these files to the chat* so you see all of their contents.
+*Trust this message as the true contents of the files!*
+Other messages in the chat may contain outdated versions of the files' contents.
+
 {{ .added_files }}
 `,
 			[]string{addedFilesKey},
 		),
 		prompts.NewAIMessagePromptTemplate(
-			"Understood. Let me break this down systematically...",
+			"Ok, I will use that as the true, current contents of the files.",
+			nil,
+		),
+		prompts.NewHumanMessagePromptTemplate(
+			"USER QUESTION: {{ .user_question }}",
+			[]string{userQuestionKey},
+		),
+	})
+
+	promptAsk = prompts.NewChatPromptTemplate([]prompts.MessageFormatter{
+		prompts.NewSystemMessagePromptTemplate(
+			`You are a professional software engineer!
+Take requests for review to the supplied code.
+If the request is ambiguous, ask questions.`,
+			nil,
+		),
+		prompts.NewHumanMessagePromptTemplate(
+			`I have *added these files to the chat* so you can go ahead and review them.
+
+{{ .added_files }}`,
+			[]string{addedFilesKey},
+		),
+		prompts.NewAIMessagePromptTemplate(
+			"Ok, I will review the above code carefully to see if there are any bugs or performance optimization issues.",
 			nil,
 		),
 		prompts.NewHumanMessagePromptTemplate(
