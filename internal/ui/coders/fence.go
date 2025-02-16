@@ -54,11 +54,11 @@ func chooseExistingFence(rawContent string) (open string, close string) {
 		}
 
 		// Check if the line after open fence is "<<<<<<< SEARCH"
-		firstNewline := strings.Index(remainingContent, "\n")
+		firstNewline := strings.Index(beforeClose, "\n")
 		if firstNewline == -1 || firstNewline > closeIndex {
 			continue
 		}
-		if !strings.HasPrefix(strings.TrimSpace(remainingContent[firstNewline:]), HEAD) {
+		if !strings.Contains(strings.TrimSpace(beforeClose[firstNewline:]), HEAD) {
 			continue
 		}
 
