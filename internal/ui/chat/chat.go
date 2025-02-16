@@ -109,12 +109,8 @@ func (c *Chat) Run() error {
 
 	// Add clipboard support
 	if c.opts.copyToClipboard {
-		content := c.Output
-		if c.GlamOutput != "" {
-			content = c.GlamOutput
-		}
-		if content != "" {
-			if err := clipboard.WriteAll(content); err != nil {
+		if c.Output != "" {
+			if err := clipboard.WriteAll(c.Output); err != nil {
 				console.RenderError(err, "Failed to copy to clipboard")
 			} else {
 				console.Render("Copied result to clipboard!")

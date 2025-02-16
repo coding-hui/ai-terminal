@@ -34,4 +34,5 @@ jobs:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
         OPENAI_API_BASE: ${{ vars.OPENAI_API_BASE }}
+        SILICONCLOUD_API_KEY: ${{ secrets.SILICONCLOUD_API_KEY }}
       run: make test
