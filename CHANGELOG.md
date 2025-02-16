@@ -2,14 +2,40 @@
 
 
 <a name="v0.13.2"></a>
-## [v0.13.2] - 2025-02-15
+## [v0.13.2] - 2025-02-16
+### Bug Fixes
+- sanitize input strings using HTML unescaping
+- integrate SILICONCLOUD_API_KEY and streamline clipboard logic
+- refactor fence detection logic for newline and header checks
+- fix autocoder failure when adding multiple files
+
 ### Code Refactoring
+- enhance `commands.go` comments and use `html` package in completion functions
+- refactor terminal renderer to use environment-based color detection
+- refactor fence selection logic for improved accuracy
+- refactor fence detection logic for improved accuracy
+- consolidate user input for command execution
+- use precomputed `AverageTokensPerSecond` field for token calculations
+- optimize token rendering by eliminating redundant `fmt.Sprintf` calls
 - refactor logging tests and add AI debug data tracking
 - remove redundant `fmt.Sprintf` in user confirmation prompt
 - refactor engine option naming for consistency
 - refactor AI engine initialization to use `New` function
 
 ### Features
+- upgrade Go dependencies, refactor command handling, replace library, and modify key bindings
+- enhance thread-safety of SimpleChatHistoryStore and update test cases for concurrency
+- enhance code fence handling and add related methods and documentation
+- upgrade dependencies, refactor struct fields, add HTML handling, and new Markdown module
+- streamline chat message rendering and output formatting
+- enable clipboard support for chat output copying
+- enhance design and chat model commands with new methods and templates
+- enhance command functionalities for AI-assisted coding
+- refactor command handlers to use single string input
+- refactor welcome message and enhance code fence handling in `AutoCoder`
+- integrate token usage tracking and reporting in the application
+- add `/apply` command and support for direct code input in `GetEdits`
+- support Volcengine Ark models and document v0.13.2 changes in changelog
 - add token usage tracking and configuration options
 - refactor AI engine to support new models and APIs
 - auto add modify file to load context
