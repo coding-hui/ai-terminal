@@ -3,6 +3,7 @@ package chat
 import (
 	"context"
 	"fmt"
+	"html"
 	"os"
 	"strings"
 	"sync"
@@ -253,6 +254,7 @@ func (c *Chat) View() string {
 const tabWidth = 4
 
 func (c *Chat) appendToOutput(s string) {
+	s = html.UnescapeString(s)
 	c.Output += s
 	if !term.IsOutputTTY() || c.config.Raw {
 		c.contentMutex.Lock()
