@@ -1,6 +1,5 @@
-// Package coders provides command execution capabilities for the AI terminal.
-// It handles commands like adding/removing files, asking questions, coding with AI,
-// committing changes, and more.
+// Package coders implements command execution for the AI terminal.
+// Handles commands for file management, AI coding, version control, and chat operations.
 package coders
 
 import (
@@ -26,10 +25,10 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/util/rest"
 )
 
-// supportCommands maps command names to their handler functions
+// supportCommands maps command names to their handler implementations
 var supportCommands = map[string]func(context.Context, string) error{}
 
-// getSupportedCommands returns a list of all supported command names
+// getSupportedCommands returns all registered command names
 func getSupportedCommands() []string {
 	commands := make([]string, 0, len(supportCommands))
 	for cmd := range supportCommands {
@@ -68,14 +67,13 @@ func (c *CommandExecutor) registryCmds() {
 	supportCommands["help"] = c.help
 }
 
-// isCommand checks if the input string is a command (starts with ! or /)
+// isCommand detects if input is a command (prefixed with ! or /)
 func (c *CommandExecutor) isCommand(input string) bool {
 	input = strings.TrimSpace(input)
 	return strings.HasPrefix(input, "!") || strings.HasPrefix(input, "/")
 }
 
-// Executor handles command execution. It parses the input, validates the command,
-// and executes the corresponding handler function.
+// Executor processes command input - parsing, validation and execution
 func (c *CommandExecutor) Executor(input string) {
 	input = strings.TrimSpace(input)
 	if input == "" {
@@ -110,7 +108,7 @@ func (c *CommandExecutor) Executor(input string) {
 	}
 }
 
-// ask Ask GPT to edit the files in the chat
+// ask queries GPT to analyze or edit files in context
 func (c *CommandExecutor) ask(ctx context.Context, input string) error {
 	messages, err := c.prepareAskCompletionMessages(input)
 	if err != nil {
@@ -131,7 +129,7 @@ func (c *CommandExecutor) ask(ctx context.Context, input string) error {
 	return chatModel.Run()
 }
 
-// add Add files to the chat so GPT can edit them or review them in detail
+// add registers files/URLs for GPT to analyze or edit
 func (c *CommandExecutor) loadFileContent(path string) (string, error) {
 	// Handle remote URLs
 	if rest.IsValidURL(path) {
@@ -233,7 +231,7 @@ func (c *CommandExecutor) add(_ context.Context, input string) (err error) {
 	return nil
 }
 
-// list List all files that have been added to the chat
+// list displays all files currently in context
 func (c *CommandExecutor) list(_ context.Context, _ string) error {
 	if len(c.coder.loadedContexts) <= 0 {
 		console.Render("No files added in chat currently")
@@ -256,7 +254,7 @@ func (c *CommandExecutor) list(_ context.Context, _ string) error {
 	return nil
 }
 
-// remove files from the chat so GPT won't edit them or review them in detail
+// remove deletes files from context to exclude from GPT analysis
 func (c *CommandExecutor) remove(_ context.Context, input string) error {
 	files := strings.Fields(input)
 	if len(files) == 0 {
@@ -540,8 +538,6 @@ func (c *CommandExecutor) apply(ctx context.Context, codes string) error {
 	if err := c.editor.ApplyEdits(ctx, edits); err != nil {
 		return errbook.Wrap("Failed to apply edits", err)
 	}
-
-	console.Render("Successfully applied %d edit blocks", len(edits))
 
 	return nil
 }

@@ -3,6 +3,7 @@ package ai
 import (
 	"context"
 	"fmt"
+	"html"
 	"strings"
 
 	"github.com/coding-hui/common/util/slices"
@@ -73,6 +74,7 @@ func (e *Engine) CreateCompletion(ctx context.Context, messages []llms.ChatMessa
 	}
 
 	content := rsp.Choices[0].Content
+	content = html.UnescapeString(content)
 
 	e.appendAssistantMessage(content)
 
@@ -126,9 +128,11 @@ func (e *Engine) CreateStreamCompletion(ctx context.Context, messages []llms.Cha
 		}
 	}
 
+	output = html.UnescapeString(output)
+
 	if !e.Config.Quiet {
 		e.channel <- StreamCompletionOutput{
-			Content:    "",
+			Content:    output,
 			Last:       true,
 			Executable: executable,
 			Usage:      rsp.Usage,
