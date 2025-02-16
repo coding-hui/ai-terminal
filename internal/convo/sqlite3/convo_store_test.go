@@ -115,11 +115,6 @@ func TestSqliteChatMessageHistory(t *testing.T) {
 	})
 
 	t.Run("Set and add messages", func(t *testing.T) {
-		h = NewSqliteStore(
-			WithContext(ctx),
-			WithDataPath(t.TempDir()),
-		)
-
 		err := h.SetMessages(ctx,
 			convoID,
 			[]llms.ChatMessage{
