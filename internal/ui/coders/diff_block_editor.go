@@ -220,6 +220,7 @@ func (e *EditBlockCoder) Execute(ctx context.Context, messages []llms.ChatMessag
 		chat.WithContext(ctx),
 		chat.WithMessages(messages),
 		chat.WithEngine(e.coder.engine),
+		chat.WithCopyToClipboard(true),
 	)
 
 	if err := chatModel.Run(); err != nil {

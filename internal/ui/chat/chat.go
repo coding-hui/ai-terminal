@@ -8,6 +8,7 @@ import (
 	"sync"
 	"unicode"
 
+	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
@@ -102,6 +103,21 @@ func (c *Chat) Run() error {
 				fmt.Print(c.GlamOutput)
 			case c.Output != "":
 				fmt.Print(c.Output)
+			}
+		}
+	}
+
+	// Add clipboard support
+	if c.opts.copyToClipboard {
+		content := c.Output
+		if c.GlamOutput != "" {
+			content = c.GlamOutput
+		}
+		if content != "" {
+			if err := clipboard.WriteAll(content); err != nil {
+				console.RenderError(err, "Failed to copy to clipboard")
+			} else {
+				console.Render("Copied result to clipboard!")
 			}
 		}
 	}
@@ -341,6 +357,14 @@ func (c *Chat) renderMarkdown(raw string) string {
 		return raw
 	}
 	return rendered
+}
+
+func (c *Chat) GetOutput() string {
+	return c.Output
+}
+
+func (c *Chat) GetGlamOutput() string {
+	return c.GlamOutput
 }
 
 func (c *Chat) saveConversation() error {

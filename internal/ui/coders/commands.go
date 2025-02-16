@@ -124,6 +124,7 @@ func (c *CommandExecutor) ask(ctx context.Context, input string) error {
 		chat.WithContext(ctx),
 		chat.WithMessages(messages),
 		chat.WithEngine(c.coder.engine),
+		chat.WithCopyToClipboard(true),
 	)
 
 	return chatModel.Run()
@@ -448,6 +449,7 @@ func (c *CommandExecutor) design(ctx context.Context, input string) error {
 		chat.WithContext(ctx),
 		chat.WithMessages(messages),
 		chat.WithEngine(c.coder.engine),
+		chat.WithCopyToClipboard(true),
 	)
 
 	return chatModel.Run()

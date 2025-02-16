@@ -13,11 +13,12 @@ import (
 )
 
 type Options struct {
-	ctx        context.Context
-	runMode    ui.RunMode
-	promptMode ui.PromptMode
-	renderer   *lipgloss.Renderer
-	wordWrap   int
+	ctx             context.Context
+	runMode         ui.RunMode
+	promptMode      ui.PromptMode
+	renderer        *lipgloss.Renderer
+	wordWrap        int
+	copyToClipboard bool
 
 	engine *ai.Engine
 
@@ -72,6 +73,12 @@ func WithWordWrap(wordWrap int) Option {
 func WithRenderer(renderer *lipgloss.Renderer) Option {
 	return func(o *Options) {
 		o.renderer = renderer
+	}
+}
+
+func WithCopyToClipboard(copy bool) Option {
+	return func(o *Options) {
+		o.copyToClipboard = copy
 	}
 }
 
