@@ -1,39 +1,38 @@
 package console
 
 import (
-	"github.com/coding-hui/go-prompt"
-	"github.com/coding-hui/go-prompt/completer"
+	"github.com/elk-language/go-prompt"
 )
 
 const suggestLimit = 5
 
 var (
 	options = []prompt.Option{
-		prompt.OptionPrefixTextColor(prompt.Turquoise),
-		prompt.OptionCompletionOnDown(),
-		prompt.OptionPreviewSuggestionTextColor(prompt.Fuchsia),
-		prompt.OptionSuggestionBGColor(prompt.DarkGray),
-		prompt.OptionSuggestionTextColor(prompt.White),
-		prompt.OptionDescriptionBGColor(prompt.LightGray),
-		prompt.OptionDescriptionTextColor(prompt.Black),
-		prompt.OptionSelectedSuggestionBGColor(prompt.Black),
-		prompt.OptionSelectedSuggestionTextColor(prompt.White),
-		prompt.OptionSelectedDescriptionBGColor(prompt.DarkGray),
-		prompt.OptionScrollbarThumbColor(prompt.Black),
-		prompt.OptionScrollbarBGColor(prompt.White),
-		prompt.OptionMaxSuggestion(suggestLimit),
-		prompt.OptionSwitchKeyBindMode(prompt.CommonKeyBind),
-		prompt.OptionCompletionWordSeparator(completer.FilePathCompletionSeparator),
-		prompt.OptionAddASCIICodeBind(makeConsoleKeyBindings()...),
-		prompt.OptionAddKeyBind(makeNecessaryKeyBindings()...),
+		prompt.WithPrefixTextColor(prompt.Turquoise),
+		prompt.WithCompletionOnDown(),
+		prompt.WithSuggestionBGColor(prompt.DarkGray),
+		prompt.WithSuggestionTextColor(prompt.White),
+		prompt.WithDescriptionBGColor(prompt.LightGray),
+		prompt.WithDescriptionTextColor(prompt.Black),
+		prompt.WithSelectedSuggestionBGColor(prompt.Black),
+		prompt.WithSelectedSuggestionTextColor(prompt.White),
+		prompt.WithSelectedDescriptionBGColor(prompt.DarkGray),
+		prompt.WithScrollbarThumbColor(prompt.Black),
+		prompt.WithScrollbarBGColor(prompt.White),
+		prompt.WithMaxSuggestion(suggestLimit),
+		prompt.WithKeyBind(makeNecessaryKeyBindings()...),
 	}
 )
 
 func NewPrompt(prefix string, enableColor bool, completer prompt.Completer, exec func(string)) *prompt.Prompt {
-	promptOptions := append(options, prompt.OptionPrefix(prefix+" > "))
+	promptOptions := append(options, prompt.WithPrefix(prefix+" > "))
+	promptOptions = append(promptOptions, prompt.WithCompleter(completer))
 	if !enableColor {
-		promptOptions = append(promptOptions, prompt.OptionPrefixTextColor(prompt.DefaultColor))
+		promptOptions = append(promptOptions, prompt.WithPrefixTextColor(prompt.DefaultColor))
 	}
 
-	return prompt.New(exec, completer, promptOptions...)
+	return prompt.New(
+		exec,
+		promptOptions...,
+	)
 }

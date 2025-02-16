@@ -3,7 +3,8 @@ package coders
 import (
 	"strings"
 
-	"github.com/coding-hui/go-prompt"
+	"github.com/elk-language/go-prompt"
+	pstrings "github.com/elk-language/go-prompt/strings"
 
 	"github.com/coding-hui/ai-terminal/internal/git"
 )
@@ -20,38 +21,39 @@ func NewCommandCompleter(repo *git.Command) CommandCompleter {
 	}
 }
 
-func (c CommandCompleter) Complete(d prompt.Document) []prompt.Suggest {
-	t := d.GetWordBeforeCursor()
+func (c CommandCompleter) Complete(d prompt.Document) (suggestions []prompt.Suggest, startChar, endChar pstrings.RuneNumber) {
+	endIndex := d.CurrentRuneIndex()
+	w := d.GetWordBeforeCursor()
+	startIndex := endIndex - pstrings.RuneCount([]byte(w))
 
 	// if the input starts with "/", then we use the command completer
-	if strings.HasPrefix(t, "/") {
+	if strings.HasPrefix(w, "/") {
 		var completions []prompt.Suggest
 		for _, v := range c.cmds {
 			completions = append(completions, prompt.Suggest{Text: v})
 		}
-		t = strings.TrimPrefix(strings.TrimPrefix(t, "/"), "!")
-		return prompt.FilterHasPrefix(completions, t, true)
+		return prompt.FilterHasPrefix(completions, w, true), startIndex, endIndex
 	}
 
 	// if the input starts with "@", then we use the file completer
-	if strings.HasPrefix(t, "@") {
+	if strings.HasPrefix(w, "@") {
 		files, _ := c.repo.ListAllFiles()
 		var completions []prompt.Suggest
 		for _, v := range files {
 			completions = append(completions, prompt.Suggest{Text: v})
 		}
-		t = strings.TrimPrefix(t, "@")
-		return prompt.FilterFuzzy(completions, t, true)
+		w = strings.TrimPrefix(w, "@")
+		return prompt.FilterFuzzy(completions, w, true), startIndex, endIndex
 	}
 
 	// if the input starts with "--", then we use the flag completer
-	if strings.HasPrefix(t, "--") {
+	if strings.HasPrefix(w, "--") {
 		completions := []prompt.Suggest{
 			{Text: "--verbose"},
 			{Text: "--help"},
 		}
-		return prompt.FilterContains(completions, t, true)
+		return prompt.FilterContains(completions, w, true), startIndex, endIndex
 	}
 
-	return []prompt.Suggest{}
+	return prompt.FilterHasPrefix([]prompt.Suggest{}, w, true), startIndex, endIndex
 }

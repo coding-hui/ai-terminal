@@ -51,20 +51,20 @@ func NewCommandExecutor(coder *AutoCoder) *CommandExecutor {
 }
 
 func (c *CommandExecutor) registryCmds() {
-	supportCommands["add"] = c.add
-	supportCommands["list"] = c.list
-	supportCommands["remove"] = c.remove
-	supportCommands["ask"] = c.ask
-	supportCommands["design"] = c.design
-	supportCommands["drop"] = c.drop
-	supportCommands["coding"] = c.coding
-	supportCommands["commit"] = c.commit
-	supportCommands["undo"] = c.undo
-	supportCommands["exit"] = c.exit
-	supportCommands["diff"] = c.diff
-	supportCommands["apply"] = c.apply
-	supportCommands["chat-model"] = c.switchNewChatModel
-	supportCommands["help"] = c.help
+	supportCommands["/add"] = c.add
+	supportCommands["/list"] = c.list
+	supportCommands["/remove"] = c.remove
+	supportCommands["/ask"] = c.ask
+	supportCommands["/design"] = c.design
+	supportCommands["/drop"] = c.drop
+	supportCommands["/coding"] = c.coding
+	supportCommands["/commit"] = c.commit
+	supportCommands["/undo"] = c.undo
+	supportCommands["/exit"] = c.exit
+	supportCommands["/diff"] = c.diff
+	supportCommands["/apply"] = c.apply
+	supportCommands["/chat-model"] = c.switchNewChatModel
+	supportCommands["/help"] = c.help
 }
 
 // isCommand detects if input is a command (prefixed with ! or /)
@@ -669,8 +669,6 @@ func (c *CommandExecutor) parseFlags(args []string) (filteredArgs []string) {
 }
 
 func extractCmdArgs(input string) (string, []string) {
-	input = strings.TrimPrefix(input, "!")
-	input = strings.TrimPrefix(input, "/")
 	words := strings.Split(strings.TrimSpace(input), " ")
 	args := []string{}
 	for _, word := range words[1:] {

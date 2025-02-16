@@ -4,79 +4,19 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/coding-hui/go-prompt"
+	"github.com/elk-language/go-prompt"
+	pstrings "github.com/elk-language/go-prompt/strings"
 )
 
 var (
-	altBackspace = []byte{27, 127}
-	altLeft      = []byte{27, 98}
-	altRight     = []byte{27, 102}
-	altUp        = []byte{27, 27, 91, 65}
-	altDown      = []byte{27, 27, 91, 66}
-	altD         = []byte{226, 136, 130}
+	altD = []byte{226, 136, 130}
 )
-
-func makeConsoleKeyBindings() []prompt.ASCIICodeBind {
-	return []prompt.ASCIICodeBind{deletePreviousWord, moveToPreviousWord, moveToNextWord, moveToLineBeginning, moveToLineEnd, deleteWholeLine}
-}
-
-var deletePreviousWord = prompt.ASCIICodeBind{
-	ASCIICode: altBackspace,
-	Fn: func(buffer *prompt.Buffer) {
-		str := buffer.Document().Text
-		cursorPosition := buffer.Document().CursorPositionCol()
-		str = str[:cursorPosition]
-		buffer.DeleteBeforeCursor(lengthLastWord(str))
-	},
-}
-
-var moveToPreviousWord = prompt.ASCIICodeBind{
-	ASCIICode: altLeft,
-	Fn: func(buffer *prompt.Buffer) {
-		str := buffer.Document().Text
-		cursorPosition := buffer.Document().CursorPositionCol()
-		str = str[:cursorPosition]
-		buffer.CursorLeft(lengthLastWord(str))
-	},
-}
-
-var moveToNextWord = prompt.ASCIICodeBind{
-	ASCIICode: altRight,
-	Fn: func(buffer *prompt.Buffer) {
-		str := buffer.Document().Text
-		cursorPosition := buffer.Document().CursorPositionCol()
-		str = str[cursorPosition:]
-		buffer.CursorRight(lengthFirstWord(str))
-	},
-}
-
-var moveToLineBeginning = prompt.ASCIICodeBind{
-	ASCIICode: altUp,
-	Fn: func(buffer *prompt.Buffer) {
-		str := buffer.Document().Text
-		cursorPosition := buffer.Document().CursorPositionCol()
-		str = str[:cursorPosition]
-		buffer.CursorLeft(len(str))
-	},
-}
-
-var moveToLineEnd = prompt.ASCIICodeBind{
-	ASCIICode: altDown,
-	Fn: func(buffer *prompt.Buffer) {
-		str := buffer.Document().Text
-		cursorPosition := buffer.Document().CursorPositionCol()
-		str = str[cursorPosition:]
-		buffer.CursorRight(len(str))
-	},
-}
 
 var deleteWholeLine = prompt.ASCIICodeBind{
 	ASCIICode: altD,
-	Fn: func(buffer *prompt.Buffer) {
-		str := buffer.Document().Text
-		cursorPosition := buffer.Document().CursorPositionCol()
-		str = str[:cursorPosition]
-		buffer.DeleteBeforeCursor(len(str))
+	Fn: func(p *prompt.Prompt) bool {
+		p.DeleteBeforeCursorRunes(pstrings.RuneNumber(len(p.Buffer().Document().Text)))
+		return true
 	},
 }
 
@@ -92,9 +32,10 @@ func makeNecessaryKeyBindings() []prompt.KeyBind {
 		},
 		{
 			Key: prompt.ControlC,
-			Fn: func(b *prompt.Buffer) {
+			Fn: func(b *prompt.Prompt) bool {
 				fmt.Println("Bye!")
 				os.Exit(0)
+				return true
 			},
 		},
 	}
