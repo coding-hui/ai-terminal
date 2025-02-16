@@ -187,7 +187,6 @@ func (c *Chat) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.IsLast() {
 			c.state = doneState
 			c.TokenUsage = msg.GetUsage()
-			c.output = html.EscapeString(msg.GetContent())
 			return c, c.quit
 		}
 		cmds = append(cmds, c.awaitChatCompletedCmd())
@@ -293,8 +292,8 @@ func (c *Chat) appendToOutput(s string) {
 	c.glamOutput = strings.ReplaceAll(c.glamOutput, "\t", strings.Repeat(" ", tabWidth))
 	c.glamHeight = lipgloss.Height(c.glamOutput)
 	c.glamOutput += "\n"
-	truncatedglamOutput := c.renderer.NewStyle().Padding(2).Width(c.width).Render(c.glamOutput)
-	c.glamViewport.SetContent(truncatedglamOutput)
+	truncatedGlamOutput := c.renderer.NewStyle().Padding(2).Width(c.width).Render(c.glamOutput)
+	c.glamViewport.SetContent(truncatedGlamOutput)
 	if oldHeight < c.glamHeight && wasAtBottom {
 		// If the viewport's at the bottom and we've received a new
 		// line of content, follow the output by auto scrolling to

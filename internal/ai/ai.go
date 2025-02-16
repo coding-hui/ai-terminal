@@ -132,7 +132,7 @@ func (e *Engine) CreateStreamCompletion(ctx context.Context, messages []llms.Cha
 
 	if !e.Config.Quiet {
 		e.channel <- StreamCompletionOutput{
-			Content:    output,
+			Content:    "",
 			Last:       true,
 			Executable: executable,
 			Usage:      rsp.Usage,
