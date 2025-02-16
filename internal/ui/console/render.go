@@ -67,10 +67,9 @@ func RenderChatMessages(messages []llms.ChatMessage) error {
 	if err != nil {
 		return err
 	}
-	content = html.UnescapeString(content)
-	Render("%s", content)
+	fmt.Println(html.UnescapeString(content))
 	_ = clipboard.WriteAll(content)
 	termenv.Copy(content)
-	PrintConfirmation("COPIED", "Ask prompt content copied to clipboard!")
+	PrintConfirmation("COPIED", "The content copied to clipboard!")
 	return nil
 }

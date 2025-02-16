@@ -267,6 +267,7 @@ func (o *Options) codeReview(engine *ai.Engine, vars map[string]any) error {
 	o.TokenUsage.TotalTokens += resp.Usage.TotalTokens
 	o.TokenUsage.FirstTokenTime = resp.Usage.FirstTokenTime
 	o.TokenUsage.TotalTime += resp.Usage.TotalTime
+	o.TokenUsage.CompletionTokens += resp.Usage.CompletionTokens
 	codeReviewResult := strings.TrimSpace(resp.Explanation)
 	vars[prompt.SummarizePointsKey] = codeReviewResult
 	vars[prompt.SummarizeMessageKey] = codeReviewResult
@@ -289,6 +290,7 @@ func (o *Options) summarizeTitle(engine *ai.Engine, vars map[string]any) error {
 	o.SummarizeTitleUsage = resp.Usage
 	o.TokenUsage.TotalTokens += resp.Usage.TotalTokens
 	o.TokenUsage.TotalTime += resp.Usage.TotalTime
+	o.TokenUsage.CompletionTokens += resp.Usage.CompletionTokens
 	summarizeTitle := resp.Explanation
 	summarizeTitle = strings.TrimRight(strings.ToLower(string(summarizeTitle[0]))+summarizeTitle[1:], ".")
 
@@ -312,6 +314,7 @@ func (o *Options) summarizePrefix(engine *ai.Engine, vars map[string]any) error 
 	o.SummarizePrefixUsage = resp.Usage
 	o.TokenUsage.TotalTokens += resp.Usage.TotalTokens
 	o.TokenUsage.TotalTime += resp.Usage.TotalTime
+	o.TokenUsage.CompletionTokens += resp.Usage.CompletionTokens
 
 	vars[prompt.SummarizePrefixKey] = strings.ToLower(resp.Explanation)
 
@@ -360,6 +363,7 @@ func (o *Options) generateCommitMsg(engine *ai.Engine, vars map[string]any) (str
 		o.TranslationUsage = resp.Usage
 		o.TokenUsage.TotalTokens += resp.Usage.TotalTokens
 		o.TokenUsage.TotalTime += resp.Usage.TotalTime
+		o.TokenUsage.CompletionTokens += resp.Usage.CompletionTokens
 		commitMsg = resp.Explanation
 	}
 
@@ -404,8 +408,9 @@ func (o *Options) printTokenUsage() {
 		printStepMetrics("Translation", o.TranslationUsage)
 	}
 
-	console.Render("\nTotal Usage: %d tokens | %.3fs",
+	console.Render("\nTotal Usage: %d tokens | %.3fs | %.1f tokens/s",
 		o.TokenUsage.TotalTokens,
 		o.TokenUsage.TotalTime.Seconds(),
+		float64(o.TokenUsage.CompletionTokens)/o.TokenUsage.TotalTime.Seconds(),
 	)
 }

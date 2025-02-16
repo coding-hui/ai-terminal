@@ -112,8 +112,6 @@ func (c *Chat) Run() error {
 		if c.Output != "" {
 			if err := clipboard.WriteAll(c.Output); err != nil {
 				console.RenderError(err, "Failed to copy to clipboard")
-			} else {
-				console.Render("Copied result to clipboard!")
 			}
 		}
 	}
