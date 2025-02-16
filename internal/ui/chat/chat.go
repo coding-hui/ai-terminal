@@ -31,37 +31,37 @@ import (
 type state int
 
 const (
-	startState state = iota // Initial state when chat starts
-	configLoadedState // State after configuration is loaded
-	requestState // State when making a request to the AI
-	responseState // State when receiving response from the AI
-	doneState // State when chat is completed
-	errorState // State when an error occurs
+	startState        state = iota // Initial state when chat starts
+	configLoadedState              // State after configuration is loaded
+	requestState                   // State when making a request to the AI
+	responseState                  // State when receiving response from the AI
+	doneState                      // State when chat is completed
+	errorState                     // State when an error occurs
 )
 
 // Chat represents the main chat application structure
 type Chat struct {
-	Error *errbook.AiError // Error encountered during chat
-	TokenUsage llms.Usage // Token usage statistics from the AI
+	Error      *errbook.AiError // Error encountered during chat
+	TokenUsage llms.Usage       // Token usage statistics from the AI
 
-	output string // Raw output from the AI
+	output     string // Raw output from the AI
 	glamOutput string // Formatted output with markdown rendering
 
-	state state // Current state of the chat
-	opts *Options // Chat options
+	state  state           // Current state of the chat
+	opts   *Options        // Chat options
 	config *options.Config // Application configuration
-	engine *ai.Engine // AI engine for processing requests
+	engine *ai.Engine      // AI engine for processing requests
 
-	anim tea.Model // Animation model for loading states
-	renderer *lipgloss.Renderer // Text renderer for styling
-	glam *glamour.TermRenderer // Markdown renderer
-	glamViewport viewport.Model // Viewport for scrolling content
-	styles console.Styles // Predefined styles for console output
-	glamHeight int // Height of the rendered markdown content
-	width int // Terminal width
-	height int // Terminal height
+	anim         tea.Model             // Animation model for loading states
+	renderer     *lipgloss.Renderer    // Text renderer for styling
+	glam         *glamour.TermRenderer // Markdown renderer
+	glamViewport viewport.Model        // Viewport for scrolling content
+	styles       console.Styles        // Predefined styles for console output
+	glamHeight   int                   // Height of the rendered markdown content
+	width        int                   // Terminal width
+	height       int                   // Terminal height
 
-	content []string // Buffered content for non-TTY output
+	content      []string    // Buffered content for non-TTY output
 	contentMutex *sync.Mutex // Mutex for thread-safe content access
 }
 
@@ -147,6 +147,7 @@ func (c *Chat) Init() tea.Cmd {
 // msg: The incoming message to process
 // Returns the updated model and commands to execute
 // This is part of the Bubble Tea framework's update loop
+//
 //nolint:golint,gocyclo
 func (c *Chat) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
