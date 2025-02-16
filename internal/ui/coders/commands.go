@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"html"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -626,7 +627,7 @@ func (c *CommandExecutor) formatFileContent(filePath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("\n%s%s", relPath, wrapFenceWithType(content, filePath)), nil
+	return fmt.Sprintf("\n%s%s", relPath, html.UnescapeString(wrapFenceWithType(content, filePath))), nil
 }
 
 func (c *CommandExecutor) switchNewChatModel(_ context.Context, input string) error {

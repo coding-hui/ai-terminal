@@ -38,9 +38,10 @@ const (
 
 type Chat struct {
 	Error      *errbook.AiError
-	Output     string
-	GlamOutput string
 	TokenUsage llms.Usage
+
+	output     string
+	glamOutput string
 
 	state  state
 	opts   *Options
@@ -96,22 +97,22 @@ func (c *Chat) Run() error {
 	}
 
 	if term.IsOutputTTY() {
-		if c.config.Raw && c.Output != "" {
-			fmt.Print(c.Output)
+		if c.config.Raw && c.output != "" {
+			fmt.Print(c.output)
 		} else {
 			switch {
-			case c.GlamOutput != "":
-				fmt.Print(c.GlamOutput)
-			case c.Output != "":
-				fmt.Print(c.Output)
+			case c.glamOutput != "":
+				fmt.Print(c.glamOutput)
+			case c.output != "":
+				fmt.Print(c.output)
 			}
 		}
 	}
 
 	// Add clipboard support
 	if c.opts.copyToClipboard {
-		if c.Output != "" {
-			if err := clipboard.WriteAll(c.Output); err != nil {
+		if c.output != "" {
+			if err := clipboard.WriteAll(c.output); err != nil {
 				console.RenderError(err, "Failed to copy to clipboard")
 			}
 		}
@@ -171,6 +172,7 @@ func (c *Chat) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.IsLast() {
 			c.state = doneState
 			c.TokenUsage = msg.GetUsage()
+			c.output = html.EscapeString(msg.GetContent())
 			return c, c.quit
 		}
 		cmds = append(cmds, c.awaitChatCompletedCmd())
@@ -229,11 +231,11 @@ func (c *Chat) View() string {
 				return c.glamViewport.View()
 			}
 			// We don't need the viewport yet.
-			return c.GlamOutput
+			return c.glamOutput
 		}
 
 		if term.IsOutputTTY() && !c.config.Raw {
-			return c.Output
+			return c.output
 		}
 
 		c.contentMutex.Lock()
@@ -254,8 +256,7 @@ func (c *Chat) View() string {
 const tabWidth = 4
 
 func (c *Chat) appendToOutput(s string) {
-	s = html.UnescapeString(s)
-	c.Output += s
+	c.output += s
 	if !term.IsOutputTTY() || c.config.Raw {
 		c.contentMutex.Lock()
 		c.content = append(c.content, s)
@@ -265,13 +266,13 @@ func (c *Chat) appendToOutput(s string) {
 
 	wasAtBottom := c.glamViewport.ScrollPercent() == 1.0
 	oldHeight := c.glamHeight
-	c.GlamOutput, _ = c.glam.Render(c.Output)
-	c.GlamOutput = strings.TrimRightFunc(c.GlamOutput, unicode.IsSpace)
-	c.GlamOutput = strings.ReplaceAll(c.GlamOutput, "\t", strings.Repeat(" ", tabWidth))
-	c.glamHeight = lipgloss.Height(c.GlamOutput)
-	c.GlamOutput += "\n"
-	truncatedGlamOutput := c.renderer.NewStyle().Padding(2).Width(c.width).Render(c.GlamOutput)
-	c.glamViewport.SetContent(truncatedGlamOutput)
+	c.glamOutput, _ = c.glam.Render(html.UnescapeString(c.output))
+	c.glamOutput = strings.TrimRightFunc(c.glamOutput, unicode.IsSpace)
+	c.glamOutput = strings.ReplaceAll(c.glamOutput, "\t", strings.Repeat(" ", tabWidth))
+	c.glamHeight = lipgloss.Height(c.glamOutput)
+	c.glamOutput += "\n"
+	truncatedglamOutput := c.renderer.NewStyle().Padding(2).Width(c.width).Render(c.glamOutput)
+	c.glamViewport.SetContent(truncatedglamOutput)
 	if oldHeight < c.glamHeight && wasAtBottom {
 		// If the viewport's at the bottom and we've received a new
 		// line of content, follow the output by auto scrolling to
@@ -356,11 +357,11 @@ func (c *Chat) renderMarkdown(raw string) string {
 }
 
 func (c *Chat) GetOutput() string {
-	return c.Output
+	return html.UnescapeString(c.output)
 }
 
 func (c *Chat) GetGlamOutput() string {
-	return c.GlamOutput
+	return c.glamOutput
 }
 
 func (c *Chat) saveConversation() error {
