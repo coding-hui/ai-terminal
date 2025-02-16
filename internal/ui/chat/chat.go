@@ -63,8 +63,8 @@ func NewChat(cfg *options.Config, opts ...Option) *Chat {
 	o := NewOptions(opts...)
 
 	gr, _ := glamour.NewTermRenderer(
-		// detect background color and pick either the default dark or light theme
-		glamour.WithAutoStyle(),
+		// detect configured terminal color support
+		glamour.WithEnvironmentConfig(),
 		// wrap output at specific width (default is 80)
 		glamour.WithWordWrap(cfg.WordWrap),
 	)
