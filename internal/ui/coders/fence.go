@@ -17,7 +17,7 @@ var fences = [][]string{
 
 func wrapFenceWithType(rawContent, filename string) string {
 	fileExt := strings.TrimLeft(filepath.Ext(filename), ".")
-	openFence, closeFence := chooseBestFence(rawContent)
+	openFence, closeFence := chooseExistingFence(rawContent)
 	return fmt.Sprintf("\n%s%s\n%s\n%s\n", openFence, fileExt, rawContent, closeFence)
 }
 
@@ -65,7 +65,7 @@ func chooseExistingFence(rawContent string) (open string, close string) {
 		return openFence, closeFence
 	}
 
-	return defaultBestFence()
+	return chooseBestFence(rawContent)
 }
 
 func chooseBestFence(rawContent string) (open string, close string) {
