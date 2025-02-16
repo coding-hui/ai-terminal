@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
 )
@@ -18,6 +19,7 @@ type SimpleChatHistoryStore struct {
 	dir      string
 	messages map[string][]llms.ChatMessage
 	loaded   map[string]bool // tracks which conversations have been loaded
+	mu       sync.RWMutex    // protects access to messages and loaded maps
 }
 
 func NewSimpleChatHistoryStore(dir string) *SimpleChatHistoryStore {
@@ -39,6 +41,9 @@ func (h *SimpleChatHistoryStore) AddUserMessage(ctx context.Context, convoID, me
 }
 
 func (h *SimpleChatHistoryStore) AddMessage(_ context.Context, convoID string, message llms.ChatMessage) error {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
 	if !h.loaded[convoID] {
 		if err := h.load(convoID); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return err
@@ -50,6 +55,9 @@ func (h *SimpleChatHistoryStore) AddMessage(_ context.Context, convoID string, m
 }
 
 func (h *SimpleChatHistoryStore) SetMessages(ctx context.Context, convoID string, messages []llms.ChatMessage) error {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
 	if err := h.InvalidateMessages(ctx, convoID); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
@@ -58,6 +66,9 @@ func (h *SimpleChatHistoryStore) SetMessages(ctx context.Context, convoID string
 }
 
 func (h *SimpleChatHistoryStore) Messages(_ context.Context, convoID string) ([]llms.ChatMessage, error) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
 	if !h.loaded[convoID] {
 		if err := h.load(convoID); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return nil, err
@@ -120,6 +131,9 @@ func (h *SimpleChatHistoryStore) PersistentMessages(_ context.Context, convoID s
 }
 
 func (h *SimpleChatHistoryStore) InvalidateMessages(_ context.Context, convoID string) error {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
 	if convoID == "" {
 		return fmt.Errorf("delete: %w", errInvalidID)
 	}
