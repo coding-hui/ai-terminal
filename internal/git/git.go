@@ -130,7 +130,18 @@ func (c *Command) InstallHook() error {
 
 	target := path.Join(strings.TrimSpace(string(hookPath)), HookPrepareCommitMessageFile)
 
-	return os.WriteFile(target, []byte(HookPrepareCommitMessageTemplate), 0o600)
+	err = os.WriteFile(target, []byte(HookPrepareCommitMessageTemplate), 0o600)
+	if err != nil {
+		return err
+	}
+
+	// Set executable permission
+	err = os.Chmod(target, 0o755)
+	if err != nil {
+		return fmt.Errorf("failed to set executable permission: %w", err)
+	}
+
+	return nil
 }
 
 func (c *Command) UninstallHook() error {
