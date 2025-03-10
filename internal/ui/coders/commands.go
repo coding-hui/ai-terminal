@@ -162,7 +162,32 @@ func (c *CommandExecutor) add(_ context.Context, input string) (err error) {
 			continue
 		}
 
-		// Handle local file patterns
+		// Construct full path for the pattern
+		fullPath := filepath.Join(c.coder.codeBasePath, pattern)
+
+		// Check if the path is a directory
+		fileInfo, err := os.Stat(fullPath)
+		if err == nil && fileInfo.IsDir() {
+			// Handle directory recursively
+			console.Render("Processing directory [%s]", fullPath)
+			err := filepath.Walk(fullPath, func(path string, info fs.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+				// Skip directories
+				if info.IsDir() {
+					return nil
+				}
+				matchedFiles = append(matchedFiles, path)
+				return nil
+			})
+			if err != nil {
+				return errbook.Wrap("Failed to walk directory", err)
+			}
+			continue
+		}
+
+		// Handle local file patterns with glob
 		matches, err := filepath.Glob(filepath.Join(c.coder.codeBasePath, pattern))
 		if err != nil {
 			return errbook.Wrap("Failed to glob files", err)
@@ -461,7 +486,7 @@ func (c *CommandExecutor) help(_ context.Context, _ string) error {
 		cmd  string
 		desc string
 	}{
-		{"/add <file patterns/URLs>", "Add local files or URLs to chat context"},
+		{"/add <file/folder patterns/URLs>", "Add local files or URLs to chat context"},
 		{"/list", "List files in chat context"},
 		{"/remove <patterns>", "Remove files from context"},
 		{"/ask <question>", "Ask about code in context"},
