@@ -20,8 +20,8 @@ import (
 // It provides functionality to remove all context data for the current conversation.
 type clean struct {
 	genericclioptions.IOStreams
-	cfg        *options.Config   // Configuration for the AI terminal
-	convoStore convo.Store      // Storage interface for conversation data
+	cfg        *options.Config // Configuration for the AI terminal
+	convoStore convo.Store     // Storage interface for conversation data
 }
 
 // newClean creates and initializes a new clean command instance.
