@@ -31,7 +31,7 @@ func NewCmdOptions(out io.Writer) *cobra.Command {
 	// The `options` command needs write its output to the `out` stream
 	// (typically stdout). Without calling SetOutput here, the Usage()
 	// function call will fall back to stderr.
-	cmd.SetOutput(out)
+	cmd.SetOut(out)
 
 	templates.UseOptionsTemplates(cmd)
 
