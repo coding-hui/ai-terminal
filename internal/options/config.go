@@ -442,8 +442,8 @@ func ensureApiKey(api API) (string, error) {
 		fmt.Sprintf(
 			"%[1]s required; set the environment variable %[1]s or update %[2]s through %[3]s.",
 			console.StderrStyles().InlineCode.Render(api.APIKeyEnv),
-			console.StderrStyles().InlineCode.Render("Config.yaml"),
-			console.StderrStyles().InlineCode.Render("ai Config"),
+			console.StderrStyles().InlineCode.Render("config.yaml"),
+			console.StderrStyles().InlineCode.Render("ai config"),
 		),
 		errbook.NewUserErrorf(
 			"You can grab one at %s.",

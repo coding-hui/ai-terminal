@@ -46,11 +46,10 @@ func NewDefaultAICommand() *cobra.Command {
 func NewAICommand(in io.Reader, out, errOut io.Writer) *cobra.Command {
 	cfg, err := options.EnsureConfig()
 	if err != nil {
-		errbook.HandleError(errbook.Wrap("Could not load your configuration file.", err))
 		// if user is editing the settings, only print out the error, but do
 		// not exit.
-		if !slices.Contains(os.Args, "--settings") {
-			os.Exit(1)
+		if !slices.Contains(os.Args, "config") {
+			errbook.HandleError(err)
 		}
 	}
 
