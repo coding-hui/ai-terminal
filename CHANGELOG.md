@@ -1,6 +1,31 @@
 # Change Log
 
 
+<a name="v0.13.4"></a>
+## [v0.13.4] - 2025-09-27
+### Bug Fixes
+- exit with code 1 on config command error
+- handle config command errors more gracefully
+
+
+<a name="v0.13.3"></a>
+## [v0.13.3] - 2025-09-13
+### Bug Fixes
+- add error handling and make git hook executable
+
+### Code Refactoring
+- fix Cobra command output stream setter
+- refactor Options struct into separate file
+- simplify SimpleChatHistoryStore, clean up test code and delete redundant files
+
+### Features
+- Support recursive directory processing in /add
+
+### Pull Requests
+- Merge pull request [#18](https://github.com/coding-hui/ai-terminal/issues/18) from clh021/feat/add-folder
+- Merge pull request [#17](https://github.com/coding-hui/ai-terminal/issues/17) from clh021/main
+
+
 <a name="v0.13.2"></a>
 ## [v0.13.2] - 2025-02-16
 ### Bug Fixes
@@ -23,6 +48,7 @@
 - refactor AI engine initialization to use `New` function
 
 ### Features
+- prepare v0.13.2 release: add features & fixes, refactor code, support new models and commands
 - upgrade Go dependencies, refactor command handling, replace library, and modify key bindings
 - enhance thread-safety of SimpleChatHistoryStore and update test cases for concurrency
 - enhance code fence handling and add related methods and documentation
@@ -368,7 +394,9 @@
 - add ask cmd
 
 
-[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.13.2...HEAD
+[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.13.4...HEAD
+[v0.13.4]: https://github.com/coding-hui/ai-terminal/compare/v0.13.3...v0.13.4
+[v0.13.3]: https://github.com/coding-hui/ai-terminal/compare/v0.13.2...v0.13.3
 [v0.13.2]: https://github.com/coding-hui/ai-terminal/compare/v0.13.1...v0.13.2
 [v0.13.1]: https://github.com/coding-hui/ai-terminal/compare/v0.13.0...v0.13.1
 [v0.13.0]: https://github.com/coding-hui/ai-terminal/compare/v0.12.1...v0.13.0

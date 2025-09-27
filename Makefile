@@ -43,8 +43,8 @@ help: ## Display this help.
 
 ##@ Development
 
-.PHONY: git-chglog
-chglog: ## Generate changelog using git-chglog.
+.PHONY: chglog
+chglog: git-chglog ## Generate changelog using git-chglog.
 	$(GIT_CHGLOG) -o CHANGELOG.md
 
 .PHONY: mod-tidy
@@ -73,8 +73,8 @@ lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes
 
 ##@ Release
 
-.PHONY: goreleaser
-release: ## Generate a release using goreleaser with auto-snapshot, clean, and draft options.
+.PHONY: release
+release: goreleaser ## Generate a release using goreleaser with auto-snapshot, clean, and draft options.
 	$(GO_RELEASER) release --auto-snapshot --clean
 
 ##@ Build
