@@ -50,6 +50,7 @@ func NewAICommand(in io.Reader, out, errOut io.Writer) *cobra.Command {
 		// not exit.
 		if !slices.Contains(os.Args, "config") {
 			errbook.HandleError(err)
+			os.Exit(1)
 		}
 	}
 
