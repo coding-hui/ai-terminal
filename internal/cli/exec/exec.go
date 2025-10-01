@@ -1,7 +1,6 @@
 package exec
 
 import (
-	"errors"
 	"path/filepath"
 	"strings"
 
@@ -34,10 +33,6 @@ func NewCmdExec(ioStreams genericclioptions.IOStreams, cfg *options.Config) *cob
 		Short: "Use AI to interpret your instruction and execute the shell command",
 		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				return errors.New("no command provided to execute")
-			}
-
 			input := strings.TrimSpace(strings.Join(args, " "))
 
 			// Delegate to coder's /exec subcommand via AutoCoder
