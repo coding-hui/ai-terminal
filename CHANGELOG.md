@@ -1,6 +1,25 @@
 # Change Log
 
 
+<a name="v0.13.5"></a>
+## [v0.13.5] - 2025-10-02
+
+<a name="latest"></a>
+## [latest] - 2025-10-02
+### Bug Fixes
+- fix raw and quiet mode rendering
+
+### Code Refactoring
+- refactor Ctrl+C handler into bye function
+- run Bubble Tea programs without renderer
+
+### Features
+- add prompt mode cycling key binding
+- refactor prompt configuration for mode-specific prefixes
+- integrate AutoCoder for AI-powered command execution
+- add AI-powered shell command execution
+
+
 <a name="v0.13.4"></a>
 ## [v0.13.4] - 2025-09-27
 ### Bug Fixes
@@ -394,7 +413,9 @@
 - add ask cmd
 
 
-[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.13.4...HEAD
+[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.13.5...HEAD
+[v0.13.5]: https://github.com/coding-hui/ai-terminal/compare/latest...v0.13.5
+[latest]: https://github.com/coding-hui/ai-terminal/compare/v0.13.4...latest
 [v0.13.4]: https://github.com/coding-hui/ai-terminal/compare/v0.13.3...v0.13.4
 [v0.13.3]: https://github.com/coding-hui/ai-terminal/compare/v0.13.2...v0.13.3
 [v0.13.2]: https://github.com/coding-hui/ai-terminal/compare/v0.13.1...v0.13.2
