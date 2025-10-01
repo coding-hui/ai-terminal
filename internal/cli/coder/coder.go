@@ -60,6 +60,7 @@ func (o *Options) run(_ *cobra.Command, args []string) error {
 		coders.WithCodeBasePath(filepath.Dir(root)),
 		coders.WithStore(store),
 		coders.WithPrompt(o.prompt),
+		coders.WithPromptMode(coders.DefaultPromptMode),
 	)
 
 	return autoCoder.Run()

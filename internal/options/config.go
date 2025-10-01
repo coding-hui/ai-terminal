@@ -134,13 +134,17 @@ type Config struct {
 
 // AutoCoder is the configuration for the auto coder.
 type AutoCoder struct {
-	PromptPrefix string   `yaml:"prompt-prefix" env:"PROMPT_PREFIX"`
-	EditFormat   string   `yaml:"edit-format" env:"EDIT_FORMAT"`
-	CommitPrefix string   `yaml:"commit-prefix" env:"COMMIT_PREFIX"`
-	AutoCommit   bool     `yaml:"auto-commit" env:"AUTO_COMMIT" default:"true"`
-	DesignModel  string   `yaml:"design-model" env:"DESIGN_MODEL"`
-	CodingModel  string   `yaml:"coding-model" env:"CODING_MODEL"`
-	CodingFences []string `yaml:"coding-fences" env:"CODING_FENCES"`
+	// Deprecated: use PromptPrefixChat/Exec/Coding
+	PromptPrefix       string   `yaml:"prompt-prefix" env:"PROMPT_PREFIX"`
+	PromptPrefixChat   string   `yaml:"prompt-prefix-chat" env:"PROMPT_PREFIX_CHAT"`
+	PromptPrefixExec   string   `yaml:"prompt-prefix-exec" env:"PROMPT_PREFIX_EXEC"`
+	PromptPrefixCoding string   `yaml:"prompt-prefix-coding" env:"PROMPT_PREFIX_CODING"`
+	EditFormat         string   `yaml:"edit-format" env:"EDIT_FORMAT"`
+	CommitPrefix       string   `yaml:"commit-prefix" env:"COMMIT_PREFIX"`
+	AutoCommit         bool     `yaml:"auto-commit" env:"AUTO_COMMIT" default:"true"`
+	DesignModel        string   `yaml:"design-model" env:"DESIGN_MODEL"`
+	CodingModel        string   `yaml:"coding-model" env:"CODING_MODEL"`
+	CodingFences       []string `yaml:"coding-fences" env:"CODING_FENCES"`
 }
 
 func (a AutoCoder) GetDefaultFences() []string {

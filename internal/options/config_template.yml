@@ -60,7 +60,11 @@ datastore:
   url: ""
 # {{ index .Help "auto-coder" }}
 auto-coder:
+  # Mode-specific prompt prefixes; fallback order: chat/exec/coding → prompt-prefix
   prompt-prefix: auto-coder
+  prompt-prefix-chat: chat
+  prompt-prefix-exec: exec
+  prompt-prefix-coding: auto-coder
   edit-format: diff
   commit-prefix: auto-coder
   auto-commit: true

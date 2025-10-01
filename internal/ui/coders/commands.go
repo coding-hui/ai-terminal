@@ -84,8 +84,15 @@ func (c *CommandExecutor) Executor(input string) {
 
 	// Handle non-command input
 	if !c.isCommand(input) {
-		console.Render("Please use a command to interact with the system. Type / to see all available commands.")
-		return
+		// Map plain input to the active mode's default action
+		switch c.coder.promptMode {
+		case ChatPromptMode:
+			input = "/ask " + input
+		case ExecPromptMode:
+			input = "/exec " + input
+		default:
+			input = "/coding " + input
+		}
 	}
 
 	// Handle command execution

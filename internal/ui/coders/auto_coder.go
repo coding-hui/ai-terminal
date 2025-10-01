@@ -101,8 +101,27 @@ func (a *AutoCoder) Run() error {
 	}
 
 	cmdCompleter := NewCommandCompleter(a.repo)
+	// Choose prompt prefix based on active mode with fallbacks
+	promptPrefix := a.cfg.AutoCoder.PromptPrefix
+	switch a.promptMode {
+	case ChatPromptMode:
+		promptPrefix = "chat"
+		if a.cfg.AutoCoder.PromptPrefixChat != "" {
+			promptPrefix = a.cfg.AutoCoder.PromptPrefixChat
+		}
+	case ExecPromptMode:
+		promptPrefix = "exec"
+		if a.cfg.AutoCoder.PromptPrefixExec != "" {
+			promptPrefix = a.cfg.AutoCoder.PromptPrefixExec
+		}
+	default:
+		if a.cfg.AutoCoder.PromptPrefixCoding != "" {
+			promptPrefix = a.cfg.AutoCoder.PromptPrefixCoding
+		}
+	}
+
 	p := console.NewPrompt(
-		a.cfg.AutoCoder.PromptPrefix,
+		promptPrefix,
 		true,
 		cmdCompleter.Complete,
 		cmdExecutor.Executor,
