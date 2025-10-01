@@ -28,6 +28,7 @@ type AutoCoder struct {
 
 	versionInfo version.Info
 	cfg         *options.Config
+	promptMode  PromptMode
 }
 
 func NewAutoCoder(opts ...AutoCoderOption) *AutoCoder {
@@ -72,8 +73,8 @@ func (a *AutoCoder) loadExistingContexts() error {
 }
 
 func (a *AutoCoder) Run() error {
-	codingCmd := strings.TrimSpace(a.prompt) != ""
-	if !codingCmd {
+	initial := strings.TrimSpace(a.prompt)
+	if initial == "" {
 		a.printWelcome()
 	}
 
@@ -83,10 +84,20 @@ func (a *AutoCoder) Run() error {
 	}
 
 	cmdExecutor := NewCommandExecutor(a)
-
-	if codingCmd {
-		cmdExecutor.Executor(fmt.Sprintf("/coding %s", a.prompt))
-		return nil
+	if initial != "" {
+		// If the provided prompt is a slash/exec command, run it directly.
+		// Otherwise, map by promptMode:
+		if !strings.HasPrefix(initial, "/") && !strings.HasPrefix(initial, "!") {
+			switch a.promptMode {
+			case ChatPromptMode:
+				initial = fmt.Sprintf("/ask %s", initial)
+			case ExecPromptMode:
+				initial = fmt.Sprintf("/exec %s", initial)
+			default:
+				initial = fmt.Sprintf("/coding %s", initial)
+			}
+		}
+		cmdExecutor.Executor(initial)
 	}
 
 	cmdCompleter := NewCommandCompleter(a.repo)

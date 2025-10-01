@@ -53,6 +53,12 @@ func WithPrompt(prompt string) AutoCoderOption {
 	}
 }
 
+func WithPromptMode(mode PromptMode) AutoCoderOption {
+	return func(a *AutoCoder) {
+		a.promptMode = mode
+	}
+}
+
 func applyAutoCoderOptions(options ...AutoCoderOption) *AutoCoder {
 	ac := &AutoCoder{
 		versionInfo:    version.Get(),

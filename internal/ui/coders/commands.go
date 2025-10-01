@@ -19,6 +19,7 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/convo"
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/prompt"
+	"github.com/coding-hui/ai-terminal/internal/runner"
 	"github.com/coding-hui/ai-terminal/internal/ui/chat"
 	"github.com/coding-hui/ai-terminal/internal/ui/console"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
@@ -58,6 +59,7 @@ func (c *CommandExecutor) registryCmds() {
 	supportCommands["/design"] = c.design
 	supportCommands["/drop"] = c.drop
 	supportCommands["/coding"] = c.coding
+	supportCommands["/exec"] = c.exec
 	supportCommands["/commit"] = c.commit
 	supportCommands["/undo"] = c.undo
 	supportCommands["/exit"] = c.exit
@@ -479,40 +481,6 @@ func (c *CommandExecutor) design(ctx context.Context, input string) error {
 	return chatModel.Run()
 }
 
-func (c *CommandExecutor) help(_ context.Context, _ string) error {
-	console.Render("Available commands:")
-
-	commands := []struct {
-		cmd  string
-		desc string
-	}{
-		{"/add <file/folder patterns/URLs>", "Add local files or URLs to chat context"},
-		{"/list", "List files in chat context"},
-		{"/remove <patterns>", "Remove files from context"},
-		{"/ask <question>", "Ask about code in context"},
-		{"/drop", "Clear all files from context"},
-		{"/design <requirements>", "Design system architecture and components"},
-		{"/coding <instructions>", "Code with AI (use for details)"},
-		{"/commit", "Commit changes to version control"},
-		{"/undo", "Revert last code changes"},
-		{"/diff", "Show diffs of context files"},
-		{"/apply <edit blocks>", "Apply AI-generated code edits"},
-		{"/chat-model <model> <api>", "Switch to a new chat mode"},
-		{"/exit", "Exit the terminal"},
-		{"/help", "Show this help message"},
-	}
-
-	for _, cmd := range commands {
-		formatted := fmt.Sprintf("  %-44s", cmd.cmd)
-		console.Render(
-			"%s%s",
-			console.StdoutStyles().Flag.Render(formatted),
-			console.StdoutStyles().FlagDesc.Render(cmd.desc),
-		)
-	}
-	return nil
-}
-
 func (c *CommandExecutor) diff(_ context.Context, _ string) error {
 	// Stage all added files
 	filesToStage := make([]string, 0, len(c.coder.loadedContexts))
@@ -564,6 +532,87 @@ func (c *CommandExecutor) apply(ctx context.Context, codes string) error {
 		return errbook.Wrap("Failed to apply edits", err)
 	}
 
+	return nil
+}
+
+// exec infers a POSIX shell command via AI and executes it
+func (c *CommandExecutor) exec(_ context.Context, input string) error {
+	if strings.TrimSpace(input) == "" {
+		return errbook.New("Please provide an instruction to execute")
+	}
+
+	system := llms.SystemChatMessage{Content: strings.Join([]string{
+		"You are a helpful terminal assistant.",
+		"Convert the user's request into a single-line POSIX shell command.",
+		"Return ONLY the command without explanations, quotes, code fences, or newlines.",
+		"If the request is unclear or unsafe (like destructive operations), respond with [noexec] and a short reason.",
+	}, " ")}
+	human := llms.HumanChatMessage{Content: input}
+
+	ch := chat.NewChat(c.coder.cfg,
+		chat.WithEngine(c.coder.engine),
+		chat.WithMessages([]llms.ChatMessage{system, human}),
+	)
+	if err := ch.Run(); err != nil {
+		return err
+	}
+
+	cmd := strings.TrimSpace(ch.GetOutput())
+	cmd = strings.Trim(cmd, "`")
+	if cmd == "" || strings.HasPrefix(strings.ToLower(cmd), "[noexec]") {
+		console.Render("No executable command was produced")
+		return nil
+	}
+	if idx := strings.IndexByte(cmd, '\n'); idx >= 0 {
+		cmd = strings.TrimSpace(cmd[:idx])
+	}
+
+	// Confirm before execution unless --yes flag is provided
+	if !c.flags[FlagYes] {
+		if !console.WaitForUserConfirm(console.Yes, "\nRun inferred command? %s", console.StderrStyles().InlineCode.Render(cmd)) {
+			return nil
+		}
+	}
+
+	shellCmd := runner.PrepareInteractiveCommand(cmd)
+	shellCmd.Stdin = os.Stdin
+	shellCmd.Stdout = os.Stdout
+	shellCmd.Stderr = os.Stderr
+	return shellCmd.Run()
+}
+
+func (c *CommandExecutor) help(_ context.Context, _ string) error {
+	console.Render("Available commands:")
+
+	commands := []struct {
+		cmd  string
+		desc string
+	}{
+		{"/add <file/folder patterns/URLs>", "Add local files or URLs to chat context"},
+		{"/list", "List files in chat context"},
+		{"/remove <patterns>", "Remove files from context"},
+		{"/ask <question>", "Ask about code in context"},
+		{"/drop", "Clear all files from context"},
+		{"/design <requirements>", "Design system architecture and components"},
+		{"/coding <instructions>", "Code with AI (use for details)"},
+		{"/exec <instruction>", "Infer and execute a shell command"},
+		{"/commit", "Commit changes to version control"},
+		{"/undo", "Revert last code changes"},
+		{"/diff", "Show diffs of context files"},
+		{"/apply <edit blocks>", "Apply AI-generated code edits"},
+		{"/chat-model <model> <api>", "Switch to a new chat mode"},
+		{"/exit", "Exit the terminal"},
+		{"/help", "Show this help message"},
+	}
+
+	for _, cmd := range commands {
+		formatted := fmt.Sprintf("  %-44s", cmd.cmd)
+		console.Render(
+			"%s%s",
+			console.StdoutStyles().Flag.Render(formatted),
+			console.StdoutStyles().FlagDesc.Render(cmd.desc),
+		)
+	}
 	return nil
 }
 
@@ -686,6 +735,14 @@ func (c *CommandExecutor) parseFlags(args []string) (filteredArgs []string) {
 		if strings.HasPrefix(arg, "--") {
 			c.flags[arg[2:]] = true
 			continue
+		}
+		// support common short flags
+		if strings.HasPrefix(arg, "-") && len(arg) == 2 {
+			switch arg {
+			case "-y":
+				c.flags[FlagYes] = true
+				continue
+			}
 		}
 		filteredArgs = append(filteredArgs, arg)
 	}

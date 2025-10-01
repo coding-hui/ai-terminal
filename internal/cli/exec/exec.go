@@ -2,17 +2,16 @@ package exec
 
 import (
 	"errors"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
 
-	"github.com/coding-hui/wecoding-sdk-go/services/ai/llms"
-
 	"github.com/coding-hui/ai-terminal/internal/ai"
+	"github.com/coding-hui/ai-terminal/internal/convo"
+	"github.com/coding-hui/ai-terminal/internal/git"
 	"github.com/coding-hui/ai-terminal/internal/options"
-	"github.com/coding-hui/ai-terminal/internal/runner"
-	"github.com/coding-hui/ai-terminal/internal/ui/chat"
-	"github.com/coding-hui/ai-terminal/internal/ui/console"
+	"github.com/coding-hui/ai-terminal/internal/ui/coders"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 )
 
@@ -41,74 +40,51 @@ func NewCmdExec(ioStreams genericclioptions.IOStreams, cfg *options.Config) *cob
 
 			input := strings.TrimSpace(strings.Join(args, " "))
 
-			// Always infer the actual shell command using AI
-			inferred, err := o.inferCommandWithAI(input)
+			// Delegate to coder's /exec subcommand via AutoCoder
+			repo := git.New()
+			root, err := repo.GitDir()
 			if err != nil {
 				return err
 			}
-			if inferred == "" {
-				return errors.New("AI did not return a runnable command")
+
+			engine, err := ai.New(ai.WithConfig(o.cfg))
+			if err != nil {
+				return err
 			}
 
-			if !o.auto {
-				if !console.WaitForUserConfirm(console.Yes, "\nRun inferred command? %s", console.StderrStyles().InlineCode.Render(inferred)) {
-					return nil
-				}
+			store, err := convo.GetConversationStore(o.cfg)
+			if err != nil {
+				return err
 			}
 
-			input = inferred
+			autoCoder := coders.NewAutoCoder(
+				coders.WithConfig(o.cfg),
+				coders.WithEngine(engine),
+				coders.WithRepo(repo),
+				coders.WithCodeBasePath(filepath.Dir(root)),
+				coders.WithStore(store),
+				coders.WithPrompt(strings.TrimSpace(input)),
+				coders.WithPromptMode(coders.ExecPromptMode),
+			)
 
-			shellCmd := runner.PrepareInteractiveCommand(input)
-			shellCmd.Stdin = o.In
-			shellCmd.Stdout = o.Out
-			shellCmd.Stderr = o.ErrOut
-			return shellCmd.Run()
+			if o.cfg.Interactive {
+				return autoCoder.Run()
+			}
+
+			// one-shot: execute /exec and exit (respect --yes)
+			execInput := "/exec " + strings.TrimSpace(input)
+			if o.auto {
+				execInput += " --yes"
+			}
+			executor := coders.NewCommandExecutor(autoCoder)
+			executor.Executor(execInput)
+
+			return nil
 		},
 	}
 
 	cmd.Flags().BoolVarP(&o.auto, "yes", "y", false, "Run without confirmation (auto-execute the inferred command)")
+	cmd.Flags().BoolVarP(&o.cfg.Interactive, "interactive", "i", false, "Interactive dialogue mode.")
 
 	return cmd
-}
-
-// inferCommandWithAI sends the user's natural language to the AI engine and
-// expects a single-line shell command in response.
-func (o *Options) inferCommandWithAI(natural string) (string, error) {
-	engine, err := ai.New(
-		ai.WithConfig(o.cfg),
-		ai.WithMode(ai.ExecEngineMode),
-	)
-	if err != nil {
-		return "", err
-	}
-
-	system := llms.SystemChatMessage{Content: strings.Join([]string{
-		"You are a helpful terminal assistant.",
-		"Convert the user's request into a single-line POSIX shell command.",
-		"Return ONLY the command without explanations, quotes, code fences, or newlines.",
-		"If the request is unclear or unsafe (like destructive operations), respond with [noexec] and a short reason.",
-	}, " ")}
-
-	human := llms.HumanChatMessage{Content: natural}
-
-	// Use chat UI to render a cool terminal experience while inferring the command
-	ch := chat.NewChat(o.cfg,
-		chat.WithEngine(engine),
-		chat.WithMessages([]llms.ChatMessage{system, human}),
-	)
-	if err := ch.Run(); err != nil {
-		return "", err
-	}
-
-	// Extract AI output from chat
-	content := strings.TrimSpace(ch.GetOutput())
-	content = strings.Trim(content, "`")
-	if content == "" || strings.HasPrefix(strings.ToLower(content), "[noexec]") {
-		return "", nil
-	}
-	if idx := strings.IndexByte(content, '\n'); idx >= 0 {
-		content = strings.TrimSpace(content[:idx])
-	}
-
-	return content, nil
 }

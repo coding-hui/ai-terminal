@@ -2,6 +2,7 @@ package coders
 
 const (
 	FlagVerbose = "verbose"
+	FlagYes     = "yes"
 )
 
 // PromptMode represents the mode of the prompt.
