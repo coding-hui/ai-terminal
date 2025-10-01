@@ -10,7 +10,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/coding-hui/common/util/fileutil"
@@ -556,14 +555,10 @@ func (c *CommandExecutor) exec(_ context.Context, input string) error {
 	}
 
 	// Get current user and OS info
-	currentUser := os.Getenv("USER")
-	if currentUser == "" {
-		currentUser = os.Getenv("USERNAME")
-	}
-	
-	osInfo := runtime.GOOS
-	archInfo := runtime.GOARCH
-	
+	currentUser := c.coder.cfg.System.GetUsername()
+	osInfo := c.coder.cfg.System.GetOperatingSystem()
+	archInfo := c.coder.cfg.System.GetDistribution()
+
 	system := llms.SystemChatMessage{Content: strings.Join([]string{
 		"You are a helpful terminal assistant.",
 		"Convert the user's request into a single-line POSIX shell command.",

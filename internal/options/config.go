@@ -376,6 +376,8 @@ func EnsureConfig() (Config, error) {
 		return c, err
 	}
 
+	c.System = system.Analyse()
+
 	return c, nil
 }
 

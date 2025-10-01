@@ -86,12 +86,7 @@ func GetOperatingSystem() OperatingSystem {
 }
 
 func GetDistribution() string {
-	dist, err := runner.Run("lsb_release", "-sd")
-	if err != nil {
-		return ""
-	}
-
-	return strings.Trim(strings.TrimSpace(dist), "\"")
+	return runtime.GOARCH
 }
 
 func GetShell() string {
@@ -122,12 +117,14 @@ func GetHomeDirectory() string {
 }
 
 func GetUsername() string {
-	name, err := runner.Run("echo", os.Getenv("USER"))
-	if err != nil {
-		return ""
-	}
-	name = strings.TrimSpace(name)
+	name := strings.TrimSpace(os.Getenv("USER"))
+
 	if name == "" {
+		name = strings.TrimSpace(os.Getenv("USERNAME"))
+	}
+
+	if name == "" {
+		var err error
 		name, err = runner.Run("whoami")
 		if err != nil {
 			return ""
