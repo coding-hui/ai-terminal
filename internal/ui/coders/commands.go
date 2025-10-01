@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/coding-hui/common/util/fileutil"
@@ -554,9 +555,20 @@ func (c *CommandExecutor) exec(_ context.Context, input string) error {
 		return errbook.New("Please provide an instruction to execute")
 	}
 
+	// Get current user and OS info
+	currentUser := os.Getenv("USER")
+	if currentUser == "" {
+		currentUser = os.Getenv("USERNAME")
+	}
+	
+	osInfo := runtime.GOOS
+	archInfo := runtime.GOARCH
+	
 	system := llms.SystemChatMessage{Content: strings.Join([]string{
 		"You are a helpful terminal assistant.",
 		"Convert the user's request into a single-line POSIX shell command.",
+		fmt.Sprintf("Current user: %s", currentUser),
+		fmt.Sprintf("Current operating system: %s (%s)", osInfo, archInfo),
 		"Return ONLY the command without explanations, quotes, code fences, or newlines.",
 		"If the request is unclear or unsafe (like destructive operations), respond with [noexec] and a short reason.",
 	}, " ")}
