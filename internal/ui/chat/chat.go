@@ -97,7 +97,7 @@ func NewChat(cfg *options.Config, opts ...Option) *Chat {
 // Returns error if the program fails to start or encounters an error during execution
 func (c *Chat) Run() error {
 	var opts []tea.ProgramOption
-	if c.config.Quiet {
+	if c.config.Raw || c.config.Quiet {
 		opts = append(opts, tea.WithoutRenderer())
 	}
 	if _, err := tea.NewProgram(c, opts...).Run(); err != nil {
@@ -408,10 +408,10 @@ func (c *Chat) GetGlamOutput() string {
 // Returns error if the save operation fails
 func (c *Chat) saveConversation() error {
 	if c.config.NoCache {
-		if !c.config.Quiet {
+		if !c.config.Quiet && !c.config.Raw {
 			fmt.Fprintf(
 				os.Stderr,
-				"\nConversation was not saved because %s or %s is set.\n",
+				"\n\nConversation was not saved because %s or %s is set.\n\n",
 				console.StderrStyles().InlineCode.Render("--no-cache"),
 				console.StderrStyles().InlineCode.Render("NO_CACHE"),
 			)

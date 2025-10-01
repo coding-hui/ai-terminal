@@ -31,6 +31,8 @@ topp: 0.01
 topk: 50
 # {{ index .Help "no-limit" }}
 no-limit: false
+# {{ index .Help "no-cache" }}
+no-cache: true
 # {{ index .Help "word-wrap" }}
 word-wrap: 80
 # {{ index .Help "prompt-args" }}
