@@ -353,6 +353,10 @@ func (c *CommandExecutor) coding(ctx context.Context, input string) error {
 		return err
 	}
 
+	if len(addedFiles) == 0 {
+		return errbook.New("No files added in chat currently. Use /add to add files first")
+	}
+
 	openFence, closeFence := c.editor.UpdateCodeFences(ctx, addedFiles)
 
 	console.RenderStep("Selected coder block fences %s %s", openFence, closeFence)
