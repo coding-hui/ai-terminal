@@ -119,6 +119,8 @@ func (c *CommandExecutor) Executor(input string) {
 
 // ask queries GPT to analyze or edit files in context
 func (c *CommandExecutor) ask(ctx context.Context, input string) error {
+	c.coder.promptMode = ChatPromptMode
+
 	messages, err := c.prepareAskCompletionMessages(input)
 	if err != nil {
 		return errbook.Wrap("Failed to prepare ask completion messages", err)
@@ -344,6 +346,8 @@ func (c *CommandExecutor) drop(_ context.Context, _ string) error {
 }
 
 func (c *CommandExecutor) coding(ctx context.Context, input string) error {
+	c.coder.promptMode = DefaultPromptMode
+
 	addedFiles, err := c.getAddedFileContent()
 	if err != nil {
 		return err
@@ -544,6 +548,8 @@ func (c *CommandExecutor) apply(ctx context.Context, codes string) error {
 
 // exec infers a POSIX shell command via AI and executes it
 func (c *CommandExecutor) exec(_ context.Context, input string) error {
+	c.coder.promptMode = ExecPromptMode
+
 	if strings.TrimSpace(input) == "" {
 		return errbook.New("Please provide an instruction to execute")
 	}
@@ -620,6 +626,12 @@ func (c *CommandExecutor) help(_ context.Context, _ string) error {
 			console.StdoutStyles().FlagDesc.Render(cmd.desc),
 		)
 	}
+
+	console.Render("")
+	console.Render("Mode switching:")
+	console.Render("  Press `Ctrl+P` to cycle between chat/exec/coding modes")
+	console.Render("  Current mode determines default action for plain input")
+
 	return nil
 }
 

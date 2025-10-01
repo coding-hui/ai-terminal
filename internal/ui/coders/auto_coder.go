@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/coding-hui/common/version"
+	"github.com/elk-language/go-prompt"
+	pstrings "github.com/elk-language/go-prompt/strings"
 
 	"github.com/coding-hui/ai-terminal/internal/ai"
 	"github.com/coding-hui/ai-terminal/internal/convo"
@@ -101,7 +103,24 @@ func (a *AutoCoder) Run() error {
 	}
 
 	cmdCompleter := NewCommandCompleter(a.repo)
-	// Choose prompt prefix based on active mode with fallbacks
+
+	p := console.NewPrompt(
+		true,
+		cmdCompleter.Complete,
+		cmdExecutor.Executor,
+		func() string {
+			return a.getPromptPrefix()
+		},
+		a.cyclePromptMode(),
+	)
+
+	// Start the interactive REPL (Read-Eval-Print Loop) for command processing
+	p.Run()
+
+	return nil
+}
+
+func (a *AutoCoder) getPromptPrefix() string {
 	promptPrefix := a.cfg.AutoCoder.PromptPrefix
 	switch a.promptMode {
 	case ChatPromptMode:
@@ -119,18 +138,27 @@ func (a *AutoCoder) Run() error {
 			promptPrefix = a.cfg.AutoCoder.PromptPrefixCoding
 		}
 	}
+	return promptPrefix + " > "
+}
 
-	p := console.NewPrompt(
-		promptPrefix,
-		true,
-		cmdCompleter.Complete,
-		cmdExecutor.Executor,
-	)
-
-	// Start the interactive REPL (Read-Eval-Print Loop) for command processing
-	p.Run()
-
-	return nil
+func (a *AutoCoder) cyclePromptMode() prompt.KeyBind {
+	//return newPrefix
+	return prompt.KeyBind{
+		Key: prompt.ControlP,
+		Fn: func(p *prompt.Prompt) (rerender bool) {
+			p.DeleteBeforeCursorRunes(pstrings.RuneNumber(len(p.Buffer().Document().Text)))
+			// Cycle through modes: coding -> chat -> exec -> coding
+			switch a.promptMode {
+			case ChatPromptMode:
+				a.promptMode = ExecPromptMode
+			case ExecPromptMode:
+				a.promptMode = DefaultPromptMode // Default coding mode
+			default:
+				a.promptMode = ChatPromptMode
+			}
+			return true
+		},
+	}
 }
 
 func (a *AutoCoder) printWelcome() {

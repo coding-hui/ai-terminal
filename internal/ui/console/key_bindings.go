@@ -8,16 +8,9 @@ import (
 	pstrings "github.com/elk-language/go-prompt/strings"
 )
 
-var (
-	altD = []byte{226, 136, 130}
-)
-
-var deleteWholeLine = prompt.ASCIICodeBind{
-	ASCIICode: altD,
-	Fn: func(p *prompt.Prompt) bool {
-		p.DeleteBeforeCursorRunes(pstrings.RuneNumber(len(p.Buffer().Document().Text)))
-		return true
-	},
+var deleteWholeLine = func(p *prompt.Prompt) bool {
+	p.DeleteBeforeCursorRunes(pstrings.RuneNumber(len(p.Buffer().Document().Text)))
+	return true
 }
 
 func makeNecessaryKeyBindings() []prompt.KeyBind {
@@ -28,7 +21,7 @@ func makeNecessaryKeyBindings() []prompt.KeyBind {
 		},
 		{
 			Key: prompt.ControlU,
-			Fn:  deleteWholeLine.Fn,
+			Fn:  deleteWholeLine,
 		},
 		{
 			Key: prompt.ControlC,

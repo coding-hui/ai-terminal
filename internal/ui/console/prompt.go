@@ -24,11 +24,14 @@ var (
 	}
 )
 
-func NewPrompt(prefix string, enableColor bool, completer prompt.Completer, exec func(string)) *prompt.Prompt {
-	promptOptions := append(options, prompt.WithPrefix(prefix+" > "))
-	promptOptions = append(promptOptions, prompt.WithCompleter(completer))
+func NewPrompt(enableColor bool, completer prompt.Completer, exec func(string), prefixCallback func() string, keyBindings ...prompt.KeyBind) *prompt.Prompt {
+	promptOptions := append(options, prompt.WithCompleter(completer))
+	promptOptions = append(promptOptions, prompt.WithPrefixCallback(prefixCallback))
 	if !enableColor {
 		promptOptions = append(promptOptions, prompt.WithPrefixTextColor(prompt.DefaultColor))
+	}
+	if len(keyBindings) > 0 {
+		promptOptions = append(promptOptions, prompt.WithKeyBind(keyBindings...))
 	}
 
 	return prompt.New(
