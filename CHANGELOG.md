@@ -1,8 +1,17 @@
 # Change Log
 
 
+<a name="v0.13.6"></a>
+## [v0.13.6] - 2025-10-02
+### Code Refactoring
+- refactor system configuration detection
+
+
 <a name="v0.13.5"></a>
 ## [v0.13.5] - 2025-10-02
+### Code Refactoring
+- remove deprecated prompt configuration
+
 
 <a name="latest"></a>
 ## [latest] - 2025-10-02
@@ -413,7 +422,8 @@
 - add ask cmd
 
 
-[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.13.5...HEAD
+[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.13.6...HEAD
+[v0.13.6]: https://github.com/coding-hui/ai-terminal/compare/v0.13.5...v0.13.6
 [v0.13.5]: https://github.com/coding-hui/ai-terminal/compare/latest...v0.13.5
 [latest]: https://github.com/coding-hui/ai-terminal/compare/v0.13.4...latest
 [v0.13.4]: https://github.com/coding-hui/ai-terminal/compare/v0.13.3...v0.13.4
