@@ -21,6 +21,7 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/cli/completion"
 	"github.com/coding-hui/ai-terminal/internal/cli/configure"
 	"github.com/coding-hui/ai-terminal/internal/cli/convo"
+	"github.com/coding-hui/ai-terminal/internal/cli/exec"
 	"github.com/coding-hui/ai-terminal/internal/cli/hook"
 	"github.com/coding-hui/ai-terminal/internal/cli/loadctx"
 	"github.com/coding-hui/ai-terminal/internal/cli/manpage"
@@ -101,6 +102,7 @@ func NewAICommand(in io.Reader, out, errOut io.Writer) *cobra.Command {
 				coder.NewCmdCoder(&cfg),
 				ask.NewCmdASK(ioStreams, &cfg),
 				convo.NewCmdConversation(ioStreams, &cfg),
+				exec.NewCmdExec(ioStreams, &cfg),
 				commit.NewCmdCommit(ioStreams, &cfg),
 				review.NewCmdCommit(ioStreams, &cfg),
 				loadctx.NewCmdContext(ioStreams, &cfg),

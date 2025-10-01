@@ -408,14 +408,6 @@ func (c *Chat) GetGlamOutput() string {
 // Returns error if the save operation fails
 func (c *Chat) saveConversation() error {
 	if c.config.NoCache {
-		if !c.config.Quiet && !c.config.Raw {
-			fmt.Fprintf(
-				os.Stderr,
-				"\n\nConversation was not saved because %s or %s is set.\n\n",
-				console.StderrStyles().InlineCode.Render("--no-cache"),
-				console.StderrStyles().InlineCode.Render("NO_CACHE"),
-			)
-		}
 		return nil
 	}
 
