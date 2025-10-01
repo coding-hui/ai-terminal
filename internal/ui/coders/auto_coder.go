@@ -120,16 +120,14 @@ func (a *AutoCoder) Run() error {
 	return nil
 }
 
-func (a *AutoCoder) getPromptPrefix() string {
-	promptPrefix := a.cfg.AutoCoder.PromptPrefix
+func (a *AutoCoder) getPromptPrefix() (promptPrefix string) {
+	promptPrefix = a.promptMode.String()
 	switch a.promptMode {
 	case ChatPromptMode:
-		promptPrefix = "chat"
 		if a.cfg.AutoCoder.PromptPrefixChat != "" {
 			promptPrefix = a.cfg.AutoCoder.PromptPrefixChat
 		}
 	case ExecPromptMode:
-		promptPrefix = "exec"
 		if a.cfg.AutoCoder.PromptPrefixExec != "" {
 			promptPrefix = a.cfg.AutoCoder.PromptPrefixExec
 		}

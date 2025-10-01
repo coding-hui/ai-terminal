@@ -23,7 +23,7 @@ func (m PromptMode) String() string {
 	case ChatPromptMode:
 		return "chat"
 	default:
-		return "default"
+		return "auto-coder"
 	}
 }
 

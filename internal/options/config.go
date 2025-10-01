@@ -134,8 +134,6 @@ type Config struct {
 
 // AutoCoder is the configuration for the auto coder.
 type AutoCoder struct {
-	// Deprecated: use PromptPrefixChat/Exec/Coding
-	PromptPrefix       string   `yaml:"prompt-prefix" env:"PROMPT_PREFIX"`
 	PromptPrefixChat   string   `yaml:"prompt-prefix-chat" env:"PROMPT_PREFIX_CHAT"`
 	PromptPrefixExec   string   `yaml:"prompt-prefix-exec" env:"PROMPT_PREFIX_EXEC"`
 	PromptPrefixCoding string   `yaml:"prompt-prefix-coding" env:"PROMPT_PREFIX_CODING"`
