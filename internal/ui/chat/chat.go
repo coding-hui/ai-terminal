@@ -96,7 +96,11 @@ func NewChat(cfg *options.Config, opts ...Option) *Chat {
 // Run starts the chat application and handles the main execution loop
 // Returns error if the program fails to start or encounters an error during execution
 func (c *Chat) Run() error {
-	if _, err := tea.NewProgram(c).Run(); err != nil {
+	var opts []tea.ProgramOption
+	if c.config.Quiet {
+		opts = append(opts, tea.WithoutRenderer())
+	}
+	if _, err := tea.NewProgram(c, opts...).Run(); err != nil {
 		return errbook.Wrap("Couldn't start Bubble Tea program.", err)
 	}
 
@@ -104,16 +108,12 @@ func (c *Chat) Run() error {
 		return *c.Error
 	}
 
-	if term.IsOutputTTY() {
-		if c.config.Raw && c.output != "" {
+	if term.IsOutputTTY() && !c.config.Raw {
+		switch {
+		case c.glamOutput != "":
+			fmt.Print(c.glamOutput)
+		case c.output != "":
 			fmt.Print(c.output)
-		} else {
-			switch {
-			case c.glamOutput != "":
-				fmt.Print(c.glamOutput)
-			case c.output != "":
-				fmt.Print(c.output)
-			}
 		}
 	}
 

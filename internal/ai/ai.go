@@ -92,11 +92,9 @@ func (e *Engine) CreateStreamCompletion(ctx context.Context, messages []llms.Cha
 	e.running = true
 
 	streamingFunc := func(ctx context.Context, chunk []byte) error {
-		if !e.Config.Quiet {
-			e.channel <- StreamCompletionOutput{
-				Content: string(chunk),
-				Last:    false,
-			}
+		e.channel <- StreamCompletionOutput{
+			Content: string(chunk),
+			Last:    false,
 		}
 		return nil
 	}
@@ -130,13 +128,11 @@ func (e *Engine) CreateStreamCompletion(ctx context.Context, messages []llms.Cha
 
 	output = html.UnescapeString(output)
 
-	if !e.Config.Quiet {
-		e.channel <- StreamCompletionOutput{
-			Content:    "",
-			Last:       true,
-			Executable: executable,
-			Usage:      rsp.Usage,
-		}
+	e.channel <- StreamCompletionOutput{
+		Content:    "",
+		Last:       true,
+		Executable: executable,
+		Usage:      rsp.Usage,
 	}
 	e.running = false
 
