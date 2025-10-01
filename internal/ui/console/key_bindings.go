@@ -13,6 +13,12 @@ var deleteWholeLine = func(p *prompt.Prompt) bool {
 	return true
 }
 
+var bye = func(p *prompt.Prompt) bool {
+	fmt.Println("Bye!")
+	os.Exit(0)
+	return true
+}
+
 func makeNecessaryKeyBindings() []prompt.KeyBind {
 	keyBinds := []prompt.KeyBind{
 		{
@@ -25,11 +31,7 @@ func makeNecessaryKeyBindings() []prompt.KeyBind {
 		},
 		{
 			Key: prompt.ControlC,
-			Fn: func(b *prompt.Prompt) bool {
-				fmt.Println("Bye!")
-				os.Exit(0)
-				return true
-			},
+			Fn:  bye,
 		},
 	}
 
