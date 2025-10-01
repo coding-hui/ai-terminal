@@ -114,6 +114,26 @@ ai completion powershell -h
   ai review --exclude-list "*.md,*.txt"
   ```
 
+#### 命令执行
+
+- **通过AI执行Shell命令：**
+  ```sh
+  ai exec "查找最近7天内修改的所有文件"
+  ```
+  使用AI解释您的指令并执行适当的Shell命令。
+
+- **无需确认自动执行：**
+  ```sh
+  ai exec --yes "列出所有Docker容器"
+  ```
+  自动执行推断出的命令，无需确认。
+
+- **交互式命令模式：**
+  ```sh
+  ai exec --interactive
+  ```
+  启动交互式对话来优化和执行命令。
+
 #### 提交消息
 
 - **生成提交消息：**

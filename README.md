@@ -119,6 +119,26 @@ Here are some examples of how to use AI-Terminal, grouped by functionality:
   ai review --exclude-list "*.md,*.txt"
   ```
 
+#### Command Execution
+
+- **Execute Shell Commands via AI:**
+  ```sh
+  ai exec "find all files modified in the last 7 days"
+  ```
+  Uses AI to interpret your instruction and execute the appropriate shell command.
+
+- **Auto-execute Without Confirmation:**
+  ```sh
+  ai exec --yes "list all docker containers"
+  ```
+  Automatically executes the inferred command without asking for confirmation.
+
+- **Interactive Command Mode:**
+  ```sh
+  ai exec --interactive
+  ```
+  Starts an interactive dialogue to refine and execute commands.
+
 #### Commit Messages
 
 - **Generate a Commit Message:**
