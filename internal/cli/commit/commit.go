@@ -163,9 +163,9 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 		}
 	}
 
-	// git commit automatically
+	// git commit automatically with ai auto coder as author
 	console.RenderStep("Recording changes to repository...")
-	output, err := g.Commit(commitMessage)
+	output, err := g.CommitWithAuthor(commitMessage, "ai auto coder", "ai-auto-coder@ai-terminal")
 	if err != nil {
 		return errbook.Wrap("Could not commit changes to the repository.", err)
 	}

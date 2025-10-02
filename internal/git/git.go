@@ -74,6 +74,15 @@ func (c *Command) Commit(val string) (string, error) {
 	return strings.TrimSpace(string(output)), nil
 }
 
+func (c *Command) CommitWithAuthor(val, authorName, authorEmail string) (string, error) {
+	output, err := c.commitWithAuthor(val, authorName, authorEmail).Output()
+	if err != nil {
+		return "", err
+	}
+
+	return strings.TrimSpace(string(output)), nil
+}
+
 // RollbackLastCommit rolls back the most recent commit, leaving changes staged.
 func (c *Command) RollbackLastCommit() error {
 	output, err := exec.Command("git", "reset", "--hard", "HEAD~1").CombinedOutput()
@@ -244,6 +253,25 @@ func (c *Command) commit(val string) *exec.Cmd {
 		"--no-verify",
 		"--signoff",
 		fmt.Sprintf("--message=%s", val),
+	}
+
+	if c.isAmend {
+		args = append(args, "--amend")
+	}
+
+	return exec.Command(
+		"git",
+		args...,
+	)
+}
+
+func (c *Command) commitWithAuthor(val, authorName, authorEmail string) *exec.Cmd {
+	args := []string{
+		"commit",
+		"--no-verify",
+		"--signoff",
+		fmt.Sprintf("--message=%s", val),
+		fmt.Sprintf("--author=%s <%s>", authorName, authorEmail),
 	}
 
 	if c.isAmend {
