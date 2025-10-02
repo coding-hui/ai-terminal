@@ -313,7 +313,7 @@ func (c *CommandExecutor) list(_ context.Context, _ string) error {
 		listOutput.WriteString(line + "\n")
 		no++
 	}
-	
+
 	// Write the entire list to chat history
 	c.coder.writeChatHistory("", strings.TrimSpace(listOutput.String()))
 	return nil
