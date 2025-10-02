@@ -201,6 +201,11 @@ func (a *AutoCoder) Run() error {
 				historyWriter.RenderError(err, "Failed to write command to history")
 			}
 			cmdExecutor.Executor(input)
+			
+			// Reload contexts after each command to maintain conversation continuity
+			if err := a.loadExistingContexts(); err != nil {
+				historyWriter.RenderError(err, "Failed to reload conversation contexts")
+			}
 		},
 		func() string {
 			return a.getPromptPrefix()
