@@ -53,8 +53,8 @@ func (o *Options) run(_ *cobra.Command, args []string) error {
 		return errbook.Wrap("Could not initialize conversation store", err)
 	}
 
-	if o.prompt != "" {
-		o.cfg.Interactive = false
+	if o.prompt == "" {
+		o.cfg.Interactive = true
 	}
 
 	autoCoder := coders.NewAutoCoder(

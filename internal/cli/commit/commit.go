@@ -165,7 +165,7 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 
 	// git commit automatically
 	console.RenderStep("Recording changes to repository...")
-	
+
 	// Check if this is an auto coder commit and use configured author with model info
 	if o.isAutoCoder {
 		authorName, authorEmail := o.cfg.GetCommitAuthor()
