@@ -140,8 +140,6 @@ func (c *Chat) writeChatHistory(input, response string) error {
 			// For other inputs, use the '>' prefix with prompt prefix
 			// Get the appropriate prompt prefix based on mode
 			promptPrefix := c.getPromptPrefix()
-			// Remove the " > " suffix from the prompt prefix if present
-			promptPrefix = strings.TrimSuffix(promptPrefix, " > ")
 			historyContent.WriteString(fmt.Sprintf("> %s %s\n", promptPrefix, input))
 		}
 	}

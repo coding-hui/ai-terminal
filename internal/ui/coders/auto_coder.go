@@ -92,8 +92,6 @@ func (a *AutoCoder) writeChatHistory(command, response string) error {
 		} else {
 			// Add prompt prefix before the command
 			promptPrefix := a.getPromptPrefix()
-			// Remove the " > " suffix from the prompt prefix
-			promptPrefix = strings.TrimSuffix(promptPrefix, " > ")
 			historyContent.WriteString(fmt.Sprintf("> %s %s\n", promptPrefix, command))
 		}
 	}
@@ -224,7 +222,7 @@ func (a *AutoCoder) getPromptPrefix() (promptPrefix string) {
 			promptPrefix = a.cfg.AutoCoder.PromptPrefixCoding
 		}
 	}
-	return promptPrefix + " > "
+	return promptPrefix
 }
 
 func (a *AutoCoder) printWelcome() {
