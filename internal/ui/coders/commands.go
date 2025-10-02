@@ -489,6 +489,7 @@ func (c *CommandExecutor) commit(ctx context.Context, _ string) error {
 		commit.WithConfig(c.coder.cfg),
 		commit.WithCommitPrefix(c.coder.cfg.AutoCoder.CommitPrefix), // Use configured commit prefix
 		commit.WithCommitLang(prompt.DefaultLanguage),
+		commit.WithIsAutoCoder(true), // Mark as auto coder commit
 	)
 	if err := commitCmd.AutoCommit(nil, nil); err != nil {
 		return errbook.Wrap("Failed to commit changes", err)
