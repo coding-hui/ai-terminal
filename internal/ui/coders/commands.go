@@ -291,10 +291,10 @@ func (c *CommandExecutor) add(_ context.Context, input string) (err error) {
 func (c *CommandExecutor) list(_ context.Context, _ string) error {
 	if len(c.coder.loadedContexts) <= 0 {
 		msg := "No files added in chat currently"
-		c.historyWriter.Render(msg)
+		c.historyWriter.Render("No files added in chat currently")
 		return nil
 	}
-	
+
 	var listOutput strings.Builder
 	no := 1
 	for _, lc := range c.coder.loadedContexts {
