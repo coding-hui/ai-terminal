@@ -664,13 +664,13 @@ func (c *CommandExecutor) help(_ context.Context, _ string) error {
 	// Render each group with headers
 	c.historyWriter.Render("\n📁 File Management:")
 	c.historyWriter.RenderHelps(fileCommands)
-	
+
 	c.historyWriter.Render("\n🤖 AI Interactions:")
 	c.historyWriter.RenderHelps(aiCommands)
-	
+
 	c.historyWriter.Render("\n🔧 Code Management:")
 	c.historyWriter.RenderHelps(codeManagementCommands)
-	
+
 	c.historyWriter.Render("\n⚙️  System Operations:")
 	c.historyWriter.RenderHelps(systemCommands)
 

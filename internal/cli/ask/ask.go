@@ -16,7 +16,6 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/git"
 	"github.com/coding-hui/ai-terminal/internal/options"
-	"github.com/coding-hui/ai-terminal/internal/ui/chat"
 	"github.com/coding-hui/ai-terminal/internal/ui/coders"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 	"github.com/coding-hui/ai-terminal/internal/util/templates"
@@ -92,51 +91,34 @@ func (o *Options) Validate() error {
 
 // Run executes ask command.
 func (o *Options) Run() error {
-	content := o.pipe + "\n\n" + strings.Join(o.prompts, "\n\n")
-
-	// Interactive: route to coder's /ask to leverage contexts and REPL UX
-	if o.cfg.Interactive {
-		repo := git.New()
-		root, err := repo.GitDir()
-		if err != nil {
-			return errbook.Wrap("Could not get git root", err)
-		}
-
-		engine, err := ai.New(ai.WithConfig(o.cfg))
-		if err != nil {
-			return errbook.Wrap("Could not initialized ai engine", err)
-		}
-
-		store, err := convo.GetConversationStore(o.cfg)
-		if err != nil {
-			return errbook.Wrap("Could not initialize conversation store", err)
-		}
-
-		autoCoder := coders.NewAutoCoder(
-			coders.WithConfig(o.cfg),
-			coders.WithEngine(engine),
-			coders.WithRepo(repo),
-			coders.WithCodeBasePath(filepath.Dir(root)),
-			coders.WithStore(store),
-			coders.WithPrompt(strings.TrimSpace(content)),
-			coders.WithPromptMode(coders.ChatPromptMode),
-		)
-
-		return autoCoder.Run()
+	repo := git.New()
+	root, err := repo.GitDir()
+	if err != nil {
+		return errbook.Wrap("Could not get git root", err)
 	}
 
-	// Non-interactive: keep current chat one-shot behavior
 	engine, err := ai.New(ai.WithConfig(o.cfg))
 	if err != nil {
-		return err
+		return errbook.Wrap("Could not initialized ai engine", err)
 	}
 
-	chatModel := chat.NewChat(o.cfg,
-		chat.WithContent(content),
-		chat.WithEngine(engine),
+	store, err := convo.GetConversationStore(o.cfg)
+	if err != nil {
+		return errbook.Wrap("Could not initialize conversation store", err)
+	}
+
+	content := o.pipe + "\n\n" + strings.Join(o.prompts, "\n\n")
+	autoCoder := coders.NewAutoCoder(
+		coders.WithConfig(o.cfg),
+		coders.WithEngine(engine),
+		coders.WithRepo(repo),
+		coders.WithCodeBasePath(filepath.Dir(root)),
+		coders.WithStore(store),
+		coders.WithPrompt(strings.TrimSpace(content)),
+		coders.WithPromptMode(coders.ChatPromptMode),
 	)
 
-	return chatModel.Run()
+	return autoCoder.Run()
 }
 
 func (o *Options) preparePrompts(args []string) error {

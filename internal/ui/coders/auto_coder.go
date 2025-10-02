@@ -67,10 +67,11 @@ func (a *AutoCoder) writeChatHistory(command, response string) error {
 	// Build history content
 	var historyContent strings.Builder
 
+	historyContent.WriteString(fmt.Sprintf("# AI chat started at %s\n\n", time.Now().Format("2006-01-02 15:04:05")))
+
 	// Add file header if this is the first write
 	fileInfo, err := os.Stat(historyFilePath)
 	if err != nil || fileInfo.Size() == 0 {
-		historyContent.WriteString(fmt.Sprintf("# AI chat started at %s\n\n", time.Now().Format("2006-01-02 15:04:05")))
 		// Add command invocation details if available
 		if len(os.Args) > 0 {
 			historyContent.WriteString(fmt.Sprintf("> %s\n", strings.Join(os.Args, " ")))
@@ -113,7 +114,7 @@ func (a *AutoCoder) writeChatHistory(command, response string) error {
 	if err != nil {
 		return errbook.Wrap("Failed to open chat history file", err)
 	}
-	defer file.Close()
+	defer file.Close() //nolint:errcheck
 
 	if _, err := file.WriteString(historyContent.String()); err != nil {
 		return errbook.Wrap("Failed to write chat history", err)
@@ -183,6 +184,10 @@ func (a *AutoCoder) Run() error {
 		}
 
 		cmdExecutor.Executor(initial)
+	}
+
+	if !a.cfg.Interactive {
+		return nil
 	}
 
 	cmdCompleter := NewCommandCompleter(a.repo)

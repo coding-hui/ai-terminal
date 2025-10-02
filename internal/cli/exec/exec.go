@@ -10,7 +10,6 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/convo"
 	"github.com/coding-hui/ai-terminal/internal/git"
 	"github.com/coding-hui/ai-terminal/internal/options"
-	"github.com/coding-hui/ai-terminal/internal/ui/chat"
 	"github.com/coding-hui/ai-terminal/internal/ui/coders"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 )
@@ -35,6 +34,9 @@ func NewCmdExec(ioStreams genericclioptions.IOStreams, cfg *options.Config) *cob
 		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			input := strings.TrimSpace(strings.Join(args, " "))
+			if o.auto {
+				input += " --yes"
+			}
 
 			// Delegate to coder's /exec subcommand via AutoCoder
 			repo := git.New()
@@ -63,19 +65,7 @@ func NewCmdExec(ioStreams genericclioptions.IOStreams, cfg *options.Config) *cob
 				coders.WithPromptMode(coders.ExecPromptMode),
 			)
 
-			if o.cfg.Interactive {
-				return autoCoder.Run()
-			}
-
-			// one-shot: execute /exec and exit (respect --yes)
-			execInput := "/exec " + strings.TrimSpace(input)
-			if o.auto {
-				execInput += " --yes"
-			}
-			executor := coders.NewCommandExecutor(autoCoder, chat.NewHistoryWriter())
-			executor.Executor(execInput)
-
-			return nil
+			return autoCoder.Run()
 		},
 	}
 

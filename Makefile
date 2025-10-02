@@ -80,7 +80,7 @@ release: goreleaser ## Generate a release using goreleaser with auto-snapshot, c
 ##@ Build
 
 .PHONY: build
-build: fmt ## Build the AI CLI command
+build: fmt vet ## Build the AI CLI command
 	go build $(GO_BUILD_FLAGS) -trimpath -o bin/ai cmd/cli/main.go
 
 .PHONY: run

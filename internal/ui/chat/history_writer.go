@@ -74,9 +74,8 @@ func (h *HistoryWriter) WriteToHistory(content string) error {
 
 // Render writes to console and chat history
 func (h *HistoryWriter) Render(format string, args ...interface{}) {
-	content := fmt.Sprintf(format, args...)
-	console.Render(content)
-	_ = h.WriteToHistory(content)
+	console.Render(format, args...)
+	_ = h.WriteToHistory(fmt.Sprintf(format, args...))
 }
 
 // RenderHelps writes to console and chat history

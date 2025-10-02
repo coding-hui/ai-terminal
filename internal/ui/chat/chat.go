@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 	"unicode"
 
 	"github.com/atotto/clipboard"
@@ -116,19 +115,7 @@ func (c *Chat) writeChatHistory(input, response string) error {
 	// Add file header if this is the first write
 	fileInfo, err := os.Stat(historyFilePath)
 	if err != nil || fileInfo.Size() == 0 {
-		historyContent.WriteString(fmt.Sprintf("# AI chat started at %s\n\n", time.Now().Format("2006-01-02 15:04:05")))
-		// Add command invocation details if available
-		if len(os.Args) > 0 {
-			historyContent.WriteString(fmt.Sprintf("> %s\n", strings.Join(os.Args, " ")))
-		}
-		// Add model info
-		historyContent.WriteString(fmt.Sprintf("> Model: %s\n", c.config.Model))
-		// Add git repo info if available
-		// Check if we're in a git repository
-		if _, err := os.Stat(".git"); err == nil {
-			historyContent.WriteString("> Git repo: .git\n")
-		}
-		historyContent.WriteString("\n")
+		return errbook.Wrap("Failed to get history file", err)
 	}
 
 	// Write input and response
@@ -169,7 +156,7 @@ func (c *Chat) writeChatHistory(input, response string) error {
 	if err != nil {
 		return errbook.Wrap("Failed to open chat history file", err)
 	}
-	defer file.Close()
+	defer file.Close() //nolint:errcheck
 
 	if _, err := file.WriteString(historyContent.String()); err != nil {
 		return errbook.Wrap("Failed to write chat history", err)
@@ -185,8 +172,6 @@ func (c *Chat) Run() error {
 	if c.config.Raw || c.config.Quiet {
 		opts = append(opts, tea.WithoutRenderer())
 	}
-
-	// No longer writing "Starting chat session..." to history
 
 	if _, err := tea.NewProgram(c, opts...).Run(); err != nil {
 		return errbook.Wrap("Couldn't start Bubble Tea program.", err)
