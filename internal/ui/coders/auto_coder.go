@@ -94,6 +94,8 @@ func (a *AutoCoder) writeChatHistory(command, response string) error {
 			promptPrefix := a.getPromptPrefix()
 			historyContent.WriteString(fmt.Sprintf("> %s %s\n", promptPrefix, command))
 		}
+		// Add a newline after command
+		historyContent.WriteString("\n")
 	}
 
 	if response != "" {
@@ -107,6 +109,8 @@ func (a *AutoCoder) writeChatHistory(command, response string) error {
 				historyContent.WriteString("\n")
 			}
 		}
+		// Add a newline after response
+		historyContent.WriteString("\n")
 	}
 
 	// Write to file

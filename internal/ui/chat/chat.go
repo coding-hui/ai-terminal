@@ -142,6 +142,8 @@ func (c *Chat) writeChatHistory(input, response string) error {
 			promptPrefix := c.getPromptPrefix()
 			historyContent.WriteString(fmt.Sprintf("> %s %s\n", promptPrefix, input))
 		}
+		// Add a newline after input
+		historyContent.WriteString("\n")
 	}
 
 	if response != "" {
@@ -155,6 +157,8 @@ func (c *Chat) writeChatHistory(input, response string) error {
 				historyContent.WriteString("\n")
 			}
 		}
+		// Add a newline after response
+		historyContent.WriteString("\n")
 	}
 
 	// Write to file
