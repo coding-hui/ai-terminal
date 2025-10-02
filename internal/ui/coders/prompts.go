@@ -54,9 +54,6 @@ ONLY EVER RETURN CODE IN A *SEARCH/REPLACE BLOCK*!
 )
 
 var (
-	promptAskWithFiles prompts.ChatPromptTemplate
-	promptAskGeneral   prompts.ChatPromptTemplate
-	
 	promptDesign = prompts.NewChatPromptTemplate([]prompts.MessageFormatter{
 		prompts.NewSystemMessagePromptTemplate(
 			`Act as an expert architect engineer and provide direction to your editor engineer.
