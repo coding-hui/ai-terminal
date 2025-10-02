@@ -129,7 +129,7 @@ func (c *CommandExecutor) Executor(input string) {
 func (c *CommandExecutor) ask(ctx context.Context, input string) error {
 	if input == "" {
 		c.coder.promptMode = ChatPromptMode
-		console.Render("Switched /ask mode")
+		c.historyWriter.Render("Switched /ask mode")
 		return nil
 	}
 
@@ -156,12 +156,12 @@ func (c *CommandExecutor) ask(ctx context.Context, input string) error {
 func (c *CommandExecutor) loadFileContent(path string) (string, error) {
 	// Handle remote URLs
 	if rest.IsValidURL(path) {
-		console.Render("Loading remote content [%s]", path)
+		c.historyWriter.Render("Loading remote content [%s]", path)
 		return rest.FetchURLContent(path)
 	}
 
 	// Handle local files
-	console.Render("Loading local file [%s]", path)
+	c.historyWriter.Render("Loading local file [%s]", path)
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return "", errbook.Wrap("Failed to read local file", err)
@@ -194,7 +194,7 @@ func (c *CommandExecutor) add(_ context.Context, input string) (err error) {
 		fileInfo, err := os.Stat(fullPath)
 		if err == nil && fileInfo.IsDir() {
 			// Handle directory recursively
-			console.Render("Processing directory [%s]", fullPath)
+			c.historyWriter.Render("Processing directory [%s]", fullPath)
 			err := filepath.Walk(fullPath, func(path string, info fs.FileInfo, err error) error {
 				if err != nil {
 					return err
@@ -290,12 +290,10 @@ func (c *CommandExecutor) add(_ context.Context, input string) (err error) {
 // list displays all files currently in context
 func (c *CommandExecutor) list(_ context.Context, _ string) error {
 	if len(c.coder.loadedContexts) <= 0 {
-		msg := "No files added in chat currently"
 		c.historyWriter.Render("No files added in chat currently")
 		return nil
 	}
 
-	var listOutput strings.Builder
 	no := 1
 	for _, lc := range c.coder.loadedContexts {
 		path := lc.FilePath
@@ -307,13 +305,10 @@ func (c *CommandExecutor) list(_ context.Context, _ string) error {
 			return errbook.Wrap("Failed to get relative path", err)
 		}
 		line := fmt.Sprintf("%d.%s (%s)", no, relPath, lc.Type)
-		console.Render(line)
-		listOutput.WriteString(line + "\n")
+		c.historyWriter.Render(line)
 		no++
 	}
 
-	// Write the entire list to chat history using HistoryWriter
-	c.historyWriter.Render(listOutput.String())
 	return nil
 }
 
@@ -346,7 +341,7 @@ func (c *CommandExecutor) remove(_ context.Context, input string) error {
 					if err := c.coder.deleteContext(context.Background(), lc.ID); err != nil {
 						return errbook.Wrap("Failed to delete file context", err)
 					}
-					console.Render("Removed file [%s]", abs)
+					c.historyWriter.Render("Removed file [%s]", abs)
 					continue
 				}
 				newContexts = append(newContexts, lc)
@@ -367,7 +362,7 @@ func (c *CommandExecutor) drop(_ context.Context, _ string) error {
 	}
 
 	c.coder.loadedContexts = []*convo.LoadContext{}
-	console.Render("Dropped %d files", dropCount)
+	c.historyWriter.Render("Dropped %d files", dropCount)
 
 	return nil
 }
@@ -380,7 +375,7 @@ func (c *CommandExecutor) coding(ctx context.Context, input string) error {
 
 	if input == "" {
 		c.coder.promptMode = DefaultPromptMode
-		console.Render("Switched /coding mode")
+		c.historyWriter.Render("Switched /coding mode")
 		return nil
 	}
 
@@ -390,7 +385,7 @@ func (c *CommandExecutor) coding(ctx context.Context, input string) error {
 
 	openFence, closeFence := c.editor.UpdateCodeFences(ctx, addedFiles)
 
-	console.RenderStep("Selected coder block fences %s %s", openFence, closeFence)
+	c.historyWriter.Render("Selected coder block fences %s %s", openFence, closeFence)
 	messages, err := c.editor.FormatMessages(map[string]any{
 		userQuestionKey: input,
 		addedFilesKey:   addedFiles,
@@ -462,7 +457,7 @@ func (c *CommandExecutor) undo(ctx context.Context, _ string) error {
 
 	// Confirm with user before undoing
 	if !console.WaitForUserConfirm(console.No, "Are you sure you want to undo the last changes?") {
-		console.Render("Undo canceled")
+		c.historyWriter.Render("Undo canceled")
 		return nil
 	}
 
@@ -470,7 +465,7 @@ func (c *CommandExecutor) undo(ctx context.Context, _ string) error {
 		return errbook.Wrap("Failed to undo changes", err)
 	}
 
-	console.Render("Successfully undone last changes")
+	c.historyWriter.Render("Successfully undone last changes")
 	return nil
 }
 
@@ -559,7 +554,7 @@ func (c *CommandExecutor) apply(ctx context.Context, codes string) error {
 	}
 	openFence, closeFence := chooseExistingFence(codes)
 
-	console.Render("Selected coder block fences %s %s", openFence, closeFence)
+	c.historyWriter.Render("Selected coder block fences %s %s", openFence, closeFence)
 
 	// Parse edit blocks from input
 	edits, err := c.editor.GetEdits(ctx, codes, []string{openFence, closeFence})
@@ -569,7 +564,7 @@ func (c *CommandExecutor) apply(ctx context.Context, codes string) error {
 
 	// Check if any edits were found
 	if len(edits) == 0 {
-		console.Render("No changes were applied - no valid edit blocks found")
+		c.historyWriter.Render("No changes were applied - no valid edit blocks found")
 		return nil
 	}
 
@@ -585,7 +580,7 @@ func (c *CommandExecutor) apply(ctx context.Context, codes string) error {
 func (c *CommandExecutor) exec(_ context.Context, input string) error {
 	if input == "" {
 		c.coder.promptMode = ExecPromptMode
-		console.Render("Switched /exec mode")
+		c.historyWriter.Render("Switched /exec mode")
 		return nil
 	}
 
@@ -619,7 +614,7 @@ func (c *CommandExecutor) exec(_ context.Context, input string) error {
 	cmd := strings.TrimSpace(ch.GetOutput())
 	cmd = strings.Trim(cmd, "`")
 	if cmd == "" || strings.HasPrefix(strings.ToLower(cmd), "[noexec]") {
-		console.Render("No executable command was produced")
+		c.historyWriter.Render("No executable command was produced")
 		return nil
 	}
 	if idx := strings.IndexByte(cmd, '\n'); idx >= 0 {
@@ -641,7 +636,7 @@ func (c *CommandExecutor) exec(_ context.Context, input string) error {
 }
 
 func (c *CommandExecutor) help(_ context.Context, _ string) error {
-	console.Render("Available commands:")
+	c.historyWriter.Render("Available commands:")
 
 	commands := []struct {
 		cmd  string
@@ -666,7 +661,7 @@ func (c *CommandExecutor) help(_ context.Context, _ string) error {
 
 	for _, cmd := range commands {
 		formatted := fmt.Sprintf("  %-44s", cmd.cmd)
-		console.Render(
+		c.historyWriter.Render(
 			"%s%s",
 			console.StdoutStyles().Flag.Render(formatted),
 			console.StdoutStyles().FlagDesc.Render(cmd.desc),
@@ -783,7 +778,7 @@ func (c *CommandExecutor) switchNewChatModel(_ context.Context, input string) er
 	c.coder.cfg.AutoCoder.CodingModel = model
 	c.coder.cfg.API = api
 
-	console.Render("Updated coding model to %s using API %s", model, api)
+	c.historyWriter.Render("Updated coding model to %s using API %s", model, api)
 
 	return nil
 }
