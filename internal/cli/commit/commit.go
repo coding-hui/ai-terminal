@@ -166,11 +166,9 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 	// git commit automatically with configured author including model info
 	console.RenderStep("Recording changes to repository...")
 	authorName, authorEmail := o.cfg.GetCommitAuthor()
-	// Add model information to the email
+	// Add model information to the author name in parentheses
 	if o.cfg.CurrentModel.Name != "" {
-		authorEmail = fmt.Sprintf("%s+%s@ai-terminal", 
-			strings.TrimSuffix(authorEmail, "@ai-terminal"),
-			strings.ReplaceAll(o.cfg.CurrentModel.Name, "/", "-"))
+		authorName = fmt.Sprintf("%s (%s)", authorName, o.cfg.CurrentModel.Name)
 	}
 	output, err := g.CommitWithAuthor(commitMessage, authorName, authorEmail)
 	if err != nil {
