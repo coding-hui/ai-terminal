@@ -99,11 +99,16 @@ func (c *CommandExecutor) Executor(input string) {
 	cmd, args := extractCmdArgs(input)
 	fn, ok := supportCommands[cmd]
 	if !ok {
-		console.RenderError(
-			errbook.ErrInvalidArgument,
+		errorMsg := fmt.Sprintf(
 			"Unknown command: %s. Supported commands: %s. Type / to see all recommended commands.",
 			cmd, strings.Join(getSupportedCommands(), ", "),
 		)
+		console.RenderError(
+			errbook.ErrInvalidArgument,
+			errorMsg,
+		)
+		// Write error to chat history
+		c.coder.writeChatHistory("", errorMsg)
 		return
 	}
 
@@ -113,7 +118,10 @@ func (c *CommandExecutor) Executor(input string) {
 
 	// Execute the recognized command
 	if err := fn(context.Background(), userInput); err != nil {
+		errorMsg := fmt.Sprintf("Failed to execute command %s: %s", cmd, err.Error())
 		console.RenderError(err, "Failed to execute command %s", cmd)
+		// Write error to chat history
+		c.coder.writeChatHistory("", errorMsg)
 	}
 }
 
@@ -165,7 +173,9 @@ func (c *CommandExecutor) loadFileContent(path string) (string, error) {
 func (c *CommandExecutor) add(_ context.Context, input string) (err error) {
 	files := strings.Fields(input)
 	if len(files) == 0 {
-		return errbook.New("Please provide at least one file or URL")
+		errorMsg := "Please provide at least one file or URL"
+		c.coder.writeChatHistory("", errorMsg)
+		return errbook.New(errorMsg)
 	}
 
 	var matchedFiles = make([]string, 0, len(files))
@@ -209,7 +219,9 @@ func (c *CommandExecutor) add(_ context.Context, input string) (err error) {
 		}
 
 		if len(matches) <= 0 {
-			console.Render("No files matched pattern [%s]", pattern)
+			msg := fmt.Sprintf("No files matched pattern [%s]", pattern)
+			console.Render(msg)
+			c.coder.writeChatHistory("", msg)
 			continue
 		}
 
@@ -224,7 +236,9 @@ func (c *CommandExecutor) add(_ context.Context, input string) (err error) {
 			if fileExists {
 				matchedFiles = append(matchedFiles, filePath)
 			} else {
-				return errbook.New("File [%s] not found", filePath)
+				errorMsg := fmt.Sprintf("File [%s] not found", filePath)
+				c.coder.writeChatHistory("", errorMsg)
+				return errbook.New(errorMsg)
 			}
 		}
 	}
@@ -241,7 +255,9 @@ func (c *CommandExecutor) add(_ context.Context, input string) (err error) {
 		// Check if file already loaded
 		for _, lc := range c.coder.loadedContexts {
 			if lc.FilePath == absPath || lc.URL == absPath {
-				return errbook.New("File [%s] already exists", absPath)
+				errorMsg := fmt.Sprintf("File [%s] already exists", absPath)
+				c.coder.writeChatHistory("", errorMsg)
+				return errbook.New(errorMsg)
 			}
 		}
 
@@ -265,7 +281,9 @@ func (c *CommandExecutor) add(_ context.Context, input string) (err error) {
 			return errbook.Wrap("Failed to persist file context", err)
 		}
 
-		console.Render("Added [%s]", absPath)
+		msg := fmt.Sprintf("Added [%s]", absPath)
+		console.Render(msg)
+		c.coder.writeChatHistory("", msg)
 	}
 
 	return nil
@@ -273,8 +291,11 @@ func (c *CommandExecutor) add(_ context.Context, input string) (err error) {
 
 // list displays all files currently in context
 func (c *CommandExecutor) list(_ context.Context, _ string) error {
+	var listOutput strings.Builder
 	if len(c.coder.loadedContexts) <= 0 {
-		console.Render("No files added in chat currently")
+		msg := "No files added in chat currently"
+		console.Render(msg)
+		c.coder.writeChatHistory("", msg)
 		return nil
 	}
 	no := 1
@@ -287,10 +308,14 @@ func (c *CommandExecutor) list(_ context.Context, _ string) error {
 		if err != nil {
 			return errbook.Wrap("Failed to get relative path", err)
 		}
-		console.Render("%d.%s (%s)", no, relPath, lc.Type)
+		line := fmt.Sprintf("%d.%s (%s)", no, relPath, lc.Type)
+		console.Render(line)
+		listOutput.WriteString(line + "\n")
 		no++
 	}
-
+	
+	// Write the entire list to chat history
+	c.coder.writeChatHistory("", strings.TrimSpace(listOutput.String()))
 	return nil
 }
 
