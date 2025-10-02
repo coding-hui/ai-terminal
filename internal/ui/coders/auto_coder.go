@@ -196,7 +196,7 @@ func (a *AutoCoder) Run() error {
 			cmdExecutor.Executor(input)
 		},
 		func() string {
-			return a.getPromptPrefix()
+			return a.getPromptPrefix() + " > "
 		},
 	)
 
