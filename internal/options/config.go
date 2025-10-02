@@ -143,6 +143,8 @@ type AutoCoder struct {
 	DesignModel        string   `yaml:"design-model" env:"DESIGN_MODEL"`
 	CodingModel        string   `yaml:"coding-model" env:"CODING_MODEL"`
 	CodingFences       []string `yaml:"coding-fences" env:"CODING_FENCES"`
+	CommitAuthorName   string   `yaml:"commit-author-name" env:"COMMIT_AUTHOR_NAME" default:"ai auto coder"`
+	CommitAuthorEmail  string   `yaml:"commit-author-email" env:"COMMIT_AUTHOR_EMAIL" default:"ai-auto-coder@ai-terminal"`
 }
 
 func (a AutoCoder) GetDefaultFences() []string {
@@ -244,6 +246,18 @@ const (
 
 func (o OutputFormat) String() string {
 	return string(o)
+}
+
+func (c *Config) GetCommitAuthor() (name, email string) {
+	name = c.AutoCoder.CommitAuthorName
+	email = c.AutoCoder.CommitAuthorEmail
+	if name == "" {
+		name = "ai auto coder"
+	}
+	if email == "" {
+		email = "ai-auto-coder@ai-terminal"
+	}
+	return name, email
 }
 
 func (c *Config) GetModel(name string) (model Model, err error) {
