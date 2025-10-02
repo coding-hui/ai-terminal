@@ -127,7 +127,7 @@ func (a *AutoCoder) loadExistingContexts() error {
 	// Get current conversation details
 	details, err := convo.GetCurrentConversationID(context.Background(), a.cfg, a.store)
 	if err != nil {
-		return errbook.Wrap("Unable to load conversation session", err)
+		return err
 	}
 
 	a.cfg.CacheWriteToID = details.WriteID
