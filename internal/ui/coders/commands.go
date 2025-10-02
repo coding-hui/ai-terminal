@@ -691,18 +691,20 @@ func (c *CommandExecutor) help(_ context.Context, _ string) error {
 }
 
 func (c *CommandExecutor) clear(ctx context.Context, _ string) error {
+	sessionID := c.coder.cfg.CacheWriteToID
+	
 	// Clear all loaded contexts first
-	if _, err := c.coder.store.CleanContexts(ctx, c.coder.cfg.CacheWriteToID); err != nil {
+	if _, err := c.coder.store.CleanContexts(ctx, sessionID); err != nil {
 		return errbook.Wrap("Failed to clean file contexts", err)
 	}
 	c.coder.loadedContexts = []*convo.LoadContext{}
 
 	// Clear conversation messages
-	if err := c.coder.store.InvalidateMessages(ctx, c.coder.cfg.CacheWriteToID); err != nil {
+	if err := c.coder.store.InvalidateMessages(ctx, sessionID); err != nil {
 		return errbook.Wrap("Failed to clear conversation messages", err)
 	}
 
-	c.historyWriter.Render("Cleared current conversation")
+	c.historyWriter.Render("Cleared current conversation (session: %s)", sessionID)
 	return nil
 }
 
