@@ -99,24 +99,12 @@ func NewChat(cfg *options.Config, opts ...Option) *Chat {
 	}
 }
 
-// writeChatHistory writes chat interactions to the history file
+// writeChatHistory writes chat interactions to the history file using HistoryWriter
 func (c *Chat) writeChatHistory(input, response string) error {
-	// Get current working directory
-	wd, err := os.Getwd()
-	if err != nil {
-		return errbook.Wrap("Failed to get current working directory", err)
-	}
-
-	historyFilePath := filepath.Join(wd, chatHistoryFilename)
-
+	writer := NewHistoryWriter()
+	
 	// Build history content
 	var historyContent strings.Builder
-
-	// Add file header if this is the first write
-	fileInfo, err := os.Stat(historyFilePath)
-	if err != nil || fileInfo.Size() == 0 {
-		return errbook.Wrap("Failed to get history file", err)
-	}
 
 	// Write input and response
 	if input != "" {
@@ -125,7 +113,6 @@ func (c *Chat) writeChatHistory(input, response string) error {
 			historyContent.WriteString(fmt.Sprintf("#### %s\n", input))
 		} else {
 			// For other inputs, use the '>' prefix with prompt prefix
-			// Get the appropriate prompt prefix based on mode
 			promptPrefix := c.getPromptPrefix()
 			historyContent.WriteString(fmt.Sprintf("> %s %s\n", promptPrefix, input))
 		}
@@ -151,18 +138,7 @@ func (c *Chat) writeChatHistory(input, response string) error {
 		historyContent.WriteString("\n")
 	}
 
-	// Write to file
-	file, err := os.OpenFile(historyFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
-	if err != nil {
-		return errbook.Wrap("Failed to open chat history file", err)
-	}
-	defer file.Close() //nolint:errcheck
-
-	if _, err := file.WriteString(historyContent.String()); err != nil {
-		return errbook.Wrap("Failed to write chat history", err)
-	}
-
-	return nil
+	return writer.WriteToHistory(historyContent.String())
 }
 
 // Run starts the chat application and handles the main execution loop
