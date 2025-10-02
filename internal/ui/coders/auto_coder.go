@@ -4,7 +4,10 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/coding-hui/ai-terminal/internal/ai"
 	"github.com/coding-hui/ai-terminal/internal/convo"
@@ -17,6 +20,11 @@ import (
 
 //go:embed banner.txt
 var banner string
+
+// Define constants for chat history functionality
+const (
+	chatHistoryFilename = ".ai.chat.history.md"
+)
 
 type AutoCoder struct {
 	codeBasePath, prompt string
@@ -43,6 +51,57 @@ func (a *AutoCoder) saveContext(ctx context.Context, lc *convo.LoadContext) erro
 // deleteContext removes a specific conversation context from the store by its ID
 func (a *AutoCoder) deleteContext(ctx context.Context, id uint64) error {
 	return a.store.DeleteContexts(ctx, id)
+}
+
+// writeChatHistory writes commands and responses to the chat history file
+func (a *AutoCoder) writeChatHistory(command, response string) error {
+	// Get current working directory
+	wd, err := os.Getwd()
+	if err != nil {
+		return errbook.Wrap("Failed to get current working directory", err)
+	}
+
+	historyFilePath := filepath.Join(wd, chatHistoryFilename)
+
+	// Build history content
+	var historyContent strings.Builder
+	
+	// Add file header if this is the first write
+	fileInfo, err := os.Stat(historyFilePath)
+	if err != nil || fileInfo.Size() == 0 {
+		historyContent.WriteString("# AI Terminal Chat History\n\n")
+		historyContent.WriteString(fmt.Sprintf("**Session Started:** %s\n", time.Now().Format(time.RFC3339)))
+		historyContent.WriteString(fmt.Sprintf("**Model:** %s\n", a.cfg.Model))
+		historyContent.WriteString(fmt.Sprintf("**Mode:** %s\n\n", a.promptMode.String()))
+		historyContent.WriteString("---\n\n")
+	}
+
+	// Write command and response
+	historyContent.WriteString(fmt.Sprintf("## %s\n\n", time.Now().Format("15:04:05")))
+	historyContent.WriteString("### Command\n```bash\n")
+	historyContent.WriteString(command)
+	historyContent.WriteString("\n```\n\n")
+
+	if response != "" {
+		historyContent.WriteString("### Response\n")
+		historyContent.WriteString(response)
+		historyContent.WriteString("\n\n")
+	}
+
+	historyContent.WriteString("---\n\n")
+
+	// Write to file
+	file, err := os.OpenFile(historyFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		return errbook.Wrap("Failed to open chat history file", err)
+	}
+	defer file.Close()
+
+	if _, err := file.WriteString(historyContent.String()); err != nil {
+		return errbook.Wrap("Failed to write chat history", err)
+	}
+
+	return nil
 }
 
 func (a *AutoCoder) loadExistingContexts() error {
@@ -96,6 +155,12 @@ func (a *AutoCoder) Run() error {
 				initial = fmt.Sprintf("/coding %s", initial)
 			}
 		}
+		
+		// Record initial command to history
+		if err := a.writeChatHistory(initial, ""); err != nil {
+			console.RenderError(err, "Failed to write initial command to history")
+		}
+		
 		cmdExecutor.Executor(initial)
 	}
 
@@ -104,7 +169,13 @@ func (a *AutoCoder) Run() error {
 	p := console.NewPrompt(
 		true,
 		cmdCompleter.Complete,
-		cmdExecutor.Executor,
+		func(input string) {
+			// Record command to history before execution
+			if err := a.writeChatHistory(input, ""); err != nil {
+				console.RenderError(err, "Failed to write command to history")
+			}
+			cmdExecutor.Executor(input)
+		},
 		func() string {
 			return a.getPromptPrefix()
 		},

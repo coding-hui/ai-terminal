@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"html"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 	"unicode"
 
 	"github.com/atotto/clipboard"
@@ -25,6 +27,11 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/options"
 	"github.com/coding-hui/ai-terminal/internal/ui/console"
 	"github.com/coding-hui/ai-terminal/internal/util/term"
+)
+
+// Define constants for chat history functionality
+const (
+	chatHistoryFilename = ".ai.chat.history.md"
 )
 
 // state represents the current state of the chat application
@@ -93,6 +100,59 @@ func NewChat(cfg *options.Config, opts ...Option) *Chat {
 	}
 }
 
+// writeChatHistory writes chat interactions to the history file
+func (c *Chat) writeChatHistory(input, response string) error {
+	// Get current working directory
+	wd, err := os.Getwd()
+	if err != nil {
+		return errbook.Wrap("Failed to get current working directory", err)
+	}
+
+	historyFilePath := filepath.Join(wd, chatHistoryFilename)
+
+	// Build history content
+	var historyContent strings.Builder
+	
+	// Add file header if this is the first write
+	fileInfo, err := os.Stat(historyFilePath)
+	if err != nil || fileInfo.Size() == 0 {
+		historyContent.WriteString("# AI Chat History\n\n")
+		historyContent.WriteString(fmt.Sprintf("**Session Started:** %s\n", time.Now().Format(time.RFC3339)))
+		historyContent.WriteString(fmt.Sprintf("**Model:** %s\n\n", c.config.Model))
+		historyContent.WriteString("---\n\n")
+	}
+
+	// Write input and response
+	historyContent.WriteString(fmt.Sprintf("## %s\n\n", time.Now().Format("15:04:05")))
+	
+	if input != "" {
+		historyContent.WriteString("### Input\n")
+		historyContent.WriteString(input)
+		historyContent.WriteString("\n\n")
+	}
+
+	if response != "" {
+		historyContent.WriteString("### Response\n")
+		historyContent.WriteString(response)
+		historyContent.WriteString("\n\n")
+	}
+
+	historyContent.WriteString("---\n\n")
+
+	// Write to file
+	file, err := os.OpenFile(historyFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		return errbook.Wrap("Failed to open chat history file", err)
+	}
+	defer file.Close()
+
+	if _, err := file.WriteString(historyContent.String()); err != nil {
+		return errbook.Wrap("Failed to write chat history", err)
+	}
+
+	return nil
+}
+
 // Run starts the chat application and handles the main execution loop
 // Returns error if the program fails to start or encounters an error during execution
 func (c *Chat) Run() error {
@@ -100,6 +160,14 @@ func (c *Chat) Run() error {
 	if c.config.Raw || c.config.Quiet {
 		opts = append(opts, tea.WithoutRenderer())
 	}
+	
+	// Record initial message before running
+	if len(c.opts.messages) > 0 || c.opts.content != "" {
+		if err := c.writeChatHistory("", "Starting chat session..."); err != nil {
+			console.RenderError(err, "Failed to write initial chat history")
+		}
+	}
+	
 	if _, err := tea.NewProgram(c, opts...).Run(); err != nil {
 		return errbook.Wrap("Couldn't start Bubble Tea program.", err)
 	}
@@ -187,6 +255,10 @@ func (c *Chat) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.IsLast() {
 			c.state = doneState
 			c.TokenUsage = msg.GetUsage()
+			// Write chat history when conversation is completed
+			if err := c.writeChatHistory("", c.GetOutput()); err != nil {
+				console.RenderError(err, "Failed to write chat history")
+			}
 			return c, c.quit
 		}
 		cmds = append(cmds, c.awaitChatCompletedCmd())
