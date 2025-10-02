@@ -116,16 +116,19 @@ func (c *Chat) writeChatHistory(input, response string) error {
 	// Add file header if this is the first write
 	fileInfo, err := os.Stat(historyFilePath)
 	if err != nil || fileInfo.Size() == 0 {
-		historyContent.WriteString(fmt.Sprintf("# aider chat started at %s\n\n", time.Now().Format("2006-01-02 15:04:05")))
-		// TODO: Add command invocation details if available
-		// historyContent.WriteString(fmt.Sprintf("> %s\n", strings.Join(os.Args, " ")))
-		// TODO: Add version info if available
-		// historyContent.WriteString("> Aider v0.86.1\n")
-		// TODO: Add model info
-		// historyContent.WriteString(fmt.Sprintf("> Model: %s\n", c.config.Model))
-		// TODO: Add git repo info if available
-		// historyContent.WriteString("> Git repo: .git with 136 files\n")
-		// historyContent.WriteString("> Repo-map: using 4096 tokens, auto refresh\n\n")
+		historyContent.WriteString(fmt.Sprintf("# AI chat started at %s\n\n", time.Now().Format("2006-01-02 15:04:05")))
+		// Add command invocation details if available
+		if len(os.Args) > 0 {
+			historyContent.WriteString(fmt.Sprintf("> %s\n", strings.Join(os.Args, " ")))
+		}
+		// Add model info
+		historyContent.WriteString(fmt.Sprintf("> Model: %s\n", c.config.Model))
+		// Add git repo info if available
+		// Check if we're in a git repository
+		if _, err := os.Stat(".git"); err == nil {
+			historyContent.WriteString("> Git repo: .git\n")
+		}
+		historyContent.WriteString("\n")
 	}
 
 	// Write input and response
