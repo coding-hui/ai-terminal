@@ -73,6 +73,7 @@ func (c *CommandExecutor) registryCmds() {
 	supportCommands["/apply"] = c.apply
 	supportCommands["/chat-model"] = c.switchNewChatModel
 	supportCommands["/help"] = c.help
+	supportCommands["/clear"] = c.clear
 }
 
 // isCommand detects if input is a command (prefixed with ! or /)
@@ -658,6 +659,7 @@ func (c *CommandExecutor) help(_ context.Context, _ string) error {
 	systemCommands := []ui.Command{
 		{Name: "/exec <instruction>", Desc: "Infer and execute a shell command"},
 		{Name: "/chat-model <model> <api>", Desc: "Switch to a different chat model and API"},
+		{Name: "/clear", Desc: "Clear current conversation"},
 		{Name: "/exit", Desc: "Exit the terminal"},
 		{Name: "/help", Desc: "Show this help message"},
 	}
@@ -682,6 +684,22 @@ func (c *CommandExecutor) help(_ context.Context, _ string) error {
 	c.historyWriter.Render("  • Add --verbose flag to see raw AI messages")
 	c.historyWriter.Render("  • Add -y flag to skip confirmations")
 
+	return nil
+}
+
+func (c *CommandExecutor) clear(ctx context.Context, _ string) error {
+	// Clear all loaded contexts first
+	if _, err := c.coder.store.CleanContexts(ctx, c.coder.cfg.CacheWriteToID); err != nil {
+		return errbook.Wrap("Failed to clean file contexts", err)
+	}
+	c.coder.loadedContexts = []*convo.LoadContext{}
+
+	// Clear conversation messages
+	if err := c.coder.store.InvalidateMessages(ctx, c.coder.cfg.CacheWriteToID); err != nil {
+		return errbook.Wrap("Failed to clear conversation messages", err)
+	}
+
+	c.historyWriter.Render("Cleared current conversation")
 	return nil
 }
 
