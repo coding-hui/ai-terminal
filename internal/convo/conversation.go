@@ -145,7 +145,7 @@ func GetCurrentConversationID(ctx context.Context, cfg *options.Config, store St
 	title := writeID
 	model := cfg.Model
 
-	if readID == "" && cfg.ShowLast && cfg.Show == "" {
+	if readID == "" && (cfg.ShowLast && cfg.Show == "") || cfg.ContinueLast {
 		latest, err := store.LatestConversation(ctx)
 		if err != nil {
 			return CacheDetailsMsg{}, errbook.Wrap("Couldn't find latest conversation.", err)
