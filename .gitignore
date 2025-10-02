@@ -34,3 +34,5 @@ completions/*
 manpages/*
 
 .DS_Store
+.ai*
+.aider*

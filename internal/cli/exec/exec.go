@@ -10,6 +10,7 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/convo"
 	"github.com/coding-hui/ai-terminal/internal/git"
 	"github.com/coding-hui/ai-terminal/internal/options"
+	"github.com/coding-hui/ai-terminal/internal/ui/chat"
 	"github.com/coding-hui/ai-terminal/internal/ui/coders"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 )
@@ -71,7 +72,7 @@ func NewCmdExec(ioStreams genericclioptions.IOStreams, cfg *options.Config) *cob
 			if o.auto {
 				execInput += " --yes"
 			}
-			executor := coders.NewCommandExecutor(autoCoder)
+			executor := coders.NewCommandExecutor(autoCoder, chat.NewHistoryWriter())
 			executor.Executor(execInput)
 
 			return nil

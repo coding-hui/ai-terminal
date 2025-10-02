@@ -20,6 +20,7 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/prompt"
 	"github.com/coding-hui/ai-terminal/internal/runner"
+	"github.com/coding-hui/ai-terminal/internal/ui"
 	"github.com/coding-hui/ai-terminal/internal/ui/chat"
 	"github.com/coding-hui/ai-terminal/internal/ui/console"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
@@ -129,7 +130,7 @@ func (c *CommandExecutor) Executor(input string) {
 func (c *CommandExecutor) ask(ctx context.Context, input string) error {
 	if input == "" {
 		c.coder.promptMode = ChatPromptMode
-		c.historyWriter.Render("Switched /ask mode")
+		c.historyWriter.RenderComment("Switched /ask mode")
 		return nil
 	}
 
@@ -375,7 +376,7 @@ func (c *CommandExecutor) coding(ctx context.Context, input string) error {
 
 	if input == "" {
 		c.coder.promptMode = DefaultPromptMode
-		c.historyWriter.Render("Switched /coding mode")
+		c.historyWriter.RenderComment("Switched /coding mode")
 		return nil
 	}
 
@@ -432,7 +433,7 @@ func (c *CommandExecutor) coding(ctx context.Context, input string) error {
 		if !found {
 			if console.WaitForUserConfirm(console.Yes, "Do you want to add modified file %s to context?", file) {
 				if err := c.add(ctx, file); err != nil {
-					console.RenderError(err, "Failed to add file %s to context", file)
+					c.historyWriter.Render("Failed to add file %s to context", file)
 				}
 			}
 		}
@@ -580,7 +581,7 @@ func (c *CommandExecutor) apply(ctx context.Context, codes string) error {
 func (c *CommandExecutor) exec(_ context.Context, input string) error {
 	if input == "" {
 		c.coder.promptMode = ExecPromptMode
-		c.historyWriter.Render("Switched /exec mode")
+		c.historyWriter.RenderComment("Switched /exec mode")
 		return nil
 	}
 
@@ -638,10 +639,7 @@ func (c *CommandExecutor) exec(_ context.Context, input string) error {
 func (c *CommandExecutor) help(_ context.Context, _ string) error {
 	c.historyWriter.Render("Available commands:")
 
-	commands := []struct {
-		cmd  string
-		desc string
-	}{
+	commands := []ui.Command{
 		{"/add <file/folder patterns/URLs>", "Add local files or URLs to chat context"},
 		{"/list", "List files in chat context"},
 		{"/remove <patterns>", "Remove files from context"},
@@ -659,14 +657,7 @@ func (c *CommandExecutor) help(_ context.Context, _ string) error {
 		{"/help", "Show this help message"},
 	}
 
-	for _, cmd := range commands {
-		formatted := fmt.Sprintf("  %-44s", cmd.cmd)
-		c.historyWriter.Render(
-			"%s%s",
-			console.StdoutStyles().Flag.Render(formatted),
-			console.StdoutStyles().FlagDesc.Render(cmd.desc),
-		)
-	}
+	c.historyWriter.RenderHelps(commands)
 
 	return nil
 }

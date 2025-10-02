@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/coding-hui/ai-terminal/internal/errbook"
+	"github.com/coding-hui/ai-terminal/internal/ui"
 	"github.com/coding-hui/ai-terminal/internal/ui/console"
 )
 
@@ -60,7 +61,9 @@ func (h *HistoryWriter) WriteToHistory(content string) error {
 	if err != nil {
 		return errbook.Wrap("Failed to open chat history file", err)
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
 	if _, err := file.WriteString(historyContent.String()); err != nil {
 		return errbook.Wrap("Failed to write chat history", err)
@@ -73,23 +76,38 @@ func (h *HistoryWriter) WriteToHistory(content string) error {
 func (h *HistoryWriter) Render(format string, args ...interface{}) {
 	content := fmt.Sprintf(format, args...)
 	console.Render(content)
-	h.WriteToHistory(content)
+	_ = h.WriteToHistory(content)
+}
+
+// RenderHelps writes to console and chat history
+func (h *HistoryWriter) RenderHelps(commands []ui.Command) {
+	var content strings.Builder
+	for _, cmd := range commands {
+		formatted := fmt.Sprintf("  %-44s", cmd.Name)
+		console.Render(
+			"%s%s",
+			console.StdoutStyles().Flag.Render(formatted),
+			console.StdoutStyles().FlagDesc.Render(cmd.Desc),
+		)
+		content.WriteString(fmt.Sprintf(">%s%s  \n", formatted, cmd.Desc))
+	}
+	_ = h.WriteToHistory(content.String())
 }
 
 // RenderError writes error to console and chat history
 func (h *HistoryWriter) RenderError(err error, reason string, args ...interface{}) {
 	console.RenderError(err, reason, args...)
-	errorMsg := fmt.Sprintf("Error: %s - %s", err.Error(), fmt.Sprintf(reason, args...))
-	// Format error with special markdown
-	formattedError := fmt.Sprintf("**Error:** %s\n", errorMsg)
-	h.WriteToHistory(formattedError)
+	header := fmt.Sprintf("> ERROR: %s", err)
+	detail := fmt.Sprintf("> "+reason, args...)
+	errorMsg := fmt.Sprintf("%s  \n%s\n", header, detail)
+	_ = h.WriteToHistory(errorMsg)
 }
 
 // RenderComment writes comment to console and chat history
 func (h *HistoryWriter) RenderComment(format string, args ...interface{}) {
 	console.RenderComment(format, args...)
 	content := fmt.Sprintf(format, args...)
-	h.WriteToHistory(content)
+	_ = h.WriteToHistory("> " + content)
 }
 
 // RenderStep writes step information to console and chat history
@@ -97,5 +115,5 @@ func (h *HistoryWriter) RenderStep(format string, args ...interface{}) {
 	// Assuming console has a RenderStep function, if not, use Render
 	console.Render(format, args...)
 	content := fmt.Sprintf(format, args...)
-	h.WriteToHistory(content)
+	_ = h.WriteToHistory(content)
 }

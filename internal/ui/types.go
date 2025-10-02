@@ -78,3 +78,8 @@ func (m RunMode) String() string {
 		return "repl"
 	}
 }
+
+type Command struct {
+	Name string
+	Desc string
+}

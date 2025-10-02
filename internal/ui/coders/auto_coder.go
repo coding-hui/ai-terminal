@@ -87,16 +87,7 @@ func (a *AutoCoder) writeChatHistory(command, response string) error {
 
 	// Write command and response
 	if command != "" {
-		// Format commands with '>' prefix or '####' for slash commands
-		if strings.HasPrefix(command, "/") {
-			historyContent.WriteString(fmt.Sprintf("#### %s\n", command))
-		} else {
-			// Add prompt prefix before the command
-			promptPrefix := a.getPromptPrefix()
-			historyContent.WriteString(fmt.Sprintf("> %s %s\n", promptPrefix, command))
-		}
-		// Add a newline after command
-		historyContent.WriteString("\n")
+		historyContent.WriteString(fmt.Sprintf("#### %s\n", command))
 	}
 
 	if response != "" {
@@ -207,7 +198,7 @@ func (a *AutoCoder) Run() error {
 			cmdExecutor.Executor(input)
 		},
 		func() string {
-			return a.getPromptPrefix() + " > "
+			return a.getPromptPrefix()
 		},
 	)
 
@@ -218,7 +209,7 @@ func (a *AutoCoder) Run() error {
 }
 
 func (a *AutoCoder) getPromptPrefix() (promptPrefix string) {
-	promptPrefix = a.promptMode.String()
+	promptPrefix = a.promptMode.String() + " > "
 	switch a.promptMode {
 	case ChatPromptMode:
 		if a.cfg.AutoCoder.PromptPrefixChat != "" {
