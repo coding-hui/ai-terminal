@@ -39,14 +39,19 @@ func getSupportedCommands() []string {
 }
 
 type CommandExecutor struct {
-	coder  *AutoCoder
-	editor *EditBlockCoder
-	flags  map[string]bool
+	coder         *AutoCoder
+	editor        *EditBlockCoder
+	flags         map[string]bool
+	historyWriter *chat.HistoryWriter
 }
 
-func NewCommandExecutor(coder *AutoCoder) *CommandExecutor {
+func NewCommandExecutor(coder *AutoCoder, historyWriter *chat.HistoryWriter) *CommandExecutor {
 	editor := NewEditBlockCoder(coder, fences[0])
-	cmds := &CommandExecutor{coder: coder, editor: editor}
+	cmds := &CommandExecutor{
+		coder:         coder, 
+		editor:        editor,
+		historyWriter: historyWriter,
+	}
 	cmds.registryCmds()
 	return cmds
 }

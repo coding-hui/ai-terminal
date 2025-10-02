@@ -154,9 +154,12 @@ func (a *AutoCoder) loadExistingContexts() error {
 }
 
 func (a *AutoCoder) Run() error {
+	// Create history writer
+	historyWriter := chat.NewHistoryWriter()
+	
 	initial := strings.TrimSpace(a.prompt)
 	if initial == "" {
-		a.printWelcome()
+		a.printWelcome(historyWriter)
 	}
 
 	// Load any existing contexts from previous session
@@ -164,7 +167,7 @@ func (a *AutoCoder) Run() error {
 		return err
 	}
 
-	cmdExecutor := NewCommandExecutor(a)
+	cmdExecutor := NewCommandExecutor(a, historyWriter)
 	if initial != "" {
 		// If the provided prompt is a slash/exec command, run it directly.
 		// Otherwise, map by promptMode:
@@ -181,7 +184,7 @@ func (a *AutoCoder) Run() error {
 
 		// Record initial command to history
 		if err := a.writeChatHistory(initial, ""); err != nil {
-			console.RenderError(err, "Failed to write initial command to history")
+			historyWriter.RenderError(err, "Failed to write initial command to history")
 		}
 
 		cmdExecutor.Executor(initial)
@@ -195,7 +198,7 @@ func (a *AutoCoder) Run() error {
 		func(input string) {
 			// Record command to history before execution
 			if err := a.writeChatHistory(input, ""); err != nil {
-				console.RenderError(err, "Failed to write command to history")
+				historyWriter.RenderError(err, "Failed to write command to history")
 			}
 			cmdExecutor.Executor(input)
 		},
@@ -229,23 +232,23 @@ func (a *AutoCoder) getPromptPrefix() (promptPrefix string) {
 	return promptPrefix
 }
 
-func (a *AutoCoder) printWelcome() {
+func (a *AutoCoder) printWelcome(historyWriter *chat.HistoryWriter) {
 	fmt.Println(banner)
-	console.RenderComment("")
-	console.RenderComment("Welcome to AutoCoder - Your AI Coding Assistant! (%s) [Model: %s]\n", a.versionInfo.GitVersion, a.cfg.CurrentModel.Name)
+	historyWriter.RenderComment("")
+	historyWriter.RenderComment("Welcome to AutoCoder - Your AI Coding Assistant! (%s) [Model: %s]\n", a.versionInfo.GitVersion, a.cfg.CurrentModel.Name)
 
 	// Get current conversation info from config
 	if a.cfg.CacheWriteToID != "" {
-		console.RenderComment("Current Session:")
-		console.RenderComment("  • ID: %s", a.cfg.CacheWriteToID)
+		historyWriter.RenderComment("Current Session:")
+		historyWriter.RenderComment("  • ID: %s", a.cfg.CacheWriteToID)
 		if a.cfg.CacheWriteToTitle != "" {
-			console.RenderComment("  • Title: %s", a.cfg.CacheWriteToTitle)
+			historyWriter.RenderComment("  • Title: %s", a.cfg.CacheWriteToTitle)
 		}
-		console.RenderComment("")
+		historyWriter.RenderComment("")
 	}
 
-	console.Render("Let's start coding! 🚀")
-	console.RenderComment("")
+	historyWriter.Render("Let's start coding! 🚀")
+	historyWriter.RenderComment("")
 }
 
 func (a *AutoCoder) determineBeatCodeFences(rawCode string) (string, string) {
