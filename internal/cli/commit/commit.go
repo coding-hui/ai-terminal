@@ -67,14 +67,11 @@ func NewCmdCommit(ioStreams genericclioptions.IOStreams, cfg *options.Config) *c
 }
 
 func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
-	if !runner.IsCommandAvailable("git") {
-		return errbook.New("git command not found on your system's PATH. Please install Git and try again")
+	if err := o.validateGit(); err != nil {
+		return err
 	}
 
-	o.userPrompt = ""
-	if len(args) > 0 {
-		o.userPrompt = strings.TrimSpace(strings.Join(args, " "))
-	}
+	o.setUserPrompt(args)
 
 	llmEngine, err := ai.New(ai.WithConfig(o.cfg))
 	if err != nil {
@@ -87,17 +84,61 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 		git.WithEnableAmend(o.commitAmend),
 	)
 
-	// Add files specified by the user
+	if err := o.addFilesToGit(g); err != nil {
+		return err
+	}
+
+	commitMessage, err := o.generateCommitMessage(llmEngine, g)
+	if err != nil {
+		return err
+	}
+
+	if err := o.writeCommitMessageToFile(g, commitMessage); err != nil {
+		return err
+	}
+
+	if err := o.handlePreviewAndConfirmation(&commitMessage); err != nil {
+		return err
+	}
+
+	if err := o.executeCommit(g, commitMessage); err != nil {
+		return err
+	}
+
+	if o.cfg.ShowTokenUsages {
+		defer o.printTokenUsage()
+	}
+
+	return nil
+}
+
+func (o *Options) validateGit() error {
+	if !runner.IsCommandAvailable("git") {
+		return errbook.New("git command not found on your system's PATH. Please install Git and try again")
+	}
+	return nil
+}
+
+func (o *Options) setUserPrompt(args []string) {
+	o.userPrompt = ""
+	if len(args) > 0 {
+		o.userPrompt = strings.TrimSpace(strings.Join(args, " "))
+	}
+}
+
+func (o *Options) addFilesToGit(g *git.Command) error {
 	if len(o.FilesToAdd) > 0 {
-		err := g.AddFiles(o.FilesToAdd)
-		if err != nil {
+		if err := g.AddFiles(o.FilesToAdd); err != nil {
 			return errbook.Wrap("Could not add files.", err)
 		}
 	}
+	return nil
+}
 
+func (o *Options) generateCommitMessage(llmEngine *ai.Engine, g *git.Command) (string, error) {
 	diff, err := g.DiffFiles()
 	if err != nil {
-		return errbook.Wrap("Could not get diff files.", err)
+		return "", errbook.Wrap("Could not get diff files.", err)
 	}
 
 	vars := map[string]any{
@@ -106,13 +147,19 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 		prompt.OutputLanguageKey:    prompt.GetLanguage(o.commitLang),
 	}
 
-	err = o.codeReview(llmEngine, vars)
-	if err != nil {
+	if err := o.performCodeAnalysis(llmEngine, vars); err != nil {
+		return "", err
+	}
+
+	return o.generateFinalCommitMessage(llmEngine, vars)
+}
+
+func (o *Options) performCodeAnalysis(llmEngine *ai.Engine, vars map[string]any) error {
+	if err := o.codeReview(llmEngine, vars); err != nil {
 		return errbook.Wrap("Could not generate code review.", err)
 	}
 
-	err = o.summarizeTitle(llmEngine, vars)
-	if err != nil {
+	if err := o.summarizeTitle(llmEngine, vars); err != nil {
 		return errbook.Wrap("Could not generate summarize title.", err)
 	}
 
@@ -121,17 +168,22 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 		vars[prompt.SummarizePrefixKey] = o.commitPrefix
 	} else {
 		// Otherwise generate prefix from LLM
-		err = o.summarizePrefix(llmEngine, vars)
-		if err != nil {
+		if err := o.summarizePrefix(llmEngine, vars); err != nil {
 			return errbook.Wrap("Could not generate summarize prefix.", err)
 		}
 	}
+	return nil
+}
 
+func (o *Options) generateFinalCommitMessage(llmEngine *ai.Engine, vars map[string]any) (string, error) {
 	commitMessage, err := o.generateCommitMsg(llmEngine, vars)
 	if err != nil {
-		return errbook.Wrap("Could not generate commit message.", err)
+		return "", errbook.Wrap("Could not generate commit message.", err)
 	}
+	return commitMessage, nil
+}
 
+func (o *Options) writeCommitMessageToFile(g *git.Command, commitMessage string) error {
 	if o.commitMsgFile == "" {
 		out, err := g.GitDir()
 		if err != nil {
@@ -140,30 +192,34 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 		o.commitMsgFile = path.Join(strings.TrimSpace(out), "COMMIT_EDITMSG")
 	}
 	console.RenderStep("Writing commit message to %s", o.commitMsgFile)
-	err = os.WriteFile(o.commitMsgFile, []byte(commitMessage), 0o600)
-	if err != nil {
+	if err := os.WriteFile(o.commitMsgFile, []byte(commitMessage), 0o600); err != nil {
 		return errbook.Wrap("Could not write commit message to file: "+o.commitMsgFile, err)
 	}
+	return nil
+}
 
+func (o *Options) handlePreviewAndConfirmation(commitMessage *string) error {
 	if o.preview && !o.noConfirm {
 		if ok := console.WaitForUserConfirm(console.No, "Commit preview summary?"); !ok {
-			return nil
+			return errbook.New("Commit cancelled by user")
 		}
 	}
 
 	if !o.noConfirm {
 		if change := console.WaitForUserConfirm(console.No, "Do you want to change the commit message?"); change {
-			m := ui.InitialTextareaPrompt(commitMessage)
+			m := ui.InitialTextareaPrompt(*commitMessage)
 			p := tea.NewProgram(m)
 			if _, err := p.Run(); err != nil {
 				return errbook.Wrap("Could not start Bubble Tea program.", err)
 			}
 			p.Wait()
-			commitMessage = m.Textarea.Value()
+			*commitMessage = m.Textarea.Value()
 		}
 	}
+	return nil
+}
 
-	// git commit automatically
+func (o *Options) executeCommit(g *git.Command, commitMessage string) error {
 	console.RenderStep("Recording changes to repository...")
 
 	// Determine attribution settings
@@ -178,54 +234,55 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 
 	// Handle different commit scenarios based on attribution settings
 	if o.isAutoCoder && (useAttributeAuthor || useAttributeCommitter) {
-		// Use custom author/committer attribution
-		authorName, authorEmail := o.cfg.GetCommitAuthor()
-		committerName, committerEmail := o.cfg.GetCommitAuthor()
-
-		// Add model information to names if needed
-		if useAttributeAuthor && o.cfg.CurrentModel.Name != "" {
-			authorName = fmt.Sprintf("%s (%s)", authorName, o.cfg.CurrentModel.Name)
-		}
-		if useAttributeCommitter && o.cfg.CurrentModel.Name != "" {
-			committerName = fmt.Sprintf("%s (%s)", committerName, o.cfg.CurrentModel.Name)
-		}
-
-		// Use separate author and committer if both are specified
-		if useAttributeAuthor && useAttributeCommitter {
-			output, err := g.CommitWithAuthorAndCommitter(finalCommitMessage, authorName, authorEmail, committerName, committerEmail)
-			if err != nil {
-				return errbook.Wrap("Could not commit changes to the repository.", err)
-			}
-			color.Yellow(output)
-		} else if useAttributeAuthor {
-			// Only modify author
-			output, err := g.CommitWithAuthor(finalCommitMessage, authorName, authorEmail)
-			if err != nil {
-				return errbook.Wrap("Could not commit changes to the repository.", err)
-			}
-			color.Yellow(output)
-		} else {
-			// Only modify committer via environment
-			output, err := g.CommitWithAuthorAndCommitter(finalCommitMessage, "", "", committerName, committerEmail)
-			if err != nil {
-				return errbook.Wrap("Could not commit changes to the repository.", err)
-			}
-			color.Yellow(output)
-		}
+		return o.executeAttributedCommit(g, finalCommitMessage, useAttributeAuthor, useAttributeCommitter)
 	} else {
-		// Use default git author (no special attribution)
-		output, err := g.Commit(finalCommitMessage)
+		return o.executeStandardCommit(g, finalCommitMessage)
+	}
+}
+
+func (o *Options) executeAttributedCommit(g *git.Command, finalCommitMessage string, useAttributeAuthor, useAttributeCommitter bool) error {
+	authorName, authorEmail := o.cfg.GetCommitAuthor()
+	committerName, committerEmail := o.cfg.GetCommitAuthor()
+
+	// Add model information to names if needed
+	if useAttributeAuthor && o.cfg.CurrentModel.Name != "" {
+		authorName = fmt.Sprintf("%s (%s)", authorName, o.cfg.CurrentModel.Name)
+	}
+	if useAttributeCommitter && o.cfg.CurrentModel.Name != "" {
+		committerName = fmt.Sprintf("%s (%s)", committerName, o.cfg.CurrentModel.Name)
+	}
+
+	// Use separate author and committer if both are specified
+	if useAttributeAuthor && useAttributeCommitter {
+		output, err := g.CommitWithAuthorAndCommitter(finalCommitMessage, authorName, authorEmail, committerName, committerEmail)
+		if err != nil {
+			return errbook.Wrap("Could not commit changes to the repository.", err)
+		}
+		color.Yellow(output)
+	} else if useAttributeAuthor {
+		// Only modify author
+		output, err := g.CommitWithAuthor(finalCommitMessage, authorName, authorEmail)
+		if err != nil {
+			return errbook.Wrap("Could not commit changes to the repository.", err)
+		}
+		color.Yellow(output)
+	} else {
+		// Only modify committer via environment
+		output, err := g.CommitWithAuthorAndCommitter(finalCommitMessage, "", "", committerName, committerEmail)
 		if err != nil {
 			return errbook.Wrap("Could not commit changes to the repository.", err)
 		}
 		color.Yellow(output)
 	}
+	return nil
+}
 
-	// Print token usage after commit is done
-	if o.cfg.ShowTokenUsages {
-		defer o.printTokenUsage()
+func (o *Options) executeStandardCommit(g *git.Command, finalCommitMessage string) error {
+	output, err := g.Commit(finalCommitMessage)
+	if err != nil {
+		return errbook.Wrap("Could not commit changes to the repository.", err)
 	}
-
+	color.Yellow(output)
 	return nil
 }
 
