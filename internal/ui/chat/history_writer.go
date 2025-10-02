@@ -80,7 +80,9 @@ func (h *HistoryWriter) Render(format string, args ...interface{}) {
 func (h *HistoryWriter) RenderError(err error, reason string, args ...interface{}) {
 	console.RenderError(err, reason, args...)
 	errorMsg := fmt.Sprintf("Error: %s - %s", err.Error(), fmt.Sprintf(reason, args...))
-	h.WriteToHistory(errorMsg)
+	// Format error with special markdown
+	formattedError := fmt.Sprintf("**Error:** %s\n", errorMsg)
+	h.WriteToHistory(formattedError)
 }
 
 // RenderComment writes comment to console and chat history

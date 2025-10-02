@@ -103,6 +103,9 @@ func (a *AutoCoder) writeChatHistory(command, response string) error {
 		// Format responses that indicate file operations
 		if strings.Contains(response, "Added") && strings.Contains(response, "to the chat") {
 			historyContent.WriteString(fmt.Sprintf("> %s\n", response))
+		} else if strings.Contains(response, "Error:") || strings.Contains(response, "Failed to") {
+			// Format error messages with special markdown
+			historyContent.WriteString(fmt.Sprintf("**Error:** %s\n", response))
 		} else {
 			// For other responses, just write them directly
 			historyContent.WriteString(response)

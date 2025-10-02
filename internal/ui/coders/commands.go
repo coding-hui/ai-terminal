@@ -108,12 +108,10 @@ func (c *CommandExecutor) Executor(input string) {
 			"Unknown command: %s. Supported commands: %s. Type / to see all recommended commands.",
 			cmd, strings.Join(getSupportedCommands(), ", "),
 		)
-		console.RenderError(
+		c.historyWriter.RenderError(
 			errbook.ErrInvalidArgument,
 			errorMsg,
 		)
-		// Write error to chat history
-		c.coder.writeChatHistory("", errorMsg)
 		return
 	}
 
@@ -123,10 +121,7 @@ func (c *CommandExecutor) Executor(input string) {
 
 	// Execute the recognized command
 	if err := fn(context.Background(), userInput); err != nil {
-		errorMsg := fmt.Sprintf("Failed to execute command %s: %s", cmd, err.Error())
-		console.RenderError(err, "Failed to execute command %s", cmd)
-		// Write error to chat history
-		c.coder.writeChatHistory("", errorMsg)
+		c.historyWriter.RenderError(err, "Failed to execute command %s", cmd)
 	}
 }
 
@@ -179,7 +174,7 @@ func (c *CommandExecutor) add(_ context.Context, input string) (err error) {
 	files := strings.Fields(input)
 	if len(files) == 0 {
 		errorMsg := "Please provide at least one file or URL"
-		c.coder.writeChatHistory("", errorMsg)
+		c.historyWriter.RenderError(errbook.New(errorMsg), errorMsg)
 		return errbook.New(errorMsg)
 	}
 
@@ -225,8 +220,7 @@ func (c *CommandExecutor) add(_ context.Context, input string) (err error) {
 
 		if len(matches) <= 0 {
 			msg := fmt.Sprintf("No files matched pattern [%s]", pattern)
-			console.Render(msg)
-			c.coder.writeChatHistory("", msg)
+			c.historyWriter.Render(msg)
 			continue
 		}
 
@@ -242,7 +236,7 @@ func (c *CommandExecutor) add(_ context.Context, input string) (err error) {
 				matchedFiles = append(matchedFiles, filePath)
 			} else {
 				errorMsg := fmt.Sprintf("File [%s] not found", filePath)
-				c.coder.writeChatHistory("", errorMsg)
+				c.historyWriter.RenderError(errbook.New(errorMsg), errorMsg)
 				return errbook.New(errorMsg)
 			}
 		}
@@ -261,7 +255,7 @@ func (c *CommandExecutor) add(_ context.Context, input string) (err error) {
 		for _, lc := range c.coder.loadedContexts {
 			if lc.FilePath == absPath || lc.URL == absPath {
 				errorMsg := fmt.Sprintf("File [%s] already exists", absPath)
-				c.coder.writeChatHistory("", errorMsg)
+				c.historyWriter.RenderError(errbook.New(errorMsg), errorMsg)
 				return errbook.New(errorMsg)
 			}
 		}
@@ -287,8 +281,7 @@ func (c *CommandExecutor) add(_ context.Context, input string) (err error) {
 		}
 
 		msg := fmt.Sprintf("Added [%s]", absPath)
-		console.Render(msg)
-		c.coder.writeChatHistory("", msg)
+		c.historyWriter.Render(msg)
 	}
 
 	return nil
@@ -296,13 +289,13 @@ func (c *CommandExecutor) add(_ context.Context, input string) (err error) {
 
 // list displays all files currently in context
 func (c *CommandExecutor) list(_ context.Context, _ string) error {
-	var listOutput strings.Builder
 	if len(c.coder.loadedContexts) <= 0 {
 		msg := "No files added in chat currently"
-		console.Render(msg)
-		c.coder.writeChatHistory("", msg)
+		c.historyWriter.Render(msg)
 		return nil
 	}
+	
+	var listOutput strings.Builder
 	no := 1
 	for _, lc := range c.coder.loadedContexts {
 		path := lc.FilePath
@@ -319,8 +312,8 @@ func (c *CommandExecutor) list(_ context.Context, _ string) error {
 		no++
 	}
 
-	// Write the entire list to chat history
-	c.coder.writeChatHistory("", strings.TrimSpace(listOutput.String()))
+	// Write the entire list to chat history using HistoryWriter
+	c.historyWriter.Render(listOutput.String())
 	return nil
 }
 
