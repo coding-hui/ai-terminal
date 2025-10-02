@@ -533,15 +533,15 @@ func (c *Chat) saveConversation() error {
 			c.TokenUsage.TotalTokens,
 		)
 	}
-	
+
 	// Write to history file
 	wd, err := os.Getwd()
 	if err == nil {
 		historyFilePath := filepath.Join(wd, chatHistoryFilename)
 		file, err := os.OpenFile(historyFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 		if err == nil {
-			defer file.Close()
-			file.WriteString(saveContent + "\n")
+			defer file.Close()                   //nolint:errcheck
+			file.WriteString(saveContent + "\n") //nolint:errcheck
 		}
 	}
 
