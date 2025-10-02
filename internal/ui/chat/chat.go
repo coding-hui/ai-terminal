@@ -572,12 +572,12 @@ func (c *Chat) getPromptPrefix() string {
 	// Since Chat doesn't have an explicit PromptMode field, we'll use a default
 	// You may want to add a PromptMode field to Chat if needed
 	promptPrefix := "chat" // Default prefix for chat mode
-	
+
 	// If the chat has access to configuration for prompt prefixes, use them
 	if c.config != nil && c.config.AutoCoder.PromptPrefixChat != "" {
 		promptPrefix = c.config.AutoCoder.PromptPrefixChat
 	}
-	
+
 	return promptPrefix
 }
 
