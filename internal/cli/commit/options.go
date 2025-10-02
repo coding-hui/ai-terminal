@@ -19,6 +19,7 @@ type Options struct {
 	commitLang     string
 	userPrompt     string
 	commitPrefix   string
+	isAutoCoder    bool
 
 	cfg *options.Config
 	genericclioptions.IOStreams
@@ -75,5 +76,12 @@ func WithCommitPrefix(prefix string) Option {
 func WithCommitLang(lang string) Option {
 	return func(o *Options) {
 		o.commitLang = lang
+	}
+}
+
+// WithIsAutoCoder marks the commit as coming from auto coder
+func WithIsAutoCoder(isAutoCoder bool) Option {
+	return func(o *Options) {
+		o.isAutoCoder = isAutoCoder
 	}
 }

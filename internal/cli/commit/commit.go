@@ -163,18 +163,30 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 		}
 	}
 
-	// git commit automatically with configured author including model info
+	// git commit automatically
 	console.RenderStep("Recording changes to repository...")
-	authorName, authorEmail := o.cfg.GetCommitAuthor()
-	// Add model information to the author name in parentheses
-	if o.cfg.CurrentModel.Name != "" {
-		authorName = fmt.Sprintf("%s (%s)", authorName, o.cfg.CurrentModel.Name)
+	
+	// Check if this is an auto coder commit (has FilesToAdd) and use configured author
+	if len(o.FilesToAdd) > 0 {
+		// This is an auto coder commit, use configured author with model info
+		authorName, authorEmail := o.cfg.GetCommitAuthor()
+		// Add model information to the author name in parentheses
+		if o.cfg.CurrentModel.Name != "" {
+			authorName = fmt.Sprintf("%s (%s)", authorName, o.cfg.CurrentModel.Name)
+		}
+		output, err := g.CommitWithAuthor(commitMessage, authorName, authorEmail)
+		if err != nil {
+			return errbook.Wrap("Could not commit changes to the repository.", err)
+		}
+		color.Yellow(output)
+	} else {
+		// This is a direct commit command, use default git author
+		output, err := g.Commit(commitMessage)
+		if err != nil {
+			return errbook.Wrap("Could not commit changes to the repository.", err)
+		}
+		color.Yellow(output)
 	}
-	output, err := g.CommitWithAuthor(commitMessage, authorName, authorEmail)
-	if err != nil {
-		return errbook.Wrap("Could not commit changes to the repository.", err)
-	}
-	color.Yellow(output)
 
 	// Print token usage after commit is done
 	if o.cfg.ShowTokenUsages {
