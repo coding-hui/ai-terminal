@@ -179,12 +179,7 @@ func (c *Chat) Run() error {
 		opts = append(opts, tea.WithoutRenderer())
 	}
 
-	// Record initial message before running
-	if len(c.opts.messages) > 0 || c.opts.content != "" {
-		if err := c.writeChatHistory("", "Starting chat session..."); err != nil {
-			console.RenderError(err, "Failed to write initial chat history")
-		}
-	}
+	// No longer writing "Starting chat session..." to history
 
 	if _, err := tea.NewProgram(c, opts...).Run(); err != nil {
 		return errbook.Wrap("Couldn't start Bubble Tea program.", err)
