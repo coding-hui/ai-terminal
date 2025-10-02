@@ -499,7 +499,10 @@ func (c *Chat) saveConversation() error {
 		), err)
 	}
 
-	// Write save confirmation to history file instead of console
+	// Write save confirmation to history file using HistoryWriter
+	writer := NewHistoryWriter()
+	
+	// Build save content
 	saveContent := fmt.Sprintf("\n**Conversation successfully saved:** `%s` `%s`\n", c.config.CacheWriteToID[:convo.Sha1short], writeToTitle)
 	if c.config.ShowTokenUsages {
 		saveContent += fmt.Sprintf("\nFirst Token: `%.3fs` | Avg: `%.3f/s` | Total: `%.3fs` | Tokens: `%d`",
@@ -510,15 +513,9 @@ func (c *Chat) saveConversation() error {
 		)
 	}
 
-	// Write to history file
-	wd, err := os.Getwd()
-	if err == nil {
-		historyFilePath := filepath.Join(wd, chatHistoryFilename)
-		file, err := os.OpenFile(historyFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
-		if err == nil {
-			defer file.Close()                   //nolint:errcheck
-			file.WriteString(saveContent + "\n") //nolint:errcheck
-		}
+	// Write to history file using HistoryWriter
+	if err := writer.WriteToHistory(saveContent); err != nil {
+		console.RenderError(err, "Failed to write save confirmation to chat history")
 	}
 
 	return nil
