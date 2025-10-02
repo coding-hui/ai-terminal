@@ -6,8 +6,6 @@ import (
 	"context"
 	"fmt"
 	"html"
-	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 	"unicode"
@@ -102,7 +100,7 @@ func NewChat(cfg *options.Config, opts ...Option) *Chat {
 // writeChatHistory writes chat interactions to the history file using HistoryWriter
 func (c *Chat) writeChatHistory(input, response string) error {
 	writer := NewHistoryWriter()
-	
+
 	// Build history content
 	var historyContent strings.Builder
 
@@ -501,9 +499,9 @@ func (c *Chat) saveConversation() error {
 
 	// Write save confirmation to history file using HistoryWriter
 	writer := NewHistoryWriter()
-	
+
 	// Build save content
-	saveContent := fmt.Sprintf("\n**Conversation successfully saved:** `%s` `%s`\n", c.config.CacheWriteToID[:convo.Sha1short], writeToTitle)
+	saveContent := fmt.Sprintf("**Conversation successfully saved:** `%s` `%s`", c.config.CacheWriteToID[:convo.Sha1short], writeToTitle)
 	if c.config.ShowTokenUsages {
 		saveContent += fmt.Sprintf("\nFirst Token: `%.3fs` | Avg: `%.3f/s` | Total: `%.3fs` | Tokens: `%d`",
 			c.TokenUsage.FirstTokenTime.Seconds(),

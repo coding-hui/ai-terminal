@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/ui"
@@ -33,18 +32,9 @@ func (h *HistoryWriter) WriteToHistory(content string) error {
 	var historyContent strings.Builder
 
 	// Add file header if this is the first write
-	fileInfo, err := os.Stat(historyFilePath)
-	if err != nil || fileInfo.Size() == 0 {
-		historyContent.WriteString(fmt.Sprintf("# AI chat started at %s\n\n", time.Now().Format("2006-01-02 15:04:05")))
-		if len(os.Args) > 0 {
-			historyContent.WriteString(fmt.Sprintf("> %s\n", strings.Join(os.Args, " ")))
-		}
-		// Note: Model info would need to be passed in or retrieved from context
-		historyContent.WriteString("> Model: [model]\n")
-		if _, err := os.Stat(".git"); err == nil {
-			historyContent.WriteString("> Git repo: .git\n")
-		}
-		historyContent.WriteString("\n")
+	_, err := os.Stat(historyFilePath)
+	if err != nil {
+		return err
 	}
 
 	// Write the content
