@@ -715,15 +715,26 @@ func (c *CommandExecutor) prepareAskCompletionMessages(userInput string) ([]llms
 		return nil, err
 	}
 
-	messages, err := promptAsk.FormatMessages(map[string]any{
-		addedFilesKey:   addedFileMessages,
-		userQuestionKey: userInput,
-	})
-	if err != nil {
-		return nil, err
+	// Use different prompt templates based on whether files are present
+	if len(addedFileMessages) > 0 {
+		messages, err := promptAskWithFiles.FormatMessages(map[string]any{
+			addedFilesKey:   addedFileMessages,
+			userQuestionKey: userInput,
+		})
+		if err != nil {
+			return nil, err
+		}
+		return messages, nil
+	} else {
+		// No files added - use general assistant prompt
+		messages, err := promptAskGeneral.FormatMessages(map[string]any{
+			userQuestionKey: userInput,
+		})
+		if err != nil {
+			return nil, err
+		}
+		return messages, nil
 	}
-
-	return messages, nil
 }
 
 func (c *CommandExecutor) getAddedFileContent() (string, error) {

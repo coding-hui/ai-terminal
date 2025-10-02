@@ -54,6 +54,9 @@ ONLY EVER RETURN CODE IN A *SEARCH/REPLACE BLOCK*!
 )
 
 var (
+	promptAskWithFiles prompts.ChatPromptTemplate
+	promptAskGeneral   prompts.ChatPromptTemplate
+	
 	promptDesign = prompts.NewChatPromptTemplate([]prompts.MessageFormatter{
 		prompts.NewSystemMessagePromptTemplate(
 			`Act as an expert architect engineer and provide direction to your editor engineer.
@@ -86,11 +89,12 @@ Other messages in the chat may contain outdated versions of the files' contents.
 		),
 	})
 
-	promptAsk = prompts.NewChatPromptTemplate([]prompts.MessageFormatter{
+	promptAskWithFiles = prompts.NewChatPromptTemplate([]prompts.MessageFormatter{
 		prompts.NewSystemMessagePromptTemplate(
 			`You are a professional software engineer!
 Take requests for review to the supplied code.
-If the request is ambiguous, ask questions.`,
+If the request is ambiguous, ask questions.
+Always respond in the same language as the user's question.`,
 			nil,
 		),
 		prompts.NewHumanMessagePromptTemplate(
@@ -104,7 +108,19 @@ If the request is ambiguous, ask questions.`,
 			nil,
 		),
 		prompts.NewHumanMessagePromptTemplate(
-			"USER QUESTION: {{ .user_question }}",
+			"{{ .user_question }}",
+			[]string{userQuestionKey},
+		),
+	})
+
+	promptAskGeneral = prompts.NewChatPromptTemplate([]prompts.MessageFormatter{
+		prompts.NewSystemMessagePromptTemplate(
+			`You are a helpful AI assistant that can help with various tasks.
+Always respond in the same language as the user's question.`,
+			nil,
+		),
+		prompts.NewHumanMessagePromptTemplate(
+			"{{ .user_question }}",
 			[]string{userQuestionKey},
 		),
 	})
