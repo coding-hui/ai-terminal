@@ -116,28 +116,41 @@ func (c *Chat) writeChatHistory(input, response string) error {
 	// Add file header if this is the first write
 	fileInfo, err := os.Stat(historyFilePath)
 	if err != nil || fileInfo.Size() == 0 {
-		historyContent.WriteString("# AI Chat History\n\n")
-		historyContent.WriteString(fmt.Sprintf("**Session Started:** %s\n", time.Now().Format(time.RFC3339)))
-		historyContent.WriteString(fmt.Sprintf("**Model:** %s\n\n", c.config.Model))
-		historyContent.WriteString("---\n\n")
+		historyContent.WriteString(fmt.Sprintf("# aider chat started at %s\n\n", time.Now().Format("2006-01-02 15:04:05")))
+		// TODO: Add command invocation details if available
+		// historyContent.WriteString(fmt.Sprintf("> %s\n", strings.Join(os.Args, " ")))
+		// TODO: Add version info if available
+		// historyContent.WriteString("> Aider v0.86.1\n")
+		// TODO: Add model info
+		// historyContent.WriteString(fmt.Sprintf("> Model: %s\n", c.config.Model))
+		// TODO: Add git repo info if available
+		// historyContent.WriteString("> Git repo: .git with 136 files\n")
+		// historyContent.WriteString("> Repo-map: using 4096 tokens, auto refresh\n\n")
 	}
 
 	// Write input and response
-	historyContent.WriteString(fmt.Sprintf("## %s\n\n", time.Now().Format("15:04:05")))
-
 	if input != "" {
-		historyContent.WriteString("### Input\n")
-		historyContent.WriteString(input)
-		historyContent.WriteString("\n\n")
+		// Format commands with '>' prefix
+		if strings.HasPrefix(input, "/") {
+			historyContent.WriteString(fmt.Sprintf("#### %s\n", input))
+		} else {
+			// For other inputs, use the '>' prefix
+			historyContent.WriteString(fmt.Sprintf("> %s\n", input))
+		}
 	}
 
 	if response != "" {
-		historyContent.WriteString("### Response\n")
-		historyContent.WriteString(response)
-		historyContent.WriteString("\n\n")
+		// Format responses that indicate file operations
+		if strings.Contains(response, "Added") && strings.Contains(response, "to the chat") {
+			historyContent.WriteString(fmt.Sprintf("> %s\n", response))
+		} else {
+			// For other responses, just write them directly
+			historyContent.WriteString(response)
+			if !strings.HasSuffix(response, "\n") {
+				historyContent.WriteString("\n")
+			}
+		}
 	}
-
-	historyContent.WriteString("---\n\n")
 
 	// Write to file
 	file, err := os.OpenFile(historyFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
