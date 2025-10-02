@@ -105,13 +105,10 @@ func (c *CommandExecutor) Executor(input string) {
 	cmd, args := extractCmdArgs(input)
 	fn, ok := supportCommands[cmd]
 	if !ok {
-		errorMsg := fmt.Sprintf(
-			"Unknown command: %s. Supported commands: %s. Type / to see all recommended commands.",
-			cmd, strings.Join(getSupportedCommands(), ", "),
-		)
 		c.historyWriter.RenderError(
 			errbook.ErrInvalidArgument,
-			errorMsg,
+			"Unknown command: %s. Supported commands: %s. Type / to see all recommended commands.",
+			cmd, strings.Join(getSupportedCommands(), ", "),
 		)
 		return
 	}
@@ -174,9 +171,9 @@ func (c *CommandExecutor) loadFileContent(path string) (string, error) {
 func (c *CommandExecutor) add(_ context.Context, input string) (err error) {
 	files := strings.Fields(input)
 	if len(files) == 0 {
-		errorMsg := "Please provide at least one file or URL"
-		c.historyWriter.RenderError(errbook.New(errorMsg), errorMsg)
-		return errbook.New(errorMsg)
+		e := errbook.New("Please provide at least one file or URL")
+		c.historyWriter.RenderError(e, "")
+		return e
 	}
 
 	var matchedFiles = make([]string, 0, len(files))
@@ -220,8 +217,7 @@ func (c *CommandExecutor) add(_ context.Context, input string) (err error) {
 		}
 
 		if len(matches) <= 0 {
-			msg := fmt.Sprintf("No files matched pattern [%s]", pattern)
-			c.historyWriter.Render(msg)
+			c.historyWriter.Render("No files matched pattern [%s]", pattern)
 			continue
 		}
 
@@ -236,9 +232,9 @@ func (c *CommandExecutor) add(_ context.Context, input string) (err error) {
 			if fileExists {
 				matchedFiles = append(matchedFiles, filePath)
 			} else {
-				errorMsg := fmt.Sprintf("File [%s] not found", filePath)
-				c.historyWriter.RenderError(errbook.New(errorMsg), errorMsg)
-				return errbook.New(errorMsg)
+				e := errbook.New("File [%s] not found", filePath)
+				c.historyWriter.RenderError(e, "")
+				return e
 			}
 		}
 	}
@@ -255,9 +251,9 @@ func (c *CommandExecutor) add(_ context.Context, input string) (err error) {
 		// Check if file already loaded
 		for _, lc := range c.coder.loadedContexts {
 			if lc.FilePath == absPath || lc.URL == absPath {
-				errorMsg := fmt.Sprintf("File [%s] already exists", absPath)
-				c.historyWriter.RenderError(errbook.New(errorMsg), errorMsg)
-				return errbook.New(errorMsg)
+				e := errbook.New("File [%s] already exists", absPath)
+				c.historyWriter.RenderError(e, "")
+				return e
 			}
 		}
 
@@ -281,8 +277,7 @@ func (c *CommandExecutor) add(_ context.Context, input string) (err error) {
 			return errbook.Wrap("Failed to persist file context", err)
 		}
 
-		msg := fmt.Sprintf("Added [%s]", absPath)
-		c.historyWriter.Render(msg)
+		c.historyWriter.Render("Added [%s]", absPath)
 	}
 
 	return nil
@@ -305,8 +300,7 @@ func (c *CommandExecutor) list(_ context.Context, _ string) error {
 		if err != nil {
 			return errbook.Wrap("Failed to get relative path", err)
 		}
-		line := fmt.Sprintf("%d.%s (%s)", no, relPath, lc.Type)
-		c.historyWriter.Render(line)
+		c.historyWriter.Render("%d.%s (%s)", no, relPath, lc.Type)
 		no++
 	}
 
@@ -637,27 +631,55 @@ func (c *CommandExecutor) exec(_ context.Context, input string) error {
 }
 
 func (c *CommandExecutor) help(_ context.Context, _ string) error {
-	c.historyWriter.Render("Available commands:")
+	c.historyWriter.Render("Available commands (grouped by functionality):")
 
-	commands := []ui.Command{
-		{"/add <file/folder patterns/URLs>", "Add local files or URLs to chat context"},
-		{"/list", "List files in chat context"},
-		{"/remove <patterns>", "Remove files from context"},
-		{"/ask <question>", "Ask about code in context"},
-		{"/drop", "Clear all files from context"},
-		{"/design <requirements>", "Design system architecture and components"},
-		{"/coding <instructions>", "Code with AI (use for details)"},
-		{"/exec <instruction>", "Infer and execute a shell command"},
-		{"/commit", "Commit changes to version control"},
-		{"/undo", "Revert last code changes"},
-		{"/diff", "Show diffs of context files"},
-		{"/apply <edit blocks>", "Apply AI-generated code edits"},
-		{"/chat-model <model> <api>", "Switch to a new chat mode"},
-		{"/exit", "Exit the terminal"},
-		{"/help", "Show this help message"},
+	// Group commands by functionality
+	fileCommands := []ui.Command{
+		{Name: "/add <file/folder patterns/URLs>", Desc: "Add local files or URLs to chat context"},
+		{Name: "/list", Desc: "List files currently in chat context"},
+		{Name: "/remove <patterns>", Desc: "Remove files from context"},
+		{Name: "/drop", Desc: "Clear all files from context"},
 	}
 
-	c.historyWriter.RenderHelps(commands)
+	aiCommands := []ui.Command{
+		{Name: "/ask <question>", Desc: "Ask questions about code in context"},
+		{Name: "/design <requirements>", Desc: "Design system architecture and components"},
+		{Name: "/coding <instructions>", Desc: "Generate and modify code with AI"},
+	}
+
+	codeManagementCommands := []ui.Command{
+		{Name: "/commit", Desc: "Commit changes to version control"},
+		{Name: "/undo", Desc: "Revert last code changes"},
+		{Name: "/diff", Desc: "Show diffs of context files"},
+		{Name: "/apply <edit blocks>", Desc: "Apply AI-generated code edits directly"},
+	}
+
+	systemCommands := []ui.Command{
+		{Name: "/exec <instruction>", Desc: "Infer and execute a shell command"},
+		{Name: "/chat-model <model> <api>", Desc: "Switch to a different chat model and API"},
+		{Name: "/exit", Desc: "Exit the terminal"},
+		{Name: "/help", Desc: "Show this help message"},
+	}
+
+	// Render each group with headers
+	c.historyWriter.Render("\n📁 File Management:")
+	c.historyWriter.RenderHelps(fileCommands)
+	
+	c.historyWriter.Render("\n🤖 AI Interactions:")
+	c.historyWriter.RenderHelps(aiCommands)
+	
+	c.historyWriter.Render("\n🔧 Code Management:")
+	c.historyWriter.RenderHelps(codeManagementCommands)
+	
+	c.historyWriter.Render("\n⚙️  System Operations:")
+	c.historyWriter.RenderHelps(systemCommands)
+
+	c.historyWriter.Render("\n💡 Tips:")
+	c.historyWriter.Render("  • Type commands directly or use ! prefix")
+	c.historyWriter.Render("  • In default mode, input is treated as /coding command")
+	c.historyWriter.Render("  • Use /ask mode for questions, /exec for shell commands")
+	c.historyWriter.Render("  • Add --verbose flag to see raw AI messages")
+	c.historyWriter.Render("  • Add -y flag to skip confirmations")
 
 	return nil
 }
