@@ -83,6 +83,15 @@ func (c *Command) CommitWithAuthor(val, authorName, authorEmail string) (string,
 	return strings.TrimSpace(string(output)), nil
 }
 
+func (c *Command) CommitWithAuthorAndCommitter(val, authorName, authorEmail, committerName, committerEmail string) (string, error) {
+	output, err := c.commitWithAuthorAndCommitter(val, authorName, authorEmail, committerName, committerEmail).Output()
+	if err != nil {
+		return "", err
+	}
+
+	return strings.TrimSpace(string(output)), nil
+}
+
 // RollbackLastCommit rolls back the most recent commit, leaving changes staged.
 func (c *Command) RollbackLastCommit() error {
 	output, err := exec.Command("git", "reset", "--hard", "HEAD~1").CombinedOutput()
@@ -282,6 +291,35 @@ func (c *Command) commitWithAuthor(val, authorName, authorEmail string) *exec.Cm
 		"git",
 		args...,
 	)
+}
+
+func (c *Command) commitWithAuthorAndCommitter(val, authorName, authorEmail, committerName, committerEmail string) *exec.Cmd {
+	args := []string{
+		"commit",
+		"--no-verify",
+		"--signoff",
+		fmt.Sprintf("--message=%s", val),
+	}
+
+	if authorName != "" && authorEmail != "" {
+		args = append(args, fmt.Sprintf("--author=%s <%s>", authorName, authorEmail))
+	}
+
+	if c.isAmend {
+		args = append(args, "--amend")
+	}
+
+	cmd := exec.Command("git", args...)
+	
+	// Set committer via environment variables
+	if committerName != "" && committerEmail != "" {
+		cmd.Env = append(os.Environ(),
+			fmt.Sprintf("GIT_COMMITTER_NAME=%s", committerName),
+			fmt.Sprintf("GIT_COMMITTER_EMAIL=%s", committerEmail),
+		)
+	}
+	
+	return cmd
 }
 
 // DiffStats holds statistics about the diff

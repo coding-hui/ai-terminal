@@ -166,21 +166,55 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 	// git commit automatically
 	console.RenderStep("Recording changes to repository...")
 
-	// Check if this is an auto coder commit and use configured author with model info
-	if o.isAutoCoder {
+	// Determine attribution settings
+	useAttributeAuthor, useAttributeCommitter, useCoAuthoredBy := o.cfg.GetCommitAttribution(o.isAutoCoder)
+
+	// Prepare commit message with potential co-authored-by trailer
+	finalCommitMessage := commitMessage
+	if useCoAuthoredBy && o.cfg.CurrentModel.Name != "" {
+		modelName := strings.ReplaceAll(o.cfg.CurrentModel.Name, "/", "/")
+		finalCommitMessage += fmt.Sprintf("\n\nCo-authored-by: ai auto coder (%s) <ai-auto-coder@ai-terminal>", modelName)
+	}
+
+	// Handle different commit scenarios based on attribution settings
+	if o.isAutoCoder && (useAttributeAuthor || useAttributeCommitter) {
+		// Use custom author/committer attribution
 		authorName, authorEmail := o.cfg.GetCommitAuthor()
-		// Add model information to the author name in parentheses
-		if o.cfg.CurrentModel.Name != "" {
+		committerName, committerEmail := o.cfg.GetCommitAuthor()
+		
+		// Add model information to names if needed
+		if useAttributeAuthor && o.cfg.CurrentModel.Name != "" {
 			authorName = fmt.Sprintf("%s (%s)", authorName, o.cfg.CurrentModel.Name)
 		}
-		output, err := g.CommitWithAuthor(commitMessage, authorName, authorEmail)
-		if err != nil {
-			return errbook.Wrap("Could not commit changes to the repository.", err)
+		if useAttributeCommitter && o.cfg.CurrentModel.Name != "" {
+			committerName = fmt.Sprintf("%s (%s)", committerName, o.cfg.CurrentModel.Name)
 		}
-		color.Yellow(output)
+		
+		// Use separate author and committer if both are specified
+		if useAttributeAuthor && useAttributeCommitter {
+			output, err := g.CommitWithAuthorAndCommitter(finalCommitMessage, authorName, authorEmail, committerName, committerEmail)
+			if err != nil {
+				return errbook.Wrap("Could not commit changes to the repository.", err)
+			}
+			color.Yellow(output)
+		} else if useAttributeAuthor {
+			// Only modify author
+			output, err := g.CommitWithAuthor(finalCommitMessage, authorName, authorEmail)
+			if err != nil {
+				return errbook.Wrap("Could not commit changes to the repository.", err)
+			}
+			color.Yellow(output)
+		} else {
+			// Only modify committer via environment
+			output, err := g.CommitWithAuthorAndCommitter(finalCommitMessage, "", "", committerName, committerEmail)
+			if err != nil {
+				return errbook.Wrap("Could not commit changes to the repository.", err)
+			}
+			color.Yellow(output)
+		}
 	} else {
-		// This is a direct commit command, use default git author
-		output, err := g.Commit(commitMessage)
+		// Use default git author (no special attribution)
+		output, err := g.Commit(finalCommitMessage)
 		if err != nil {
 			return errbook.Wrap("Could not commit changes to the repository.", err)
 		}
