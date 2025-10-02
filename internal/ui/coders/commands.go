@@ -692,7 +692,7 @@ func (c *CommandExecutor) help(_ context.Context, _ string) error {
 
 func (c *CommandExecutor) clear(ctx context.Context, _ string) error {
 	sessionID := c.coder.cfg.CacheWriteToID
-	
+
 	// Clear all loaded contexts first
 	if _, err := c.coder.store.CleanContexts(ctx, sessionID); err != nil {
 		return errbook.Wrap("Failed to clean file contexts", err)

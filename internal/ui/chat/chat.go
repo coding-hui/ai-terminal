@@ -433,20 +433,6 @@ func (c *Chat) readStdinCmd() tea.Msg {
 	}
 }
 
-// renderMarkdown renders markdown content for terminal display
-// raw: The raw markdown string to render
-// Returns the rendered string or the original if rendering fails
-func (c *Chat) renderMarkdown(raw string) string {
-	if c.config.Raw {
-		return raw
-	}
-	rendered, err := c.glam.Render(raw)
-	if err != nil {
-		return raw
-	}
-	return rendered
-}
-
 // GetOutput returns the unescaped chat output
 // Returns the processed chat output string
 func (c *Chat) GetOutput() string {
