@@ -133,12 +133,15 @@ func (c *Chat) writeChatHistory(input, response string) error {
 
 	// Write input and response
 	if input != "" {
-		// Format commands with '>' prefix
+		// Format commands with '>' prefix and add prompt prefix
 		if strings.HasPrefix(input, "/") {
 			historyContent.WriteString(fmt.Sprintf("#### %s\n", input))
 		} else {
-			// For other inputs, use the '>' prefix
-			historyContent.WriteString(fmt.Sprintf("> %s\n", input))
+			// For other inputs, use the '>' prefix with prompt prefix
+			// Get the appropriate prompt prefix based on mode
+			promptPrefix := "user" // Default prefix
+			// TODO: Get actual prompt prefix from chat mode if available
+			historyContent.WriteString(fmt.Sprintf("> %s %s\n", promptPrefix, input))
 		}
 	}
 

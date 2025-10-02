@@ -90,7 +90,11 @@ func (a *AutoCoder) writeChatHistory(command, response string) error {
 		if strings.HasPrefix(command, "/") {
 			historyContent.WriteString(fmt.Sprintf("#### %s\n", command))
 		} else {
-			historyContent.WriteString(fmt.Sprintf("> %s\n", command))
+			// Add prompt prefix before the command
+			promptPrefix := a.getPromptPrefix()
+			// Remove the " > " suffix from the prompt prefix
+			promptPrefix = strings.TrimSuffix(promptPrefix, " > ")
+			historyContent.WriteString(fmt.Sprintf("> %s %s\n", promptPrefix, command))
 		}
 	}
 
