@@ -1,150 +1,92 @@
 # AI-终端
 
-AI-终端是一个先进的AI驱动的CLI，通过AI驱动的自动化和优化来增强终端工作流程。它有效地管理任务，如文件管理、数据处理和系统诊断。
+[🇺🇸 English](./README.md) | [🇨🇳 中文](./README_zh.md) | [🇯🇵 日本語](./README_ja.md)
 
-## 主要特点
+AI-终端是一款AI驱动的命令行工具，通过智能自动化和优化提升终端工作效率。
 
-- **上下文帮助：** 从用户命令中学习，提供语法建议。
-- **自动化任务：** 识别重复任务模式并创建快捷方式。
-- **智能搜索：** 在文件、目录和特定文件类型中进行搜索。
-- **错误纠正：** 纠正不正确的命令并提供替代方案。
-- **自定义集成：** 通过插件或API支持与各种工具和服务集成。
+## 主要功能
 
-## 入门
+- **智能助手：** 上下文感知的命令建议和补全
+- **任务自动化：** 使用AI生成的快捷方式自动化重复任务
+- **智能搜索：** 高级文件和内容搜索功能
+- **错误处理：** 命令纠正和替代方案建议
+- **可扩展性：** 支持自定义集成的插件系统
 
-### 先决条件
+## 快速开始
 
-- Go版本v1.22.0或更高。
+### 环境要求
+
+- Go 1.22.0 或更高版本
 
 ### 安装
 
-使用 Homebrew 安装：
-
+**Homebrew:**
 ```bash
 brew install coding-hui/tap/ai-terminal
 ```
 
-或者直接下载：
-
-- [软件包][releases] 提供 Debian 和 RPM 格式
-- [二进制文件][releases] 适用于 Linux、macOS 和 Windows
+**直接下载：**
+- [软件包][releases] (Debian/RPM格式)
+- [二进制文件][releases] (Linux/macOS/Windows)
 
 [releases]: https://github.com/coding-hui/ai-terminal/releases
 
-或者从源码编译（需要 Go 1.22+）：
-
-```sh
+**源码编译：**
+```bash
 make build
 ```
 
-然后初始化配置：
-```sh
+**初始化配置：**
+```bash
 ai configure
 ```
 
-<details>
-<summary>Shell 自动补全</summary>
+### Shell 自动补全
 
-所有软件包和压缩包都包含预生成的 Bash、ZSH、Fish 和 PowerShell 的自动补全文件。
-
-如果从源码构建，可以使用以下命令生成：
-
+包含 Bash、ZSH、Fish 和 PowerShell 的自动补全文件。手动生成：
 ```bash
-ai completion bash -h
-ai completion zsh -h
-ai completion fish -h
-ai completion powershell -h
+ai completion [bash|zsh|fish|powershell] -h
 ```
 
-如果使用软件包（如 Homebrew、Debs 等），只要 shell 配置正确，自动补全应该会自动设置。
+## 使用示例
 
-</details>
+### 聊天与助手
+```bash
+ai ask "如何优化Docker性能？"
+ai ask --file prompt.txt
+echo "代码内容" | ai ask "分析这段代码"
+```
 
-### 使用
+### 代码生成
+```bash
+# 交互式模式
+ai coder
 
-以下是一些使用AI-终端的示例，按功能分组：
+# 批量处理
+ai ctx load context.txt
+ai coder -c 会话ID -p "添加错误处理"
+```
 
-#### 聊天
+### 代码审查
+```bash
+ai review --exclude-list "*.md,*.txt"
+```
 
-- **启动聊天：**
-  ```sh
-  ai ask "管理Docker容器的最佳方式是什么？"
-  ```
+### 命令执行
+```bash
+ai exec "查找上周的大文件"
+ai exec --yes "docker ps -a"
+ai exec --interactive
+```
 
-- **使用提示文件：**
-  ```sh
-  ai ask --file /path/to/prompt_file.txt
-  ```
-
-- **管道输入：**
-  ```sh
-  cat some_script.go | ai ask generate unit tests
-  ```
-
-#### 代码生成
-
-- **交互式代码生成：**
-  ```sh
-  ai coder
-  ```
-  启动交互模式，根据提示生成代码。
-
-- **CLI模式代码生成：**
-  ```sh
-  ai ctx load /path/to/context_file
-  ai coder -c 会话ID -p "完善注释并补充单元测试"
-  ```
-  加载上下文文件并指定会话ID进行批量处理。支持：
-  - 代码优化
-  - 注释完善
-  - 单元测试生成
-  - 代码重构
-
-- **带上下文生成代码：**
-  ```sh
-  ai ctx load /path/to/context_file
-  ai coder "实现功能xxx"
-  ```
-  先加载上下文文件为代码生成提供额外信息。
-
-#### 代码审查
-
-- **审查代码更改：**
-  ```sh
-  ai review --exclude-list "*.md,*.txt"
-  ```
-
-#### 命令执行
-
-- **通过AI执行Shell命令：**
-  ```sh
-  ai exec "查找最近7天内修改的所有文件"
-  ```
-  使用AI解释您的指令并执行适当的Shell命令。
-
-- **无需确认自动执行：**
-  ```sh
-  ai exec --yes "列出所有Docker容器"
-  ```
-  自动执行推断出的命令，无需确认。
-
-- **交互式命令模式：**
-  ```sh
-  ai exec --interactive
-  ```
-  启动交互式对话来优化和执行命令。
-
-#### 提交消息
-
-- **生成提交消息：**
-  ```sh
-  ai commit --diff-unified 3 --lang zh
-  ```
+### 提交信息
+```bash
+ai commit --diff-unified 3 --lang zh
+```
 
 ## 贡献
 
-我们欢迎贡献！请参阅我们的[贡献指南](CONTRIBUTING_zh.md)以获取更多详细信息。
+查看 [CONTRIBUTING_zh.md](CONTRIBUTING_zh.md) 了解贡献指南。
 
-## 许可证
-
-版权所有 2024 coding-hui。根据[MIT许可证](LICENSE)授权。
+**更新日志：** [CHANGELOG.md](CHANGELOG.md)  
+**许可证：** [MIT](LICENSE) © 2024 coding-hui
