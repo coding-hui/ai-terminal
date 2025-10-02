@@ -127,6 +127,7 @@ func (c *CommandExecutor) Executor(input string) {
 // ask queries GPT to analyze or edit files in context
 func (c *CommandExecutor) ask(ctx context.Context, input string) error {
 	if input == "" {
+		c.coder.promptMode = ui.ChatPromptMode
 		c.historyWriter.RenderComment("Switched /ask mode")
 		return nil
 	}
@@ -370,6 +371,7 @@ func (c *CommandExecutor) coding(ctx context.Context, input string) error {
 	}
 
 	if input == "" {
+		c.coder.promptMode = ui.DefaultPromptMode
 		c.historyWriter.RenderComment("Switched /coding mode")
 		return nil
 	}
@@ -576,6 +578,7 @@ func (c *CommandExecutor) apply(ctx context.Context, codes string) error {
 // exec infers a POSIX shell command via AI and executes it
 func (c *CommandExecutor) exec(_ context.Context, input string) error {
 	if input == "" {
+		c.coder.promptMode = ui.ExecPromptMode
 		c.historyWriter.RenderComment("Switched /exec mode")
 		return nil
 	}
