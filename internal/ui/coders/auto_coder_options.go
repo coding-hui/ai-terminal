@@ -5,6 +5,7 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/convo"
 	"github.com/coding-hui/ai-terminal/internal/git"
 	"github.com/coding-hui/ai-terminal/internal/options"
+	"github.com/coding-hui/ai-terminal/internal/ui"
 
 	"github.com/coding-hui/common/version"
 )
@@ -53,7 +54,7 @@ func WithPrompt(prompt string) AutoCoderOption {
 	}
 }
 
-func WithPromptMode(mode PromptMode) AutoCoderOption {
+func WithPromptMode(mode ui.PromptMode) AutoCoderOption {
 	return func(a *AutoCoder) {
 		a.promptMode = mode
 	}

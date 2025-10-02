@@ -14,6 +14,7 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/git"
 	"github.com/coding-hui/ai-terminal/internal/options"
+	"github.com/coding-hui/ai-terminal/internal/ui"
 	"github.com/coding-hui/ai-terminal/internal/ui/chat"
 	"github.com/coding-hui/ai-terminal/internal/ui/console"
 	"github.com/coding-hui/common/version"
@@ -36,7 +37,7 @@ type AutoCoder struct {
 
 	versionInfo version.Info
 	cfg         *options.Config
-	promptMode  PromptMode
+	promptMode  ui.PromptMode
 }
 
 func NewAutoCoder(opts ...AutoCoderOption) *AutoCoder {
@@ -169,9 +170,9 @@ func (a *AutoCoder) Run() error {
 		// Otherwise, map by promptMode:
 		if !strings.HasPrefix(initial, "/") && !strings.HasPrefix(initial, "!") {
 			switch a.promptMode {
-			case ChatPromptMode:
+			case ui.ChatPromptMode:
 				initial = fmt.Sprintf("/ask %s", initial)
-			case ExecPromptMode:
+			case ui.ExecPromptMode:
 				initial = fmt.Sprintf("/exec %s", initial)
 			default:
 				initial = fmt.Sprintf("/coding %s", initial)
@@ -201,7 +202,7 @@ func (a *AutoCoder) Run() error {
 				historyWriter.RenderError(err, "Failed to write command to history")
 			}
 			cmdExecutor.Executor(input)
-			
+
 			// Reload contexts after each command to maintain conversation continuity
 			if err := a.loadExistingContexts(); err != nil {
 				historyWriter.RenderError(err, "Failed to reload conversation contexts")
@@ -221,11 +222,11 @@ func (a *AutoCoder) Run() error {
 func (a *AutoCoder) getPromptPrefix() (promptPrefix string) {
 	promptPrefix = a.promptMode.String() + " > "
 	switch a.promptMode {
-	case ChatPromptMode:
+	case ui.ChatPromptMode:
 		if a.cfg.AutoCoder.PromptPrefixChat != "" {
 			promptPrefix = a.cfg.AutoCoder.PromptPrefixChat
 		}
-	case ExecPromptMode:
+	case ui.ExecPromptMode:
 		if a.cfg.AutoCoder.PromptPrefixExec != "" {
 			promptPrefix = a.cfg.AutoCoder.PromptPrefixExec
 		}

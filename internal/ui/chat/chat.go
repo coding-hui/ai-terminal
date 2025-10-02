@@ -22,6 +22,7 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/convo"
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/options"
+	"github.com/coding-hui/ai-terminal/internal/ui"
 	"github.com/coding-hui/ai-terminal/internal/ui/console"
 	"github.com/coding-hui/ai-terminal/internal/util/term"
 )
@@ -234,6 +235,9 @@ func (c *Chat) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.IsLast() {
 			c.state = doneState
 			c.TokenUsage = msg.GetUsage()
+			if c.opts.promptMode != ui.ExecPromptMode {
+				c.config.ContinueLast = true
+			}
 			// Write chat history when conversation is completed
 			if err := c.writeChatHistory("", c.GetOutput()); err != nil {
 				console.RenderError(err, "Failed to write chat history")

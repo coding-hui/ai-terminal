@@ -10,6 +10,7 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/convo"
 	"github.com/coding-hui/ai-terminal/internal/git"
 	"github.com/coding-hui/ai-terminal/internal/options"
+	"github.com/coding-hui/ai-terminal/internal/ui"
 	"github.com/coding-hui/ai-terminal/internal/ui/coders"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 )
@@ -62,7 +63,7 @@ func NewCmdExec(ioStreams genericclioptions.IOStreams, cfg *options.Config) *cob
 				coders.WithCodeBasePath(filepath.Dir(root)),
 				coders.WithStore(store),
 				coders.WithPrompt(strings.TrimSpace(input)),
-				coders.WithPromptMode(coders.ExecPromptMode),
+				coders.WithPromptMode(ui.ExecPromptMode),
 			)
 
 			return autoCoder.Run()

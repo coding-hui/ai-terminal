@@ -4,8 +4,11 @@ package ui
 type PromptMode int
 
 const (
-	// ExecPromptMode is for executing commands
-	ExecPromptMode PromptMode = iota
+	// DefaultPromptMode is for default auto coder commands
+	DefaultPromptMode PromptMode = iota
+
+	// 	ExecPromptMode is the exec mode
+	ExecPromptMode
 
 	// TokenConfigPromptMode is for configuring API tokens
 	TokenConfigPromptMode
@@ -18,9 +21,6 @@ const (
 
 	// ChatPromptMode is for chat interactions
 	ChatPromptMode
-
-	// DefaultPromptMode is the fallback mode
-	DefaultPromptMode
 )
 
 // String returns the string representation of a PromptMode
@@ -37,7 +37,7 @@ func (m PromptMode) String() string {
 	case ChatPromptMode:
 		return "ask"
 	default:
-		return "default"
+		return "auto-coder"
 	}
 }
 

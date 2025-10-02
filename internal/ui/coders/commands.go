@@ -92,9 +92,9 @@ func (c *CommandExecutor) Executor(input string) {
 	if !c.isCommand(input) {
 		// Map plain input to the active mode's default action
 		switch c.coder.promptMode {
-		case ChatPromptMode:
+		case ui.ChatPromptMode:
 			input = "/ask " + input
-		case ExecPromptMode:
+		case ui.ExecPromptMode:
 			input = "/exec " + input
 		default:
 			input = "/coding " + input
@@ -126,7 +126,6 @@ func (c *CommandExecutor) Executor(input string) {
 // ask queries GPT to analyze or edit files in context
 func (c *CommandExecutor) ask(ctx context.Context, input string) error {
 	if input == "" {
-		c.coder.promptMode = ChatPromptMode
 		c.historyWriter.RenderComment("Switched /ask mode")
 		return nil
 	}
@@ -144,6 +143,7 @@ func (c *CommandExecutor) ask(ctx context.Context, input string) error {
 		chat.WithContext(ctx),
 		chat.WithMessages(messages),
 		chat.WithEngine(c.coder.engine),
+		chat.WithPromptMode(c.coder.promptMode),
 		chat.WithCopyToClipboard(true),
 	)
 
@@ -369,7 +369,6 @@ func (c *CommandExecutor) coding(ctx context.Context, input string) error {
 	}
 
 	if input == "" {
-		c.coder.promptMode = DefaultPromptMode
 		c.historyWriter.RenderComment("Switched /coding mode")
 		return nil
 	}
@@ -512,6 +511,7 @@ func (c *CommandExecutor) design(ctx context.Context, input string) error {
 		chat.WithContext(ctx),
 		chat.WithMessages(messages),
 		chat.WithEngine(c.coder.engine),
+		chat.WithPromptMode(c.coder.promptMode),
 		chat.WithCopyToClipboard(true),
 	)
 
@@ -575,7 +575,6 @@ func (c *CommandExecutor) apply(ctx context.Context, codes string) error {
 // exec infers a POSIX shell command via AI and executes it
 func (c *CommandExecutor) exec(_ context.Context, input string) error {
 	if input == "" {
-		c.coder.promptMode = ExecPromptMode
 		c.historyWriter.RenderComment("Switched /exec mode")
 		return nil
 	}
@@ -601,6 +600,7 @@ func (c *CommandExecutor) exec(_ context.Context, input string) error {
 
 	ch := chat.NewChat(c.coder.cfg,
 		chat.WithEngine(c.coder.engine),
+		chat.WithPromptMode(c.coder.promptMode),
 		chat.WithMessages([]llms.ChatMessage{system, human}),
 	)
 	if err := ch.Run(); err != nil {

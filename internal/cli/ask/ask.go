@@ -16,6 +16,7 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/git"
 	"github.com/coding-hui/ai-terminal/internal/options"
+	"github.com/coding-hui/ai-terminal/internal/ui"
 	"github.com/coding-hui/ai-terminal/internal/ui/coders"
 	"github.com/coding-hui/ai-terminal/internal/util/genericclioptions"
 	"github.com/coding-hui/ai-terminal/internal/util/templates"
@@ -115,7 +116,7 @@ func (o *Options) Run() error {
 		coders.WithCodeBasePath(filepath.Dir(root)),
 		coders.WithStore(store),
 		coders.WithPrompt(strings.TrimSpace(content)),
-		coders.WithPromptMode(coders.ChatPromptMode),
+		coders.WithPromptMode(ui.ChatPromptMode),
 	)
 
 	return autoCoder.Run()

@@ -11,6 +11,7 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/git"
 	"github.com/coding-hui/ai-terminal/internal/options"
+	"github.com/coding-hui/ai-terminal/internal/ui"
 	"github.com/coding-hui/ai-terminal/internal/ui/coders"
 )
 
@@ -64,7 +65,7 @@ func (o *Options) run(_ *cobra.Command, args []string) error {
 		coders.WithCodeBasePath(filepath.Dir(root)),
 		coders.WithStore(store),
 		coders.WithPrompt(o.prompt),
-		coders.WithPromptMode(coders.DefaultPromptMode),
+		coders.WithPromptMode(ui.DefaultPromptMode),
 	)
 
 	return autoCoder.Run()
