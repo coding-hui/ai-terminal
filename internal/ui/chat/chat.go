@@ -139,8 +139,9 @@ func (c *Chat) writeChatHistory(input, response string) error {
 		} else {
 			// For other inputs, use the '>' prefix with prompt prefix
 			// Get the appropriate prompt prefix based on mode
-			promptPrefix := "user" // Default prefix
-			// TODO: Get actual prompt prefix from chat mode if available
+			promptPrefix := c.getPromptPrefix()
+			// Remove the " > " suffix from the prompt prefix if present
+			promptPrefix = strings.TrimSuffix(promptPrefix, " > ")
 			historyContent.WriteString(fmt.Sprintf("> %s %s\n", promptPrefix, input))
 		}
 	}
@@ -565,6 +566,21 @@ func lastPrompt(messages []llms.ChatMessage) string {
 		result = msg.GetContent()
 	}
 	return result
+}
+
+// getPromptPrefix returns the appropriate prompt prefix based on the chat mode
+func (c *Chat) getPromptPrefix() string {
+	// Determine the prompt mode from chat options
+	// Since Chat doesn't have an explicit PromptMode field, we'll use a default
+	// You may want to add a PromptMode field to Chat if needed
+	promptPrefix := "chat" // Default prefix for chat mode
+	
+	// If the chat has access to configuration for prompt prefixes, use them
+	if c.config != nil && c.config.AutoCoder.PromptPrefixChat != "" {
+		promptPrefix = c.config.AutoCoder.PromptPrefixChat
+	}
+	
+	return promptPrefix
 }
 
 // firstLine extracts the first line from a multi-line string
