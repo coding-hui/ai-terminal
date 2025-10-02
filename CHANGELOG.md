@@ -1,20 +1,74 @@
 # Change Log
 
 
+<a name="v0.13.8"></a>
+## [v0.13.8] - 2025-10-02
+### Bug Fixes
+- remove conversation session error wrapping
+- improve conversation session error message
+- disable interactive mode for CLI prompts
+- improve CLI error messages and help
+- remove " > " suffix from prompt prefix in chat history
+
+### Code Refactoring
+- remove unused markdown renderer
+- tHE PULL REQUEST TITLE: Show session ID in clear command message
+- consolidate prompt mode handling in UI
+- remove unused prompt variables
+- based on the changes described in the file summaries, the best title for the pull request is:
+- simplify history file formatting
+- use HistoryWriter for chat persistence
+- refactor chat history to use HistoryWriter
+- refactor AutoCommit into modular methods
+- consolidate interactive flows in CLI commands
+- integrate chat history writer into command executor
+- replace console.Render with historyWriter.Render for all outputs
+- remove trailing whitespace and add chat import
+- remove trailing whitespace in chat.go
+- standardize chat history format to match aider style
+- remove prompt mode cycling
+
+### Features
+- set prompt mode for empty slash commands
+- add conversation clearing command
+- reload conversation contexts after commands
+- continue last conversation when flag is set
+- persist save confirmation to history
+- support configurable commit attribution
+- enable interactive mode by default
+- add auto coder commit flag for model attribution
+- distinguish auto coder commits with model info in author
+- include model name in commit author
+- include model info in commit email
+- include model name in commit author
+- make commit author name and email configurable
+- set ai auto coder as commit author
+- format error messages with markdown in chat history
+- add unified console output and chat history writer
+- capture console output in chat history
+- add line breaks between chat inputs and responses
+- add prompt suffix for better terminal display
+- use prompt prefix based on mode in chat history
+- add prompt prefix to chat history commands
+- update chat history headers to generic AI format
+- add chat history logging to .ai.chat.history.md
+
+
+<a name="v0.13.7"></a>
+## [v0.13.7] - 2025-10-02
+### Bug Fixes
+- remove command argument length validation
+
+
 <a name="v0.13.6"></a>
 ## [v0.13.6] - 2025-10-02
 ### Code Refactoring
 - refactor system configuration detection
+- remove deprecated prompt configuration
 
 
 <a name="v0.13.5"></a>
 ## [v0.13.5] - 2025-10-02
-### Code Refactoring
-- remove deprecated prompt configuration
-
-
-<a name="latest"></a>
-## [latest] - 2025-10-02
 ### Bug Fixes
 - fix raw and quiet mode rendering
 
@@ -422,10 +476,11 @@
 - add ask cmd
 
 
-[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.13.6...HEAD
+[Unreleased]: https://github.com/coding-hui/ai-terminal/compare/v0.13.8...HEAD
+[v0.13.8]: https://github.com/coding-hui/ai-terminal/compare/v0.13.7...v0.13.8
+[v0.13.7]: https://github.com/coding-hui/ai-terminal/compare/v0.13.6...v0.13.7
 [v0.13.6]: https://github.com/coding-hui/ai-terminal/compare/v0.13.5...v0.13.6
-[v0.13.5]: https://github.com/coding-hui/ai-terminal/compare/latest...v0.13.5
-[latest]: https://github.com/coding-hui/ai-terminal/compare/v0.13.4...latest
+[v0.13.5]: https://github.com/coding-hui/ai-terminal/compare/v0.13.4...v0.13.5
 [v0.13.4]: https://github.com/coding-hui/ai-terminal/compare/v0.13.3...v0.13.4
 [v0.13.3]: https://github.com/coding-hui/ai-terminal/compare/v0.13.2...v0.13.3
 [v0.13.2]: https://github.com/coding-hui/ai-terminal/compare/v0.13.1...v0.13.2
