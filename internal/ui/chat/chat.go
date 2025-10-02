@@ -112,7 +112,7 @@ func (c *Chat) writeChatHistory(input, response string) error {
 
 	// Build history content
 	var historyContent strings.Builder
-	
+
 	// Add file header if this is the first write
 	fileInfo, err := os.Stat(historyFilePath)
 	if err != nil || fileInfo.Size() == 0 {
@@ -124,7 +124,7 @@ func (c *Chat) writeChatHistory(input, response string) error {
 
 	// Write input and response
 	historyContent.WriteString(fmt.Sprintf("## %s\n\n", time.Now().Format("15:04:05")))
-	
+
 	if input != "" {
 		historyContent.WriteString("### Input\n")
 		historyContent.WriteString(input)
@@ -160,14 +160,14 @@ func (c *Chat) Run() error {
 	if c.config.Raw || c.config.Quiet {
 		opts = append(opts, tea.WithoutRenderer())
 	}
-	
+
 	// Record initial message before running
 	if len(c.opts.messages) > 0 || c.opts.content != "" {
 		if err := c.writeChatHistory("", "Starting chat session..."); err != nil {
 			console.RenderError(err, "Failed to write initial chat history")
 		}
 	}
-	
+
 	if _, err := tea.NewProgram(c, opts...).Run(); err != nil {
 		return errbook.Wrap("Couldn't start Bubble Tea program.", err)
 	}

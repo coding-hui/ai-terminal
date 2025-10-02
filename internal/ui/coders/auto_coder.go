@@ -65,7 +65,7 @@ func (a *AutoCoder) writeChatHistory(command, response string) error {
 
 	// Build history content
 	var historyContent strings.Builder
-	
+
 	// Add file header if this is the first write
 	fileInfo, err := os.Stat(historyFilePath)
 	if err != nil || fileInfo.Size() == 0 {
@@ -155,12 +155,12 @@ func (a *AutoCoder) Run() error {
 				initial = fmt.Sprintf("/coding %s", initial)
 			}
 		}
-		
+
 		// Record initial command to history
 		if err := a.writeChatHistory(initial, ""); err != nil {
 			console.RenderError(err, "Failed to write initial command to history")
 		}
-		
+
 		cmdExecutor.Executor(initial)
 	}
 
