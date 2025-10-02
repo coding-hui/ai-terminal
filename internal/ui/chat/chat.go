@@ -523,17 +523,26 @@ func (c *Chat) saveConversation() error {
 		), err)
 	}
 
-	if !c.config.Quiet {
-		content := fmt.Sprintf("\n**Conversation successfully saved:** `%s` `%s`\n", c.config.CacheWriteToID[:convo.Sha1short], writeToTitle)
-		if c.config.ShowTokenUsages {
-			content += fmt.Sprintf("\nFirst Token: `%.3fs` | Avg: `%.3f/s` | Total: `%.3fs` | Tokens: `%d`",
-				c.TokenUsage.FirstTokenTime.Seconds(),
-				c.TokenUsage.AverageTokensPerSecond,
-				c.TokenUsage.TotalTime.Seconds(),
-				c.TokenUsage.TotalTokens,
-			)
+	// Write save confirmation to history file instead of console
+	saveContent := fmt.Sprintf("\n**Conversation successfully saved:** `%s` `%s`\n", c.config.CacheWriteToID[:convo.Sha1short], writeToTitle)
+	if c.config.ShowTokenUsages {
+		saveContent += fmt.Sprintf("\nFirst Token: `%.3fs` | Avg: `%.3f/s` | Total: `%.3fs` | Tokens: `%d`",
+			c.TokenUsage.FirstTokenTime.Seconds(),
+			c.TokenUsage.AverageTokensPerSecond,
+			c.TokenUsage.TotalTime.Seconds(),
+			c.TokenUsage.TotalTokens,
+		)
+	}
+	
+	// Write to history file
+	wd, err := os.Getwd()
+	if err == nil {
+		historyFilePath := filepath.Join(wd, chatHistoryFilename)
+		file, err := os.OpenFile(historyFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+		if err == nil {
+			defer file.Close()
+			file.WriteString(saveContent + "\n")
 		}
-		_, _ = fmt.Fprint(os.Stderr, c.renderMarkdown(content))
 	}
 
 	return nil
