@@ -134,20 +134,20 @@ type Config struct {
 
 // AutoCoder is the configuration for the auto coder.
 type AutoCoder struct {
-	PromptPrefixChat   string   `yaml:"prompt-prefix-chat" env:"PROMPT_PREFIX_CHAT"`
-	PromptPrefixExec   string   `yaml:"prompt-prefix-exec" env:"PROMPT_PREFIX_EXEC"`
-	PromptPrefixCoding string   `yaml:"prompt-prefix-coding" env:"PROMPT_PREFIX_CODING"`
-	EditFormat         string   `yaml:"edit-format" env:"EDIT_FORMAT"`
-	CommitPrefix       string   `yaml:"commit-prefix" env:"COMMIT_PREFIX"`
-	AutoCommit         bool     `yaml:"auto-commit" env:"AUTO_COMMIT" default:"true"`
-	DesignModel        string   `yaml:"design-model" env:"DESIGN_MODEL"`
-	CodingModel        string   `yaml:"coding-model" env:"CODING_MODEL"`
-	CodingFences       []string `yaml:"coding-fences" env:"CODING_FENCES"`
-	CommitAuthorName   string   `yaml:"commit-author-name" env:"COMMIT_AUTHOR_NAME" default:"ai auto coder"`
-	CommitAuthorEmail  string   `yaml:"commit-author-email" env:"COMMIT_AUTHOR_EMAIL" default:"ai-auto-coder@ai-terminal"`
-	AttributeAuthor    *bool    `yaml:"attribute-author" env:"ATTRIBUTE_AUTHOR"`
-	AttributeCommitter *bool    `yaml:"attribute-committer" env:"ATTRIBUTE_COMMITTER"`
-	AttributeCoAuthoredBy *bool `yaml:"attribute-co-authored-by" env:"ATTRIBUTE_CO_AUTHORED_BY"`
+	PromptPrefixChat      string   `yaml:"prompt-prefix-chat" env:"PROMPT_PREFIX_CHAT"`
+	PromptPrefixExec      string   `yaml:"prompt-prefix-exec" env:"PROMPT_PREFIX_EXEC"`
+	PromptPrefixCoding    string   `yaml:"prompt-prefix-coding" env:"PROMPT_PREFIX_CODING"`
+	EditFormat            string   `yaml:"edit-format" env:"EDIT_FORMAT"`
+	CommitPrefix          string   `yaml:"commit-prefix" env:"COMMIT_PREFIX"`
+	AutoCommit            bool     `yaml:"auto-commit" env:"AUTO_COMMIT" default:"true"`
+	DesignModel           string   `yaml:"design-model" env:"DESIGN_MODEL"`
+	CodingModel           string   `yaml:"coding-model" env:"CODING_MODEL"`
+	CodingFences          []string `yaml:"coding-fences" env:"CODING_FENCES"`
+	CommitAuthorName      string   `yaml:"commit-author-name" env:"COMMIT_AUTHOR_NAME" default:"ai auto coder"`
+	CommitAuthorEmail     string   `yaml:"commit-author-email" env:"COMMIT_AUTHOR_EMAIL" default:"ai-auto-coder@ai-terminal"`
+	AttributeAuthor       *bool    `yaml:"attribute-author" env:"ATTRIBUTE_AUTHOR"`
+	AttributeCommitter    *bool    `yaml:"attribute-committer" env:"ATTRIBUTE_COMMITTER"`
+	AttributeCoAuthoredBy *bool    `yaml:"attribute-co-authored-by" env:"ATTRIBUTE_CO_AUTHORED_BY"`
 }
 
 func (a AutoCoder) GetDefaultFences() []string {
@@ -275,12 +275,12 @@ func (c *Config) GetCommitAttribution(isAutoCoderEdit bool) (useAttributeAuthor,
 	if authorExplicit {
 		effectiveAuthor = *c.AutoCoder.AttributeAuthor
 	}
-	
+
 	effectiveCommitter := true
 	if committerExplicit {
 		effectiveCommitter = *c.AutoCoder.AttributeCommitter
 	}
-	
+
 	effectiveCoAuthoredBy := false
 	if coAuthoredByExplicit {
 		effectiveCoAuthoredBy = *c.AutoCoder.AttributeCoAuthoredBy
@@ -290,17 +290,17 @@ func (c *Config) GetCommitAttribution(isAutoCoderEdit bool) (useAttributeAuthor,
 	if isAutoCoderEdit {
 		// AI-generated changes
 		useCoAuthoredBy = effectiveCoAuthoredBy
-		
+
 		// Author modification applies only to AI edits
 		// Used if effective_author is True AND (co-authored-by is False OR author was explicitly set)
 		useAttributeAuthor = effectiveAuthor && (!effectiveCoAuthoredBy || authorExplicit)
-		
+
 		// Committer modification applies if effective_committer is True AND
 		// (it's not an AI edit with co-authored-by OR committer was explicitly set)
 		useAttributeCommitter = effectiveCommitter && (!effectiveCoAuthoredBy || committerExplicit)
 	} else {
 		// User-driven changes (manual commit)
-		useCoAuthoredBy = false // Never add co-authored-by for user changes
+		useCoAuthoredBy = false    // Never add co-authored-by for user changes
 		useAttributeAuthor = false // Never modify author for user changes
 		// Committer is modified by default for user commits (as AI runs git commit)
 		useAttributeCommitter = effectiveCommitter

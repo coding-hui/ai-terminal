@@ -310,7 +310,7 @@ func (c *Command) commitWithAuthorAndCommitter(val, authorName, authorEmail, com
 	}
 
 	cmd := exec.Command("git", args...)
-	
+
 	// Set committer via environment variables
 	if committerName != "" && committerEmail != "" {
 		cmd.Env = append(os.Environ(),
@@ -318,7 +318,7 @@ func (c *Command) commitWithAuthorAndCommitter(val, authorName, authorEmail, com
 			fmt.Sprintf("GIT_COMMITTER_EMAIL=%s", committerEmail),
 		)
 	}
-	
+
 	return cmd
 }
 

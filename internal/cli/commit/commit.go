@@ -181,7 +181,7 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 		// Use custom author/committer attribution
 		authorName, authorEmail := o.cfg.GetCommitAuthor()
 		committerName, committerEmail := o.cfg.GetCommitAuthor()
-		
+
 		// Add model information to names if needed
 		if useAttributeAuthor && o.cfg.CurrentModel.Name != "" {
 			authorName = fmt.Sprintf("%s (%s)", authorName, o.cfg.CurrentModel.Name)
@@ -189,7 +189,7 @@ func (o *Options) AutoCommit(_ *cobra.Command, args []string) error {
 		if useAttributeCommitter && o.cfg.CurrentModel.Name != "" {
 			committerName = fmt.Sprintf("%s (%s)", committerName, o.cfg.CurrentModel.Name)
 		}
-		
+
 		// Use separate author and committer if both are specified
 		if useAttributeAuthor && useAttributeCommitter {
 			output, err := g.CommitWithAuthorAndCommitter(finalCommitMessage, authorName, authorEmail, committerName, committerEmail)
