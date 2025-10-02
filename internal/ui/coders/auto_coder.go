@@ -14,6 +14,7 @@ import (
 	"github.com/coding-hui/ai-terminal/internal/errbook"
 	"github.com/coding-hui/ai-terminal/internal/git"
 	"github.com/coding-hui/ai-terminal/internal/options"
+	"github.com/coding-hui/ai-terminal/internal/ui/chat"
 	"github.com/coding-hui/ai-terminal/internal/ui/console"
 	"github.com/coding-hui/common/version"
 )
@@ -156,7 +157,7 @@ func (a *AutoCoder) loadExistingContexts() error {
 func (a *AutoCoder) Run() error {
 	// Create history writer
 	historyWriter := chat.NewHistoryWriter()
-	
+
 	initial := strings.TrimSpace(a.prompt)
 	if initial == "" {
 		a.printWelcome(historyWriter)

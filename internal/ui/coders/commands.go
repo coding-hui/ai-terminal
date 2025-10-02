@@ -48,7 +48,7 @@ type CommandExecutor struct {
 func NewCommandExecutor(coder *AutoCoder, historyWriter *chat.HistoryWriter) *CommandExecutor {
 	editor := NewEditBlockCoder(coder, fences[0])
 	cmds := &CommandExecutor{
-		coder:         coder, 
+		coder:         coder,
 		editor:        editor,
 		historyWriter: historyWriter,
 	}

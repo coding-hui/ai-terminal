@@ -27,7 +27,7 @@ func NewHistoryWriter() *HistoryWriter {
 // WriteToHistory writes content to the chat history file
 func (h *HistoryWriter) WriteToHistory(content string) error {
 	historyFilePath := filepath.Join(h.workingDir, chatHistoryFilename)
-	
+
 	// Build history content
 	var historyContent strings.Builder
 
